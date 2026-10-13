@@ -1,6 +1,6 @@
 {
   "name": "funkloch",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "type": "module",
   "description": "Signal history for every Zigbee and Thread device: trends, events and alerts for Zigbee2MQTT and OpenThread Border Router",
