@@ -24,8 +24,17 @@ export default defineConfig({
       testIgnore: /screenshots|auth/,
       use: { ...devices['Desktop Chrome'], launchOptions: { executablePath } },
     },
-    { name: 'firefox', testIgnore: /screenshots|auth/, use: devices['Desktop Firefox'] },
-    { name: 'webkit', testIgnore: /screenshots|auth/, use: devices['Desktop Safari'] },
+    // The browsers share one demo server: tests that change its settings run in Chromium only
+    {
+      name: 'firefox',
+      testIgnore: /screenshots|auth|notifications/,
+      use: devices['Desktop Firefox'],
+    },
+    {
+      name: 'webkit',
+      testIgnore: /screenshots|auth|notifications/,
+      use: devices['Desktop Safari'],
+    },
     {
       name: 'auth',
       testMatch: /auth/,
