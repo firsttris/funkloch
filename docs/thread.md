@@ -18,7 +18,10 @@ Images with the `/api` resources (ot-br-posix from 2024 on) give the most:
 
 The tasks go to `/api/actions`; the answers are read from `/api/diagnostics`. The border router
 accepts only a single media type in the `Accept` header (a list or a `q` parameter gets HTTP 406), so
-Funkloch sends `application/vnd.api+json` to `/api/*` and `application/json` to `/node/*`. A link whose average RSSI
+Funkloch sends `application/vnd.api+json` to `/api/*` and `application/json` to `/node/*`. The energy scan
+asks for one measurement per channel (`count` 1, `period` and `scanDuration` 100 ms each); the border
+router refuses the task without them (HTTP 422). It runs one diagnostic request at a time, so Funkloch
+waits for each router's answer in turn. A link whose average RSSI
 OpenThread marks as unknown (127, no frame averaged yet) uses the last RSSI, or gives no reading. Sleepy end devices
 are never asked; their parent's child table carries their link.
 

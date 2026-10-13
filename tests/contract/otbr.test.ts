@@ -12,6 +12,7 @@ import {
   diagnosticsSchema,
   energyScanSchema,
   legacyDiagnosticsSchema,
+  NETWORK_DIAGNOSTIC_TYPES,
   networkDiagnosticSchema,
   nodeSchema,
 } from '~/adapters/otbr/schemas'
@@ -64,12 +65,11 @@ describe.skipIf(recordings.length === 0)('recorded OTBR answers', () => {
       if (record.path.startsWith('/api/diagnostics')) {
         for (const item of diagnosticItems(record.body)) {
           const type = (item as { type?: string }).type
-          const itemSchema =
-            type === 'threadNetworkDiagnostic'
-              ? networkDiagnosticSchema
-              : type === 'energyScanReport'
-                ? energyScanSchema
-                : null
+          const itemSchema = NETWORK_DIAGNOSTIC_TYPES.some((t) => t === type)
+            ? networkDiagnosticSchema
+            : type === 'energyScanReport'
+              ? energyScanSchema
+              : null
           const result = itemSchema?.safeParse(item)
           if (result && !result.success) problems.push(`${type}: ${result.error.message}`)
         }

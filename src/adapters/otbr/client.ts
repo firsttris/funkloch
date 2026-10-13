@@ -56,7 +56,9 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * Posts tasks to /api/actions and waits until each is done or its time is up; returns the
- * finished tasks (with the id of their result in /api/diagnostics where there is one).
+ * finished tasks (with the id of their result in /api/diagnostics where there is one). The border
+ * router runs one diagnostic request at a time (src/rest/network_diag_handler.cpp
+ * StartDiagnosticsRequest), so each task gets its own timeout.
  */
 export const runTasks = async (
   client: OtbrClient,
@@ -68,7 +70,7 @@ export const runTasks = async (
   if (!posted.ok) return posted
   const finished: ActionItem[] = []
   const pending = new Map(posted.value.data.map((item) => [item.id, item]))
-  const deadline = Date.now() + (timeoutSeconds + 10) * 1000
+  const deadline = Date.now() + (timeoutSeconds * tasks.length + 10) * 1000
   while (pending.size > 0 && Date.now() < deadline) {
     await sleep(pollMs)
     for (const id of [...pending.keys()]) {

@@ -3,7 +3,7 @@
   "data": [
     {
       "id": "fd428d18-8528-45cf-8a2d-f191bef39b5d",
-      "type": "threadNetworkDiagnostic",
+      "type": "networkDiagnostics",
       "attributes": {
         "created": "2023-11-23T18:30:42Z",
         "extAddress": "96518e5497d5b9f3",
@@ -24,7 +24,7 @@
     },
     {
       "id": "beed10ee-f73f-4a61-992c-5738d5ab9e42",
-      "type": "threadNetworkDiagnostic",
+      "type": "networkDiagnostics",
       "attributes": {
         "created": "2023-11-23T18:30:23Z",
         "extAddress": "2a55d952bc7b4008",

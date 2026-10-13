@@ -45,9 +45,15 @@ export const linkEntrySchema = z.looseObject({
 
 export type LinkEntry = z.infer<typeof linkEntrySchema>
 
+/**
+ * The border router names its items "networkDiagnostics" (src/rest/rest_diagnostics_coll.hpp
+ * NWK_DIAG_TYPE_NAME); openapi.yaml says "threadNetworkDiagnostic". Both are read.
+ */
+export const NETWORK_DIAGNOSTIC_TYPES = ['networkDiagnostics', 'threadNetworkDiagnostic'] as const
+
 export const networkDiagnosticSchema = z.looseObject({
   id: z.string(),
-  type: z.literal('threadNetworkDiagnostic'),
+  type: z.enum(NETWORK_DIAGNOSTIC_TYPES),
   attributes: z.looseObject({
     created: z.string().optional(),
     extAddress: hex16,
@@ -101,8 +107,13 @@ export const nodeSchema = z.looseObject({
   NumOfRouter: z.number().optional(),
 })
 
-/** GET /node/dataset/active as JSON; only the channel is read, the keys are never stored */
-export const datasetSchema = z.looseObject({ Channel: z.number().int().optional() })
+/**
+ * GET /node/dataset/active as JSON; only the channel is read, the keys are never stored. Current
+ * images write "channel" (src/rest/json.cpp ActiveDataset2Json), older ones "Channel".
+ */
+export const datasetSchema = z
+  .looseObject({ channel: z.number().int().optional(), Channel: z.number().int().optional() })
+  .transform((dataset) => ({ channel: dataset.channel ?? dataset.Channel }))
 
 /** GET /diagnostics of older images: router link qualities without RSSI */
 export const legacyDiagnosticsSchema = z.array(

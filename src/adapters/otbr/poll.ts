@@ -31,6 +31,11 @@ export const INTERVALS = {
 const DIAGNOSTIC_TIMEOUT = 30
 const COLLECTION_TIMEOUT = 60
 const SCAN_TIMEOUT = 120
+/**
+ * MGMT_ED_SCAN: one measurement per channel, 100 ms apart, 100 ms each. getEnergyScanTask requires
+ * all three (src/rest/actions/energy_scan.cpp EnergyScan::Validate, 422 without them).
+ */
+const SCAN = { count: 1, period: 100, scanDuration: 100 }
 
 type Part = keyof typeof INTERVALS
 type Mode = 'api' | 'legacy'
@@ -80,8 +85,8 @@ export const createOtbrPoll = (deps: PollDeps) => {
 
   const emitChannel = async () => {
     const dataset = await client.get('/node/dataset/active', datasetSchema)
-    if (dataset.ok && dataset.value.Channel !== undefined) {
-      emit({ kind: 'channel', protocol: PROTOCOL, channel: dataset.value.Channel })
+    if (dataset.ok && dataset.value.channel !== undefined) {
+      emit({ kind: 'channel', protocol: PROTOCOL, channel: dataset.value.channel })
     }
   }
 
@@ -161,7 +166,7 @@ export const createOtbrPoll = (deps: PollDeps) => {
     )
     if (!result.ok) return result
     const diagnostics = result.value.filter(
-      (item): item is NetworkDiagnostic => item.type === 'threadNetworkDiagnostic',
+      (item): item is NetworkDiagnostic => item.type !== 'energyScanReport',
     )
     if (diagnostics.length === 0) return ok
     const roots = new Set(known.filter((d) => d.role === 'border_router').map((d) => d.address))
@@ -180,7 +185,12 @@ export const createOtbrPoll = (deps: PollDeps) => {
       [
         {
           type: 'getEnergyScanTask',
-          attributes: { destination: self.address, channelMask: CHANNELS, timeout: SCAN_TIMEOUT },
+          attributes: {
+            destination: self.address,
+            channelMask: CHANNELS,
+            ...SCAN,
+            timeout: SCAN_TIMEOUT,
+          },
         },
       ],
       SCAN_TIMEOUT,

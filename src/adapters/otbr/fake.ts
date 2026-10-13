@@ -20,6 +20,16 @@ export type FakeOtbr = {
   failTasks: Set<string>
 }
 
+/** The numeric attributes each task requires (src/rest/actions/*.cpp Validate) */
+const REQUIRED: Record<string, string[]> = {
+  updateDeviceCollectionTask: ['maxAge', 'maxRetries', 'deviceCount', 'timeout'],
+  getNetworkDiagnosticTask: ['timeout'],
+  getEnergyScanTask: ['timeout', 'count', 'period', 'scanDuration'],
+}
+
+const valid = (task: Item) =>
+  (REQUIRED[task.type] ?? []).every((key) => typeof task.attributes[key] === 'number')
+
 export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
   const devices = fixture('devices.json')
   const diagnostics: Item[] = fixture('diagnostics.json').data
@@ -33,7 +43,7 @@ export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
     if (task.type === 'getNetworkDiagnosticTask') {
       return diagnostics.find(
         (d) =>
-          d.type === 'threadNetworkDiagnostic' &&
+          d.type === 'networkDiagnostics' &&
           d.attributes.extAddress === task.attributes.destination,
       )
     }
@@ -55,9 +65,13 @@ export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
     }
     if (pathname === '/api/devices') return Response.json(devices)
     if (pathname === '/node/dataset/active')
-      return Response.json({ Channel: 25, NetworkKey: 'secret' })
+      return Response.json({ channel: 25, networkKey: 'secret' })
     if (pathname === '/api/actions' && request.method === 'POST') {
+      if (request.headers.get('content-type') !== 'application/vnd.api+json')
+        return new Response('Unsupported Media Type', { status: 415 })
       const body = (await request.json()) as { data: Item[] }
+      // The whole list is refused when one task lacks a required attribute (rest_web_server.cpp)
+      if (!body.data.every(valid)) return new Response('Unprocessable', { status: 422 })
       const items = body.data.map((task) => {
         const id = crypto.randomUUID()
         const failed = failTasks.has(task.type)

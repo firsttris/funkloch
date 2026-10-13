@@ -140,7 +140,7 @@ describe('fromDiagnostics', () => {
     const diagnostic = (entry: Record<string, number>) =>
       networkDiagnosticSchema.parse({
         id: 'd1',
-        type: 'threadNetworkDiagnostic',
+        type: 'networkDiagnostics',
         attributes: {
           extAddress: '2a55d952bc7b4008',
           children: [{ extAddress: 'f2f307043724e8d0', linkMargin: 30, ...entry }],
