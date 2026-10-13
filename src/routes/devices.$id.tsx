@@ -1,5 +1,11 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
-import { ClientOnly, createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  ClientOnly,
+  createFileRoute,
+  Link,
+  stripSearchParams,
+  useNavigate,
+} from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { z } from 'zod'
@@ -53,6 +59,7 @@ export const Route = createFileRoute('/devices/$id')({
     stringify: ({ id }) => ({ id: String(id) }),
   },
   validateSearch: searchSchema,
+  search: { middlewares: [stripSearchParams({ range: '7d' })] },
   loaderDeps: ({ search }) => ({ range: search.range }),
   loader: async ({ context, params, deps }) => {
     const [detail] = await Promise.all([

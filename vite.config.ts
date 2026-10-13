@@ -7,8 +7,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   server: { port: 8090 },
   resolve: { tsconfigPaths: true },
-  // bun:sqlite only exists inside Bun; the server bundle keeps it as an external import
-  ssr: { external: ['bun:sqlite'] },
+  // One self-contained server bundle, so the image needs no node_modules; bun:sqlite stays an
+  // import, it only exists inside Bun
+  ssr: { noExternal: true, external: ['bun:sqlite'] },
   plugins: [
     paraglideVitePlugin({
       project: './project.inlang',

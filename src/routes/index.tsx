@@ -1,5 +1,5 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, stripSearchParams, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { z } from 'zod'
@@ -33,6 +33,8 @@ const overviewQuery = (range: Range) =>
 
 export const Route = createFileRoute('/')({
   validateSearch: searchSchema,
+  // Defaults stay out of the URL
+  search: { middlewares: [stripSearchParams({ range: '24h', protocol: 'all' })] },
   loaderDeps: ({ search }) => ({ range: search.range }),
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(overviewQuery(deps.range)),
   head: () => ({ meta: [{ title: `${m.devices_title()} · Funkloch` }] }),
