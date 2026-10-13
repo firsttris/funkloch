@@ -120,3 +120,195 @@
     @apply text-foreground;
   }
 }
+
+/* Network map (components/network-graph*.tsx). It builds up from the root outwards: every part
+   waits --map-delay, set by its hops. Fill mode "backwards" only holds the start state during the
+   delay, so dimming by opacity still works once a part is in. */
+.map-dot {
+  fill: var(--chart-grid);
+}
+
+.map-line,
+.map-label,
+.map-device {
+  transition: opacity 0.25s ease;
+}
+
+.map-dimmed {
+  opacity: 0.16;
+}
+
+.map-line-base {
+  animation: map-draw 0.7s ease-out var(--map-delay) backwards;
+}
+
+.map-line-offline {
+  animation: map-fade 0.5s ease-out var(--map-delay) backwards;
+}
+
+.map-line-glow {
+  opacity: 0.14;
+  filter: blur(3px);
+  transition: opacity 0.25s ease;
+  animation: map-fade 0.5s ease-out calc(var(--map-delay) + 0.5s) backwards;
+}
+
+.map-lit .map-line-glow {
+  opacity: 0.35;
+}
+
+/* A dot every 48 px runs from the device to its parent */
+.map-line-flow {
+  stroke-dasharray: 1 47;
+  opacity: 0.85;
+  animation:
+    map-flow 2.4s linear infinite,
+    map-fade 0.4s ease-out calc(var(--map-delay) + 0.7s) backwards;
+}
+
+.map-line-flow.map-line-flow-slow {
+  animation-duration: 6s, 0.4s;
+}
+
+.map-label {
+  animation: map-fade 0.4s ease-out calc(var(--map-delay) + 0.5s) backwards;
+}
+
+.map-device {
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) var(--map-delay) backwards;
+}
+
+.map-ring {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+  transition: stroke 0.2s ease;
+}
+
+.map-device:hover .map-ring,
+.map-device:focus-visible .map-ring {
+  stroke: var(--foreground-subtle);
+}
+
+.map-mark,
+.map-root {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.map-device:hover .map-mark,
+.map-device:focus-visible .map-mark {
+  transform: scale(1.12);
+}
+
+.map-root {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary) 35%, transparent));
+}
+
+/* The root sends radio waves */
+.map-wave {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-wave 3s ease-out infinite;
+}
+
+/* A weak device breathes in red */
+.map-halo {
+  fill: var(--status-weak);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-halo 2.4s ease-in-out infinite;
+}
+
+.map-selected {
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-turn 14s linear infinite;
+}
+
+@keyframes map-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes map-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes map-flow {
+  to {
+    stroke-dashoffset: -96;
+  }
+}
+
+@keyframes map-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+  }
+}
+
+@keyframes map-wave {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+@keyframes map-halo {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.28;
+    transform: scale(1.45);
+  }
+}
+
+@keyframes map-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map .map-line-base,
+  .map .map-line-offline,
+  .map .map-line-glow,
+  .map .map-label,
+  .map .map-device,
+  .map .map-wave,
+  .map .map-halo,
+  .map .map-selected {
+    animation: none;
+  }
+  .map .map-line-flow {
+    display: none;
+  }
+}

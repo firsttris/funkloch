@@ -72,7 +72,11 @@ export const mapEdges = (
 }
 
 /** Hops from a device to the coordinator or border router along its parents; null if no path. */
-export const hopsToRoot = (id: number, edges: readonly MapEdge[], roots: ReadonlySet<number>) => {
+export const hopsToRoot = (
+  id: number,
+  edges: readonly { a: number; b: number; parent: boolean }[],
+  roots: ReadonlySet<number>,
+) => {
   const parents = new Map(edges.filter((e) => e.parent).map((e) => [e.a, e.b]))
   const seen = new Set<number>()
   let current = id
@@ -137,4 +141,32 @@ export const radialTree = (nodes: readonly MapNode[], edges: readonly MapEdge[],
   }
   place(null, -Math.PI / 2, (3 * Math.PI) / 2, 0, new Set())
   return positions
+}
+
+/** Key of an edge by its two ends, as the map uses it */
+export const edgeKey = (edge: { a: number; b: number }) => `${edge.a}-${edge.b}`
+
+/**
+ * What the map lights up for a device: the device, its way along the parents to the root, and
+ * the devices it has a line to. Everything else steps back.
+ */
+export const focusOf = (
+  id: number,
+  edges: readonly { a: number; b: number; parent: boolean }[],
+) => {
+  const nodes = new Set([id])
+  const lines = new Set<string>()
+  for (const edge of edges) {
+    if (edge.a !== id && edge.b !== id) continue
+    lines.add(edgeKey(edge))
+    nodes.add(edge.a === id ? edge.b : edge.a)
+  }
+  const parentEdge = new Map(edges.filter((e) => e.parent).map((e) => [e.a, e]))
+  const visited = new Set([id])
+  for (let up = parentEdge.get(id); up && !visited.has(up.b); up = parentEdge.get(up.b)) {
+    visited.add(up.b)
+    lines.add(edgeKey(up))
+    nodes.add(up.b)
+  }
+  return { nodes, lines }
 }

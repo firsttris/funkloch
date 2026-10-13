@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { hopsToRoot, type MapNode, mapEdges, radialTree } from './topology'
+import { focusOf, hopsToRoot, type MapNode, mapEdges, radialTree } from './topology'
 
 const score = ({ lqi }: { lqi: number | null }) =>
   lqi === null ? null : Math.round((lqi / 255) * 100)
@@ -86,5 +86,34 @@ describe('radialTree', () => {
       Math.hypot(router?.x ?? 0, router?.y ?? 0),
     )
     expect(Math.sign(sensor?.x ?? 0)).toBe(Math.sign(router?.x ?? 0))
+  })
+})
+
+describe('focusOf', () => {
+  const lines = [
+    { a: 2, b: 1, parent: true },
+    { a: 3, b: 2, parent: true },
+    { a: 4, b: 3, parent: true },
+    { a: 5, b: 1, parent: true },
+    { a: 3, b: 5, parent: false },
+  ]
+
+  test('the device, its way to the root and its direct lines', () => {
+    expect(focusOf(4, lines)).toEqual({
+      nodes: new Set([4, 3, 2, 1]),
+      lines: new Set(['4-3', '3-2', '2-1']),
+    })
+    expect(focusOf(3, lines)).toEqual({
+      nodes: new Set([3, 2, 4, 5, 1]),
+      lines: new Set(['3-2', '4-3', '3-5', '2-1']),
+    })
+  })
+
+  test('a loop of parents ends', () => {
+    const loop = [
+      { a: 1, b: 2, parent: true },
+      { a: 2, b: 1, parent: true },
+    ]
+    expect(focusOf(1, loop).nodes).toEqual(new Set([1, 2]))
   })
 })

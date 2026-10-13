@@ -123,7 +123,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 ### 🕸️ Network map and heatmap
 
 - **Network map** of the Zigbee mesh and the Thread network: link quality on every line, a
-  device's way to the coordinator, older snapshots to compare.
+  device's way to the coordinator lit up on hover, older snapshots to compare. It grows with the
+  network, so names stay readable with a hundred devices.
 - **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and
   whether their signal got better; repeaters without sensors get a history from the network map.
 - **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
