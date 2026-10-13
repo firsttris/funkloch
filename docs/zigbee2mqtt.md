@@ -17,7 +17,9 @@ It subscribes to `<base topic>/#` and uses:
 | `bridge/response/networkmap` | the mesh: who is whose parent, LQI per link, and a reading for routers that send nothing themselves |
 
 A message without `linkquality` still counts as a sign of life. Retained messages the broker
-replays at connect time are not readings.
+replays at connect time are not readings. MQTT does not order retained messages across topics, so
+device messages that arrive before the first `bridge/devices` wait for it: a retained *offline*
+still counts after a restart.
 
 ## What Funkloch sends
 

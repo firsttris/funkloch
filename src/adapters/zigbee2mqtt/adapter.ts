@@ -24,6 +24,18 @@ export const heardSince = (lastOwn: ReadonlyMap<string, number>, now: number) =>
 /** The first map a few minutes after start, when the device list is in */
 export const FIRST_MAP_AFTER = 5 * 60_000
 
+/** Device messages held back until the first device list, at most this many */
+export const EARLY_LIMIT = 5000
+
+/**
+ * A device topic needs the friendly names from bridge/devices. MQTT does not order the retained
+ * messages of different topics, so a retained availability can arrive before the device list.
+ */
+export const needsNames = (baseTopic: string, topic: string) =>
+  topic.startsWith(`${baseTopic}/`) && !topic.startsWith(`${baseTopic}/bridge/`)
+
+type RawMessage = { topic: string; text: string; retained: boolean }
+
 /** A map is due when the interval has passed since the last one (or the first wait since start) */
 export const networkmapDue = (
   last: number | null,
@@ -69,13 +81,15 @@ export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter =
     client.on('error', (error) => {
       status = { ...status, connected: false, error: error.message }
     })
-    client.on('message', (topic, message, packet) => {
+    let namesKnown = false
+    let early: RawMessage[] = []
+    const handle = ({ topic, text, retained }: RawMessage) => {
       const now = Date.now()
       const result = parseMessage(
         { baseTopic: options.baseTopic, byName, now, heard: heardSince(lastOwn, now) },
         topic,
-        message.toString(),
-        packet.retain,
+        text,
+        retained,
       )
       if (result.devices) byName = nameMap(result.devices)
       if (result.invalid) options.onInvalid?.(result.invalid)
@@ -83,6 +97,20 @@ export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter =
         if (observation.kind === 'measurement' && observation.measurement.source === 'message')
           lastOwn.set(observation.measurement.address, observation.measurement.ts)
         emit(observation)
+      }
+      return result.devices !== undefined
+    }
+    client.on('message', (topic, payload, packet) => {
+      const message = { topic, text: payload.toString(), retained: packet.retain }
+      if (!namesKnown && needsNames(options.baseTopic, topic)) {
+        if (early.length < EARLY_LIMIT) early.push(message)
+        return
+      }
+      if (handle(message) && !namesKnown) {
+        namesKnown = true
+        const held = early
+        early = []
+        for (const m of held) handle(m)
       }
     })
 
