@@ -182,7 +182,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
       [0, 27],
     ],
     noise: 5,
-    eveningDip: 28,
+    eveningDip: 33,
     parents: [[720, '6c0d2e9f41a7b852']],
   },
   {
