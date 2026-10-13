@@ -176,6 +176,14 @@ function EventsPage() {
                 </section>
               ))
             )}
+            {data.truncated ? (
+              <p role="status" className="m-0 px-[18px] pt-3 text-[13px] text-foreground-muted">
+                {m.events_truncated({
+                  shown: data.events.length,
+                  total: data.counts[data.kind],
+                })}
+              </p>
+            ) : null}
             <div className="px-[18px] py-3 text-xs text-foreground-subtle">{m.events_footer()}</div>
           </Card>
           <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">

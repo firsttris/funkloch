@@ -109,6 +109,19 @@ describe('parseMessage', () => {
     ])
   })
 
+  test('a battery outside 0–100 is left out, the reading stays', () => {
+    const result = parseMessage(
+      ctx,
+      'zigbee2mqtt/Temperatursensor Keller',
+      '{"linkquality":120,"battery":200}',
+      false,
+    )
+    expect(result.invalid).toBeUndefined()
+    expect(result.observations).toMatchObject([
+      { kind: 'measurement', measurement: { raw: 120, battery: null } },
+    ])
+  })
+
   test('a retained device state is ignored', () => {
     const result = parseMessage(ctx, 'zigbee2mqtt/Küche/Lampe', '{"linkquality":189}', true)
     expect(result.observations).toEqual([])

@@ -1,4 +1,4 @@
-// Ebene 2: every recorded Zigbee2MQTT message (bun run record) must pass the schemas, so a format
+// Layer 2: every recorded Zigbee2MQTT message (bun run record) must pass the schemas, so a format
 // change in a new Zigbee2MQTT release shows up here first.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'

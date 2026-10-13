@@ -16,7 +16,8 @@ Images with the `/api` resources (ot-br-posix from 2024 on) give the most:
 | 1 h | the same diagnostics | the mesh for the network map |
 | 6 h | `getEnergyScanTask` to the border router | energy per channel 11–26 for the 2.4 GHz card |
 
-The tasks go to `/api/actions`; the answers are read from `/api/diagnostics`. Sleepy end devices
+The tasks go to `/api/actions`; the answers are read from `/api/diagnostics`. A link whose average RSSI
+OpenThread marks as unknown (127, no frame averaged yet) uses the last RSSI, or gives no reading. Sleepy end devices
 are never asked; their parent's child table carries their link.
 
 ## Older images: `/diagnostics`

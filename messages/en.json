@@ -169,6 +169,7 @@
   "events_range": "Time range",
   "events_empty": "No events in this time range.",
   "events_footer": "Events are kept as long as the hourly values.",
+  "events_truncated": "Showing the newest {shown} of {total} events; the CSV export has them all.",
   "event_signal_weak": "Below threshold",
   "event_signal_weak_detail": "{value} (threshold {threshold}), median of the last {minutes} min",
   "event_signal_recovered": "Signal recovered",

@@ -4,8 +4,8 @@ import { and, asc, desc, eq, gte, inArray, isNull, lt, notInArray, or, sql } fro
 import { alias } from 'drizzle-orm/sqlite-core'
 import { hourStart } from '~/core/rollup'
 import { median } from '~/core/stats'
+import { ROOT_ROLES } from '~/core/topology'
 import type { Db } from './client'
-import { INFRASTRUCTURE_ROLES } from './reachability'
 import { devices, events, hourly, links, samples, snapshots } from './schema'
 
 export const displayName = (d: { name: string; customName: string | null }) =>
@@ -16,7 +16,7 @@ export const listedDevices = (db: Db) =>
   db
     .select()
     .from(devices)
-    .where(and(isNull(devices.removedAt), notInArray(devices.role, INFRASTRUCTURE_ROLES)))
+    .where(and(isNull(devices.removedAt), notInArray(devices.role, ROOT_ROLES)))
     .all()
 
 export const recentScores = (db: Db, since: number) => {
@@ -25,9 +25,13 @@ export const recentScores = (db: Db, since: number) => {
     .from(samples)
     .where(gte(samples.ts, since))
     .all()
+  // Appending in place: a copy per row grows with the square of a busy device's readings
   const byDevice = new Map<number, number[]>()
-  for (const row of rows)
-    byDevice.set(row.deviceId, [...(byDevice.get(row.deviceId) ?? []), row.score])
+  for (const row of rows) {
+    const list = byDevice.get(row.deviceId)
+    if (list) list.push(row.score)
+    else byDevice.set(row.deviceId, [row.score])
+  }
   return byDevice
 }
 
@@ -42,10 +46,10 @@ export const hourlyMedians = (db: Db, since: number, now: number) => {
   const byDevice = new Map<number, { hour: number; median: number }[]>()
   for (const row of rows) {
     if (row.median === null) continue
-    byDevice.set(row.deviceId, [
-      ...(byDevice.get(row.deviceId) ?? []),
-      { hour: row.hour, median: row.median },
-    ])
+    const point = { hour: row.hour, median: row.median }
+    const list = byDevice.get(row.deviceId)
+    if (list) list.push(point)
+    else byDevice.set(row.deviceId, [point])
   }
   const running = hourStart(now)
   for (const [deviceId, scores] of recentScores(db, running)) {

@@ -1,6 +1,9 @@
 import mqtt from 'mqtt'
 import type { MqttPublisher } from './channels'
 
+/** How long a notification waits for the broker */
+export const CONNECT_WAIT = 10_000
+
 /** One connection to the broker for notifications, opened on first use */
 export const createMqttPublisher = (options: {
   url: string
@@ -23,11 +26,16 @@ export const createMqttPublisher = (options: {
       const c = connect()
       if (!c.connected) {
         await new Promise<void>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('MQTT broker not reachable')), 10_000)
-          c.once('connect', () => {
+          const connected = () => {
             clearTimeout(timer)
             resolve()
-          })
+          }
+          // Without removing the listener, every event during an outage would leave one behind
+          const timer = setTimeout(() => {
+            c.off('connect', connected)
+            reject(new Error('MQTT broker not reachable'))
+          }, CONNECT_WAIT)
+          c.once('connect', connected)
         })
       }
       await c.publishAsync(topic, payload, { qos: 1 })

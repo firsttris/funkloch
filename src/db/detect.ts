@@ -4,10 +4,10 @@ import { and, eq, gte, isNull, lt, notInArray } from 'drizzle-orm'
 import { signalTransition, trendTransition } from '~/core/events'
 import { findPattern, PATTERN_DAYS } from '~/core/patterns'
 import type { Thresholds } from '~/core/score'
+import { ROOT_ROLES } from '~/core/topology'
 import { trend } from '~/core/trend'
 import { DAY, MINUTE, type Trend } from '~/core/types'
 import type { Db } from './client'
-import { INFRASTRUCTURE_ROLES } from './reachability'
 import { devices, events, hourly, samples } from './schema'
 import { addEvent } from './store'
 
@@ -15,7 +15,7 @@ const listed = (db: Db) =>
   db
     .select()
     .from(devices)
-    .where(and(isNull(devices.removedAt), notInArray(devices.role, INFRASTRUCTURE_ROLES)))
+    .where(and(isNull(devices.removedAt), notInArray(devices.role, ROOT_ROLES)))
     .all()
 
 /** How a protocol writes a value and the weak threshold, e.g. "LQI 38" and "LQI 64" */

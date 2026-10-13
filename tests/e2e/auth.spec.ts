@@ -74,3 +74,14 @@ test('settings change the thresholds and the password; logout ends the session',
   await page.getByRole('button', { name: 'Anmelden' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Geräte' })).toBeVisible()
 })
+
+test('a page open when the session ends leads to the login', async ({ page, context }) => {
+  await page.goto('/login')
+  await page.getByLabel('Passwort').fill('a new password!')
+  await page.getByRole('button', { name: 'Anmelden' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Geräte' })).toBeVisible()
+  await context.clearCookies()
+  await page.getByRole('link', { name: 'Ereignisse' }).click()
+  await expect(page).toHaveURL(/\/login\?next=/)
+  await expect(page.getByRole('button', { name: 'Anmelden' })).toBeVisible()
+})

@@ -39,7 +39,7 @@ jobs:
       - name: Build
         run: bun run build
 
-  # Ebene 4: the Zigbee adapter against a real broker; on main and before a release only
+  # Layer 4: the Zigbee adapter against a real broker; on main and before a release only
   integration:
     if: ${{ !github.event.pull_request.draft && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
@@ -69,7 +69,7 @@ jobs:
         with:
           lockfile: bun.lock
 
-  # Ebene 6: every page in demo mode; Chromium on pull requests, all browsers on main and releases
+  # Layer 6: every page in demo mode; Chromium on pull requests, all browsers on main and releases
   e2e:
     needs: playwright-image
     runs-on: ubuntu-latest

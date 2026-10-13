@@ -3,7 +3,8 @@
 ## Events
 
 Funkloch writes an event when something changes; the **Events** page lists them by day, filters
-them by kind and exports them as CSV (`/api/events.csv`).
+them by kind and exports them as CSV (`/api/events.csv`). The page shows the newest 1000 events
+of the range and says so when there are more; the CSV has them all.
 
 | Kind | Events |
 |---|---|

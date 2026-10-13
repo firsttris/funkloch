@@ -54,11 +54,20 @@ export const toDeviceInfo = (item: DeviceItem): DeviceInfo => {
 
 type Heard = { from: string; to: string; rssi: number | null; lqi: number | null; child: boolean }
 
+/**
+ * OpenThread reports 127 (OT_RADIO_RSSI_INVALID) while it has averaged no frame of the link
+ * (openthread src/core/thread/link_quality.cpp RssAverager::GetAverage)
+ */
+export const INVALID_RSSI = 127
+
+const validRssi = (value: number | undefined) =>
+  value === undefined || value === INVALID_RSSI ? undefined : value
+
 /** One entry of a router's table: how `router` hears `entry` */
 const heard = (router: string, entry: LinkEntry, child: boolean): Heard => ({
   from: entry.extAddress.toLowerCase(),
   to: router,
-  rssi: entry.averageRssi ?? entry.lastRssi ?? null,
+  rssi: validRssi(entry.averageRssi) ?? validRssi(entry.lastRssi) ?? null,
   lqi: entry.linkMargin === undefined ? null : linkQualityFromMargin(entry.linkMargin),
   child,
 })

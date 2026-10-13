@@ -1,4 +1,4 @@
-// Ebene 4: notifications published on a real broker
+// Layer 4: notifications published on a real broker
 import mqtt from 'mqtt'
 import { afterAll, describe, expect, test } from 'vitest'
 import { createMqttPublisher } from '~/server/notify/mqtt'

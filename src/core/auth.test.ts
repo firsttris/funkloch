@@ -1,13 +1,16 @@
 import { describe, expect, test } from 'vitest'
 import {
   clearedSessionCookie,
+  forwardedClient,
   isHttps,
   isSameOrigin,
   parseCookies,
   passwordProblem,
+  pruneFailures,
   recordFailure,
   safeRedirect,
   sessionCookie,
+  THROTTLE_WINDOW,
   throttled,
 } from './auth'
 
@@ -106,5 +109,26 @@ describe('cookies', () => {
     expect(isHttps(request({}, 'https://a/'))).toBe(true)
     expect(isHttps(request({ 'x-forwarded-proto': 'https' }))).toBe(true)
     expect(isHttps(request({}))).toBe(false)
+  })
+})
+
+describe('forwardedClient', () => {
+  test('is the entry the proxy appended, not one the client sent', () => {
+    expect(forwardedClient('1.2.3.4, 10.0.0.9')).toBe('10.0.0.9')
+    expect(forwardedClient('10.0.0.9')).toBe('10.0.0.9')
+    expect(forwardedClient(null)).toBe('local')
+    expect(forwardedClient('')).toBe('local')
+  })
+})
+
+describe('pruneFailures', () => {
+  test('keeps the failures inside the window and drops clients without any', () => {
+    const failures = new Map([
+      ['old', [0]],
+      ['recent', [0, THROTTLE_WINDOW]],
+    ])
+    expect(pruneFailures(failures, THROTTLE_WINDOW + 1)).toEqual(
+      new Map([['recent', [THROTTLE_WINDOW]]]),
+    )
   })
 })

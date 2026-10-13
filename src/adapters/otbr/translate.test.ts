@@ -136,6 +136,23 @@ describe('fromDiagnostics', () => {
     ])
   })
 
+  test('an invalid RSSI (127) falls back to the last RSSI, else gives no reading', () => {
+    const diagnostic = (entry: Record<string, number>) =>
+      networkDiagnosticSchema.parse({
+        id: 'd1',
+        type: 'threadNetworkDiagnostic',
+        attributes: {
+          extAddress: '2a55d952bc7b4008',
+          children: [{ extAddress: 'f2f307043724e8d0', linkMargin: 30, ...entry }],
+        },
+      })
+    const fallback = fromDiagnostics([diagnostic({ averageRssi: 127, lastRssi: -70 })], 0)
+    expect(fallback.measurements).toMatchObject([{ rssi: -70 }])
+    const none = fromDiagnostics([diagnostic({ averageRssi: 127, lastRssi: 127 })], 0)
+    expect(none.measurements).toEqual([])
+    expect(none.links).toMatchObject([{ rssi: null }])
+  })
+
   test('nothing in, nothing out', () => {
     expect(fromDiagnostics([], 0)).toEqual({ measurements: [], links: [] })
   })

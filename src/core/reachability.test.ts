@@ -3,8 +3,22 @@ import { offlineMinutes, reachability, silenceLimit, typicalInterval } from './r
 import { HOUR, MINUTE } from './types'
 
 describe('typicalInterval', () => {
-  test('is the median gap', () => {
-    expect(typicalInterval([0, 10, 20, 50].map((m) => m * MINUTE))).toBe(10 * MINUTE)
+  test('is the gap a moment typically falls into', () => {
+    expect(typicalInterval([0, 10, 20, 30, 40].map((m) => m * MINUTE))).toBe(10 * MINUTE)
+    // 10 + 10 minutes against 30: most of the time lies in the long gap
+    expect(typicalInterval([0, 10, 20, 50].map((m) => m * MINUTE))).toBe(30 * MINUTE)
+  })
+
+  test('a remote that sends bursts keeps the long gaps between them', () => {
+    const presses = (day: number) => [0, 1, 2, 3].map((s) => day * 24 * HOUR + 20 * HOUR + s * 1000)
+    const week = [0, 1, 2, 3, 4, 5, 6].flatMap(presses)
+    expect(typicalInterval(week)).toBeGreaterThan(20 * HOUR)
+  })
+
+  test('a short outage does not move a regular interval', () => {
+    const regular = Array.from({ length: 200 }, (_, i) => i * 50 * MINUTE)
+    const withOutage = regular.filter((ts) => ts < 50 * HOUR || ts > 56 * HOUR)
+    expect(typicalInterval(withOutage)).toBe(50 * MINUTE)
   })
 
   test('needs three messages', () => {

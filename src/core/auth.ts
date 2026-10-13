@@ -63,6 +63,22 @@ export const recordFailure = (failures: readonly number[], now: number) => [
   now,
 ]
 
+/**
+ * The client a failed login is counted for. A proxy appends the address it sees to
+ * X-Forwarded-For (nginx $proxy_add_x_forwarded_for), so only the last entry is its own; the
+ * earlier ones are whatever the client sent.
+ */
+export const forwardedClient = (header: string | null) =>
+  header?.split(',').at(-1)?.trim() || 'local'
+
+/** The failures still inside the window, without the clients that have none left */
+export const pruneFailures = (failures: ReadonlyMap<string, readonly number[]>, now: number) =>
+  new Map(
+    [...failures]
+      .map(([key, list]) => [key, list.filter((ts) => now - ts < THROTTLE_WINDOW)] as const)
+      .filter(([, list]) => list.length > 0),
+  )
+
 /** Secure cookies behind https, including a proxy that terminates TLS */
 export const isHttps = (request: { url: string; headers: Headers }) =>
   request.headers.get('x-forwarded-proto') === 'https' || new URL(request.url).protocol === 'https:'

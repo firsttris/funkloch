@@ -2,6 +2,7 @@
 // own interval and runs when it is due. Newer images (ot-br-posix src/rest/openapi.yaml) answer
 // under /api with tasks in /api/actions; older ones (Home Assistant add-on) only have /node and
 // /diagnostics, which carry link qualities but no RSSI.
+import { CHANNELS } from '~/core/channels'
 import type { DeviceInfo, Observation } from '~/core/types'
 import { HOUR, MINUTE } from '~/core/types'
 import { type OtbrClient, type Result, runTasks } from './client'
@@ -30,7 +31,6 @@ export const INTERVALS = {
 const DIAGNOSTIC_TIMEOUT = 30
 const COLLECTION_TIMEOUT = 60
 const SCAN_TIMEOUT = 120
-const CHANNELS = Array.from({ length: 16 }, (_, i) => 11 + i)
 
 type Part = keyof typeof INTERVALS
 type Mode = 'api' | 'legacy'

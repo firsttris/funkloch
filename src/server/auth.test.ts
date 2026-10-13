@@ -142,6 +142,39 @@ describe('login', () => {
     expect((await attempt('correct horse battery'))?.headers.get('location')).toBe('/')
   })
 
+  test('a server function without a session gets a redirect its client follows', async () => {
+    const { options } = setup()
+    await signUp(options)
+    const call = new Request(`${BASE}/_serverFn/abc`, {
+      headers: { 'x-tsr-serverFn': 'true', referer: `${BASE}/events?days=7` },
+    })
+    const answer = await handleAuth(call, options)
+    expect(answer?.status).toBe(401)
+    expect(await answer?.json()).toEqual({
+      error: 'not signed in',
+      isSerializedRedirect: true,
+      href: '/login?next=%2Fevents%3Fdays%3D7',
+      reloadDocument: true,
+    })
+    const plain = await handleAuth(new Request(`${BASE}/api/events.csv`), options)
+    expect(await plain?.json()).toEqual({ error: 'not signed in' })
+  })
+
+  test('a made-up X-Forwarded-For in front of the proxy does not reset the count', async () => {
+    const { options } = setup()
+    await signUp(options)
+    const timed = { ...options, now: () => 2_000_000 }
+    const attempt = (password: string, i: number) =>
+      handleAuth(
+        post('/auth/login', { password }, { 'x-forwarded-for': `203.0.113.${i}, 10.0.0.7` }),
+        timed,
+      )
+    for (let i = 0; i < 5; i++) await attempt('wrong password!', i)
+    expect((await attempt('correct horse battery', 9))?.headers.get('location')).toBe(
+      '/login?error=throttled',
+    )
+  })
+
   test('logout ends the session', async () => {
     const { options } = setup()
     const cookie = await signUp(options)

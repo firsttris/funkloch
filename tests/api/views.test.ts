@@ -1,4 +1,4 @@
-// Ebene 5: the views behind the server functions, on a seeded database
+// Layer 5: the views behind the server functions, on a seeded database
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { deviceView } from '~/server/views/device'
 import { eventsCsv, eventsView } from '~/server/views/events'
@@ -200,6 +200,13 @@ describe('events', () => {
       true,
     )
     expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(9)
+  })
+
+  test('a list cut at its limit says so', () => {
+    expect(eventsView(env.context, 'all', 30).truncated).toBe(false)
+    const cut = eventsView(env.context, 'all', 30, 5)
+    expect(cut.events).toHaveLength(5)
+    expect(cut.truncated).toBe(true)
   })
 
   test('the CSV has a header, one line per event and quotes JSON', () => {

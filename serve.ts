@@ -7,8 +7,19 @@ const { default: app } = (await import(join(import.meta.dir, 'dist/server/server
   default: { fetch: (request: Request) => Response | Promise<Response> }
 }
 
+/** The path as text; null for a broken escape like "%E0", which is then no file */
+const decodePath = (pathname: string) => {
+  try {
+    return decodeURIComponent(pathname)
+  } catch {
+    return null
+  }
+}
+
 const staticFile = async (pathname: string) => {
-  const path = normalize(join(clientDir, decodeURIComponent(pathname)))
+  const decoded = decodePath(pathname)
+  if (decoded === null) return null
+  const path = normalize(join(clientDir, decoded))
   if (!path.startsWith(clientDir) || pathname === '/') return null
   const file = Bun.file(path)
   return (await file.exists()) ? file : null

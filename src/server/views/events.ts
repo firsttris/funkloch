@@ -14,21 +14,25 @@ export const eventsView = (
   { db, now, adapters }: ViewContext,
   kind: EventKindFilter,
   days: number,
+  limit = MAX_EVENTS,
 ) => {
   const from = now - days * DAY
-  const counts = eventCounts(db, from)
+  const stored = eventCounts(db, from)
   const states = adapterStates(adapters)
+  const counts = {
+    all: Object.values(stored).reduce((sum, n) => sum + n, 0),
+    ...Object.fromEntries(EVENT_KINDS.map((k) => [k, stored[k] ?? 0])),
+  } as Record<EventKindFilter, number>
   return {
     now,
     kind,
     days,
     adapters: states,
     protocols: protocolInfo(states.map((a) => a.id)),
-    counts: {
-      all: Object.values(counts).reduce((sum, n) => sum + n, 0),
-      ...Object.fromEntries(EVENT_KINDS.map((k) => [k, counts[k] ?? 0])),
-    } as Record<EventKindFilter, number>,
-    events: eventsSince(db, from, kind === 'all' ? null : kind, MAX_EVENTS).map((e) => ({
+    counts,
+    /** The list stops at `limit`; the counts and the CSV have them all */
+    truncated: counts[kind] > limit,
+    events: eventsSince(db, from, kind === 'all' ? null : kind, limit).map((e) => ({
       id: e.id,
       ts: e.ts,
       kind: e.kind,

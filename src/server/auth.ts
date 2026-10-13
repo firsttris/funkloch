@@ -3,10 +3,12 @@ import { createHash, randomBytes } from 'node:crypto'
 import { eq, lt, ne } from 'drizzle-orm'
 import {
   clearedSessionCookie,
+  forwardedClient,
   isHttps,
   isSameOrigin,
   parseCookies,
   passwordProblem,
+  pruneFailures,
   recordFailure,
   SESSION_COOKIE,
   SESSION_DAYS,
@@ -83,16 +85,41 @@ const redirect = (location: string, cookie?: string) =>
     headers: { location, ...(cookie ? { 'set-cookie': cookie } : {}) },
   })
 
+/**
+ * A server function call (serverFnFetcher sets x-tsr-serverFn) cannot follow a 303. Its client
+ * throws a JSON body marked isSerializedRedirect as a router redirect (router-core redirect.ts
+ * parseRedirect), which reloads the page at `href`; without it the client would take the error
+ * body for the function's result. The status stays 401 for everything else that reads it.
+ */
+const isServerFn = (request: Request) => request.headers.get('x-tsr-serverfn') === 'true'
+
+/** The page a server function was called from, to come back to after signing in */
+const callingPage = (request: Request, url: URL) => {
+  try {
+    const referer = new URL(request.headers.get('referer') ?? '')
+    return referer.host === url.host ? safeRedirect(referer.pathname + referer.search) : '/'
+  } catch {
+    return '/'
+  }
+}
+
+const refuse = (request: Request, error: string, location: string) =>
+  Response.json(
+    isServerFn(request)
+      ? { error, isSerializedRedirect: true, href: location, reloadDocument: true }
+      : { error },
+    { status: 401 },
+  )
+
 const wantsPage = (request: Request) =>
   request.method === 'GET' &&
   (request.headers.get('sec-fetch-dest') === 'document' ||
     (request.headers.get('accept') ?? '').includes('text/html'))
 
 /** Failed logins per client address, in memory; a restart forgets them */
-const failures = new Map<string, number[]>()
+let failures = new Map<string, readonly number[]>()
 
-const clientKey = (request: Request) =>
-  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local'
+const clientKey = (request: Request) => forwardedClient(request.headers.get('x-forwarded-for'))
 
 export type AuthOptions = { db: Db; enabled: boolean; dev: boolean; now?: () => number }
 
@@ -136,7 +163,7 @@ export const handleAuth = async (
     const key = clientKey(request)
     if (throttled(failures.get(key) ?? [], now)) return redirect('/login?error=throttled')
     if (!(await verifyAdminPassword(db, String(form.get('password') ?? '')))) {
-      failures.set(key, recordFailure(failures.get(key) ?? [], now))
+      failures = pruneFailures(failures, now).set(key, recordFailure(failures.get(key) ?? [], now))
       return redirect(`/login?error=wrong&next=${encodeURIComponent(next)}`)
     }
     failures.delete(key)
@@ -150,9 +177,7 @@ export const handleAuth = async (
 
   if (!admin) {
     if (path === '/setup' || PUBLIC.some((p) => p.test(path) && path !== '/login')) return null
-    return wantsPage(request)
-      ? redirect('/setup')
-      : Response.json({ error: 'setup required' }, { status: 401 })
+    return wantsPage(request) ? redirect('/setup') : refuse(request, 'setup required', '/setup')
   }
   if (path === '/setup') return redirect('/login')
 
@@ -161,5 +186,9 @@ export const handleAuth = async (
   if (PUBLIC.some((p) => p.test(path))) return null
   return wantsPage(request)
     ? redirect(`/login?next=${encodeURIComponent(path + url.search)}`)
-    : Response.json({ error: 'not signed in' }, { status: 401 })
+    : refuse(
+        request,
+        'not signed in',
+        `/login?next=${encodeURIComponent(callingPage(request, url))}`,
+      )
 }
