@@ -83,6 +83,32 @@ const redirect = (location: string, cookie?: string) =>
     headers: { location, ...(cookie ? { 'set-cookie': cookie } : {}) },
   })
 
+/**
+ * A server function call (serverFnFetcher sets x-tsr-serverFn) cannot follow a 303. Its client
+ * throws a JSON body marked isSerializedRedirect as a router redirect (router-core redirect.ts
+ * parseRedirect), which reloads the page at `href`; without it the client would take the error
+ * body for the function's result. The status stays 401 for everything else that reads it.
+ */
+const isServerFn = (request: Request) => request.headers.get('x-tsr-serverfn') === 'true'
+
+/** The page a server function was called from, to come back to after signing in */
+const callingPage = (request: Request, url: URL) => {
+  try {
+    const referer = new URL(request.headers.get('referer') ?? '')
+    return referer.host === url.host ? safeRedirect(referer.pathname + referer.search) : '/'
+  } catch {
+    return '/'
+  }
+}
+
+const refuse = (request: Request, error: string, location: string) =>
+  Response.json(
+    isServerFn(request)
+      ? { error, isSerializedRedirect: true, href: location, reloadDocument: true }
+      : { error },
+    { status: 401 },
+  )
+
 const wantsPage = (request: Request) =>
   request.method === 'GET' &&
   (request.headers.get('sec-fetch-dest') === 'document' ||
@@ -152,7 +178,7 @@ export const handleAuth = async (
     if (path === '/setup' || PUBLIC.some((p) => p.test(path) && path !== '/login')) return null
     return wantsPage(request)
       ? redirect('/setup')
-      : Response.json({ error: 'setup required' }, { status: 401 })
+      : refuse(request, 'setup required', '/setup')
   }
   if (path === '/setup') return redirect('/login')
 
@@ -161,5 +187,9 @@ export const handleAuth = async (
   if (PUBLIC.some((p) => p.test(path))) return null
   return wantsPage(request)
     ? redirect(`/login?next=${encodeURIComponent(path + url.search)}`)
-    : Response.json({ error: 'not signed in' }, { status: 401 })
+    : refuse(
+        request,
+        'not signed in',
+        `/login?next=${encodeURIComponent(callingPage(request, url))}`,
+      )
 }

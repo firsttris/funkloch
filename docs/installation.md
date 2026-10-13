@@ -73,7 +73,8 @@ container name in the same Compose network.
 
 Open `http://<host>:8090`. The first visit asks for the admin password (at least 10 characters);
 until then anyone who reaches the port could set it, so do this right after the start. Funkloch
-then signs you in for 30 days per browser.
+then signs you in for 30 days per browser. A page that stays open after its session ended (a
+logout elsewhere, a password change) goes to the login with its next click.
 
 Forgot the password? Start once with `FUNKLOCH_RESET_PASSWORD=1`: it removes the password and
 every session, and the next visit sets a new one. Remove the variable again afterwards.

@@ -142,6 +142,24 @@ describe('login', () => {
     expect((await attempt('correct horse battery'))?.headers.get('location')).toBe('/')
   })
 
+  test('a server function without a session gets a redirect its client follows', async () => {
+    const { options } = setup()
+    await signUp(options)
+    const call = new Request(`${BASE}/_serverFn/abc`, {
+      headers: { 'x-tsr-serverFn': 'true', referer: `${BASE}/events?days=7` },
+    })
+    const answer = await handleAuth(call, options)
+    expect(answer?.status).toBe(401)
+    expect(await answer?.json()).toEqual({
+      error: 'not signed in',
+      isSerializedRedirect: true,
+      href: '/login?next=%2Fevents%3Fdays%3D7',
+      reloadDocument: true,
+    })
+    const plain = await handleAuth(new Request(`${BASE}/api/events.csv`), options)
+    expect(await plain?.json()).toEqual({ error: 'not signed in' })
+  })
+
   test('logout ends the session', async () => {
     const { options } = setup()
     const cookie = await signUp(options)
