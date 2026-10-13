@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Signal history for every Zigbee and Thread device: trends, events and alerts for Zigbee2MQTT and OpenThread Border Router",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "dev": "bun --bun vite dev",
     "build": "bun --bun vite build",

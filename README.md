@@ -11,6 +11,7 @@ One Docker container next to Zigbee2MQTT and your OTBR, read-only, no cloud, ope
 [![CI](https://github.com/firsttris/funkloch/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/funkloch/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/firsttris/funkloch?logo=github&label=release)](https://github.com/firsttris/funkloch/releases/latest)
 [![Docker image](https://img.shields.io/badge/docker-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/funkloch)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
 ```bash
 docker run -d --name funkloch --network host -v funkloch-data:/data \
@@ -180,7 +181,8 @@ and, for parsing problems, includes a short recording from `bun run record`. Ple
 ⭐ Like Funkloch? A [star on GitHub](https://github.com/firsttris/funkloch) helps others find it.<br>
 🐛 [Report a bug](https://github.com/firsttris/funkloch/issues/new) · 💡 [Request a feature](https://github.com/firsttris/funkloch/issues/new)
 
-<sub>© Tristan Teufel and contributors<br>
+<sub>License: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel and contributors<br>
+Changed versions you pass on or run for others must offer their source code under the AGPL; a commercial license without these obligations is available via <a href="https://teufel-it.de">teufel-it.de</a>.<br>
 Funkloch is not affiliated with Zigbee2MQTT, the Connectivity Standards Alliance, the Thread Group or OpenThread.</sub>
 
 </div>
