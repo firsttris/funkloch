@@ -134,5 +134,9 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
   events.
 - The OTBR schemas and `tests/fixtures/otbr-spec` follow the spec until recordings from a real
   border router arrive; then the recordings decide.
+- Routers have no parent in either protocol; `withUplinks` (`src/core/uplinks.ts`) marks each one's
+  best neighbor one hop closer to the root as its parent, so the map, "connected through" and hops
+  work for routers too. Zigbee routers that send nothing themselves get their uplink LQI as a
+  reading (`source: 'networkmap'`).
 - Fixtures: `bun run record` on the user's server (see `docs/recording.md`); recordings go to
   `tests/fixtures/recordings/<version>/` next to older ones, never over them.

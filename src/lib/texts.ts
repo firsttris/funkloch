@@ -10,6 +10,7 @@ const ROLES: Record<Role, (inputs: object, options?: Options) => string> = {
   coordinator: m.role_coordinator,
   border_router: m.role_border_router,
   router: m.role_router,
+  router_eligible: m.role_router_eligible,
   end_device: m.role_end_device,
   sleepy_end_device: m.role_sleepy_end_device,
   unknown: m.role_unknown,

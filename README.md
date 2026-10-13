@@ -115,6 +115,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 - **Network map** of the Zigbee mesh and the Thread network: link quality on every line, a
   device's way to the coordinator, older snapshots to compare.
+- **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and
+  whether their signal got better; repeaters without sensors get a history from the network map.
 - **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
   that drops every evening) and **slow declines** pointed out.
 
@@ -192,6 +194,7 @@ The full documentation, with search, is at **[firsttris.github.io/funkloch](http
 | [Zigbee2MQTT](https://firsttris.github.io/funkloch/zigbee2mqtt.html) | what Funkloch reads and the one request it sends |
 | [Thread (OTBR)](https://firsttris.github.io/funkloch/thread.html) | REST API, older images, names |
 | [Signal, trend and reachability](https://firsttris.github.io/funkloch/signal.html) | score formulas, traffic light, trend, offline rule, patterns |
+| [Repeaters](https://firsttris.github.io/funkloch/repeaters.html) | which devices use a repeater, Zigbee2MQTT settings for silent routers |
 | [Events and notifications](https://firsttris.github.io/funkloch/notifications.html) | rules, ntfy, webhook and MQTT payload |
 | [Development](https://firsttris.github.io/funkloch/development.html) | building, checks, architecture, releases |
 

@@ -50,6 +50,7 @@
   "role_coordinator": "Koordinator",
   "role_border_router": "Border Router",
   "role_router": "Router",
+  "role_router_eligible": "Router-fähig (REED)",
   "role_end_device": "End Device",
   "role_sleepy_end_device": "Sleepy End Device",
   "role_unknown": "Unbekannt",
@@ -276,5 +277,7 @@
   "energy_title": "Störpegel 2,4 GHz",
   "page_not_found_title": "Seite nicht gefunden",
   "page_not_found_text": "Diese Adresse gibt es in Funkloch nicht.",
-  "error_text": "Die Seite ließ sich nicht laden. Lade sie neu oder versuche es gleich noch einmal."
+  "error_text": "Die Seite ließ sich nicht laden. Lade sie neu oder versuche es gleich noch einmal.",
+  "links_children": "Über dieses Gerät verbunden: {count}",
+  "link_since": "seit {date}"
 }

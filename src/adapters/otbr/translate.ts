@@ -1,5 +1,6 @@
 // OTBR answers to observations. Pure: the adapter passes in what it fetched and the time.
 import type { DeviceInfo, Link, Measurement, Role } from '~/core/types'
+import { withUplinks } from '~/core/uplinks'
 import { threadMeta, threadScore } from './meta'
 import type {
   DeviceItem,
@@ -18,13 +19,18 @@ const PROTOCOL = threadMeta.id
 export const linkQualityFromMargin = (margin: number) =>
   margin > 20 ? 3 : margin > 10 ? 2 : margin > 2 ? 1 : 0
 
+/**
+ * A full Thread device that is still a child is router-eligible (REED): Thread makes it a router
+ * only when the mesh needs one, which shows as a role change.
+ */
 const roleOf = (item: DeviceItem): Role => {
   if (item.type === 'threadBorderRouter') return 'border_router'
   const mode = item.attributes.mode
   if (mode?.rxOnWhenIdle === false) return 'sleepy_end_device'
-  const role = item.attributes.role ?? ''
-  if (role === 'router' || role === 'leader' || mode?.fullThreadDevice) return 'router'
-  return role === 'child' ? 'end_device' : 'unknown'
+  const role = item.attributes.role
+  if (role === 'router' || role === 'leader') return 'router'
+  if (role === 'child') return mode?.fullThreadDevice ? 'router_eligible' : 'end_device'
+  return mode?.fullThreadDevice ? 'router' : 'unknown'
 }
 
 /** The SRP host name without ".local", else the extended address */
@@ -62,8 +68,8 @@ const scoreOf = (h: Heard) =>
 
 /**
  * Measurements and links from the routers' diagnostics. A child is measured by how its parent
- * hears it; a router by the best of the routers that hear it, and that router counts as its
- * "parent" on the map (Thread routers have no parent; the best link is the one that carries it).
+ * hears it, a router by the best of the routers that hear it. Children hang on their parent;
+ * routers have none, so each gets an uplink towards the border router (core/uplinks).
  */
 export const fromDiagnostics = (
   diagnostics: readonly NetworkDiagnostic[],
@@ -113,10 +119,10 @@ export const fromDiagnostics = (
     to: h.to,
     lqi: h.lqi,
     rssi: h.rssi,
-    parent: best.get(h.from) === h,
+    parent: h.child && best.get(h.from) === h,
   }))
 
-  return { measurements, links }
+  return { measurements, links: withUplinks(links, roots, threadMeta.linkScore) }
 }
 
 /** Energy per channel: the strongest of the samples, in dBm */
@@ -138,11 +144,19 @@ export const fromLegacyDiagnostics = (nodes: LegacyDiagnostics) => {
   const devices: DeviceInfo[] = nodes.map((n) => {
     const router = n.Rloc16 !== undefined && (n.Rloc16 & 0x1ff) === 0
     const sleepy = n.Mode?.RxOnWhenIdle === 0
+    // Mode DeviceType 1: a full Thread device, router-eligible while it is a child
+    const role: Role = router
+      ? 'router'
+      : sleepy
+        ? 'sleepy_end_device'
+        : n.Mode?.DeviceType === 1
+          ? 'router_eligible'
+          : 'end_device'
     return {
       protocol: PROTOCOL,
       address: n.ExtAddress.toLowerCase(),
       name: n.ExtAddress.toLowerCase(),
-      role: router ? 'router' : sleepy ? 'sleepy_end_device' : 'end_device',
+      role,
       model: null,
       vendor: null,
       power: sleepy ? 'battery' : 'unknown',

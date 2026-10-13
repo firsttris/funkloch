@@ -55,6 +55,7 @@ nav:
   - Using Funkloch:
       - Signal, trend and reachability: signal.md
       - Events and notifications: notifications.md
+      - Repeaters: repeaters.md
   - Development:
       - Development: development.md
       - Recording fixtures: recording.md

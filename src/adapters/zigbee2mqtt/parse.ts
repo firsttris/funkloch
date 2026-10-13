@@ -1,6 +1,7 @@
 // Turns one Zigbee2MQTT message into observations. Pure: the adapter passes in the device names it
 // knows and the receive time.
 import type { DeviceInfo, Link, Observation, PowerSource, Role } from '~/core/types'
+import { withUplinks } from '~/core/uplinks'
 import { zigbeeMeta, zigbeeScore } from './meta'
 import {
   availabilitySchema,
@@ -20,6 +21,8 @@ export type ParseContext = {
   /** friendly_name → IEEE address, from the last bridge/devices */
   byName: ReadonlyMap<string, string>
   now: number
+  /** Devices that sent a linkquality of their own lately; other routers get one from the map */
+  heard: ReadonlySet<string>
 }
 
 export type ParseResult = {
@@ -55,12 +58,14 @@ export const toDeviceInfo = (device: BridgeDevice): DeviceInfo => ({
   networkAddress: `0x${device.network_address.toString(16).toUpperCase().padStart(4, '0')}`,
 })
 
+type NetworkmapValue = NonNullable<NetworkmapResponse['data']>['value']
+
 /**
  * Links from the raw network map. Each link is an entry in the neighbor table of `target` about
  * `source`; relationship 1 makes `target` the parent of `source`, relationship 0 the other way
  * round. A pair seen from both sides keeps the first LQI and the parent flag of either.
  */
-export const toLinks = (map: NonNullable<NetworkmapResponse['data']>['value']): Link[] => {
+export const toLinks = (map: NetworkmapValue): Link[] => {
   const byPair = new Map<string, Link>()
   for (const link of map.links) {
     if (link.relationship > 3) continue
@@ -82,6 +87,35 @@ export const toLinks = (map: NonNullable<NetworkmapResponse['data']>['value']): 
   }
   return [...byPair.values()]
 }
+
+const addressesOfType = (map: NetworkmapValue, type: string) =>
+  map.nodes.filter((n) => n.type === type).map((n) => n.ieeeAddr.toLowerCase())
+
+/**
+ * A reading for each router that sends nothing itself (a repeater without entities): the LQI of
+ * its uplink in the map, so it gets a history too, as often as the map is asked for.
+ */
+export const mapReadings = (links: readonly Link[], silent: readonly string[], ts: number) =>
+  silent.flatMap((address): Observation[] => {
+    const uplink = links.find((l) => l.from === address && l.parent && l.lqi !== null)
+    if (!uplink || uplink.lqi === null) return []
+    return [
+      {
+        kind: 'measurement',
+        measurement: {
+          protocol: PROTOCOL,
+          address,
+          ts,
+          score: zigbeeScore(uplink.lqi),
+          raw: uplink.lqi,
+          lqi: uplink.lqi,
+          rssi: null,
+          battery: null,
+          source: 'networkmap',
+        },
+      },
+    ]
+  })
 
 const parseJson = (text: string): unknown => {
   try {
@@ -131,9 +165,19 @@ const parseBridge = (ctx: ParseContext, subtopic: string, payload: unknown): Par
     const result = networkmapResponseSchema.safeParse(payload)
     if (!result.success) return invalid(topic, result.error)
     if (result.data.status !== 'ok' || !result.data.data) return { observations: [] }
-    const links = toLinks(result.data.data.value)
+    const map = result.data.data.value
+    // Routers are siblings in the neighbor tables; the uplink shows their way to the coordinator
+    const links = withUplinks(
+      toLinks(map),
+      new Set(addressesOfType(map, 'Coordinator')),
+      zigbeeMeta.linkScore,
+    )
+    const silent = addressesOfType(map, 'Router').filter((address) => !ctx.heard.has(address))
     return {
-      observations: [{ kind: 'topology', topology: { protocol: PROTOCOL, ts: ctx.now, links } }],
+      observations: [
+        { kind: 'topology', topology: { protocol: PROTOCOL, ts: ctx.now, links } },
+        ...mapReadings(links, silent, ctx.now),
+      ],
     }
   }
   return { observations: [] }

@@ -73,6 +73,18 @@ describe('overview', () => {
 })
 
 describe('device detail', () => {
+  test('a router lists the devices connected through it, with status and since when', () => {
+    const view = deviceView(env.context, idOf('Steckdose Waschküche'), '7d')
+    const cellar = view?.links.find((l) => l.name === 'Temperatursensor Keller')
+    expect(cellar?.kind).toBe('child')
+    expect(cellar?.status).toBe('weak')
+    // the cellar sensor moved to the socket 49 hours ago; maps come every 6 hours
+    expect(env.context.now - (cellar?.since ?? 0)).toBeLessThanOrEqual(49 * 3_600_000)
+    expect(env.context.now - (cellar?.since ?? 0)).toBeGreaterThan(42 * 3_600_000)
+    expect(view?.links.filter((l) => l.kind === 'parent').map((l) => l.since)).toEqual([null])
+    expect(new Set(view?.links.map((l) => l.id)).size).toBe(view?.links.length)
+  })
+
   test('the cellar sensor: weak, falling, below threshold, two parent changes', () => {
     const view = deviceView(env.context, idOf('Temperatursensor Keller'), '7d')
     expect(view).not.toBeNull()

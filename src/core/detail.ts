@@ -28,6 +28,52 @@ export const parentChanges = (parents: readonly (string | null)[]) => {
   return known.slice(1).filter((p, i) => p !== known[i]).length
 }
 
+export type ConnectionKind = 'parent' | 'child' | 'neighbor'
+
+const KIND_ORDER: ConnectionKind[] = ['parent', 'child', 'neighbor']
+
+/**
+ * The devices a device is linked to in one snapshot, one entry each: a parent or child link wins
+ * over a neighbor link of the same pair (a router's uplink keeps both directions). Parent first,
+ * then children and neighbors, each by link quality.
+ */
+export const connections = <T extends { otherId: number; fromId: number; parent: boolean }>(
+  deviceId: number,
+  links: readonly T[],
+  quality: (link: T) => number | null,
+) => {
+  const kindOf = (link: T): ConnectionKind =>
+    !link.parent ? 'neighbor' : link.fromId === deviceId ? 'parent' : 'child'
+  const byOther = new Map<number, T & { kind: ConnectionKind }>()
+  for (const link of links) {
+    const entry = { ...link, kind: kindOf(link) }
+    const existing = byOther.get(link.otherId)
+    if (!existing || (existing.kind === 'neighbor' && entry.kind !== 'neighbor'))
+      byOther.set(link.otherId, entry)
+  }
+  return [...byOther.values()].sort(
+    (a, b) =>
+      KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) ||
+      (quality(b) ?? -1) - (quality(a) ?? -1),
+  )
+}
+
+/**
+ * Since when a device has had `parent`: the oldest snapshot of the unbroken run up to the newest.
+ * Null when the newest snapshot shows another parent or none.
+ */
+export const parentSince = (
+  history: readonly { ts: number; parent: string | null }[],
+  parent: string,
+) => {
+  let since: number | null = null
+  for (const entry of [...history].sort((a, b) => b.ts - a.ts)) {
+    if (entry.parent !== parent) break
+    since = entry.ts
+  }
+  return since
+}
+
 export type DetailKpis = {
   /** Median of the hourly raw medians over 7 days */
   rawMedian7d: number | null

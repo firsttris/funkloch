@@ -14,7 +14,7 @@ It subscribes to `<base topic>/#` and uses:
 | `bridge/info` | the channel of the network, for the energy scan card |
 | `<device>` | every state message with `linkquality`: one reading (LQI 0–255) |
 | `<device>/availability` | online or offline as Zigbee2MQTT sees it |
-| `bridge/response/networkmap` | the mesh: who is whose parent, LQI per link |
+| `bridge/response/networkmap` | the mesh: who is whose parent, LQI per link, and a reading for routers that send nothing themselves |
 
 A message without `linkquality` still counts as a sign of life. Retained messages the broker
 replays at connect time are not readings.
@@ -35,4 +35,6 @@ Funkloch never switches, pairs, renames or reconfigures devices.
   minutes).
 - **Battery devices** report rarely; without a reading in the last hour their traffic light uses
   the latest hourly median.
+- **Repeaters** without sensors send nothing; Funkloch reads their signal from the network map, or
+  every 10 minutes with `last_seen` and availability on: see [Repeaters](repeaters.md).
 - **Notifications by MQTT** go to the same broker (topic `funkloch/events` by default).

@@ -140,15 +140,15 @@ export const availabilityOf = (db: Db, deviceId: number, from: number, to: numbe
   return { onlineAtStart: before?.type !== 'offline', changes }
 }
 
-/** The parent of a device in each snapshot since `from`, oldest first */
-export const parentHistory = (db: Db, deviceId: number, protocol: string, from: number) =>
+/** The parent of a device in each snapshot of its protocol since `from`, oldest first */
+export const parentsOverTime = (db: Db, deviceId: number, protocol: string, from: number) =>
   db
-    .all<{ to_id: number | null }>(sql`
-      select l.to_id from snapshots s
+    .all<{ ts: number; to_id: number | null }>(sql`
+      select s.ts, l.to_id from snapshots s
       left join links l on l.snapshot_id = s.id and l.from_id = ${deviceId} and l.parent = 1
       where s.protocol = ${protocol} and s.ts >= ${from}
       order by s.ts`)
-    .map((r) => (r.to_id === null ? null : String(r.to_id)))
+    .map((r) => ({ ts: r.ts, parent: r.to_id === null ? null : String(r.to_id) }))
 
 export const linksOf = (db: Db, deviceId: number, snapshotId: number) => {
   const other = alias(devices, 'other')

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { zigbeeScore } from './meta'
 import { nameMap, parseMessage, toDeviceInfo, toLinks } from './parse'
 import type { BridgeDevice } from './schemas'
 
@@ -28,7 +29,12 @@ const sensor: BridgeDevice = {
   power_source: 'Battery',
 }
 
-const ctx = { baseTopic: 'zigbee2mqtt', byName: nameMap([coordinator, lamp, sensor]), now: 1000 }
+const ctx = {
+  baseTopic: 'zigbee2mqtt',
+  byName: nameMap([coordinator, lamp, sensor]),
+  now: 1000,
+  heard: new Set<string>(),
+}
 
 describe('toDeviceInfo', () => {
   test('maps type, power and model', () => {
@@ -213,6 +219,60 @@ describe('network map', () => {
           protocol: 'zigbee',
           ts: 1000,
           links: [{ from: '0xa', to: '0xb', lqi: 41, rssi: null, parent: true }],
+        },
+      },
+    ])
+  })
+
+  test('routers get an uplink to the coordinator; a silent router a reading from it', () => {
+    const node = (ieeeAddr: string, type: string) => ({
+      ieeeAddr,
+      friendlyName: ieeeAddr,
+      type,
+      networkAddress: 1,
+    })
+    const text = JSON.stringify({
+      status: 'ok',
+      data: {
+        type: 'raw',
+        routes: false,
+        value: {
+          nodes: [node('0xC', 'Coordinator'), node('0xR', 'Router'), node('0xP', 'Router')],
+          // the coordinator's table: both routers as siblings
+          links: [
+            link('0xR', '0xC', 2, 170),
+            link('0xP', '0xC', 2, 230),
+            link('0xE', '0xR', 1, 60),
+          ],
+        },
+      },
+    })
+    const result = parseMessage(
+      { ...ctx, heard: new Set(['0xp']) },
+      'zigbee2mqtt/bridge/response/networkmap',
+      text,
+      false,
+    )
+    const [topology, ...readings] = result.observations
+    expect(topology?.kind === 'topology' && topology.topology.links).toEqual([
+      { from: '0xr', to: '0xc', lqi: 170, rssi: null, parent: true },
+      { from: '0xp', to: '0xc', lqi: 230, rssi: null, parent: true },
+      { from: '0xe', to: '0xr', lqi: 60, rssi: null, parent: true },
+    ])
+    // 0xp sends its own linkquality, 0xr is a repeater without entities
+    expect(readings).toEqual([
+      {
+        kind: 'measurement',
+        measurement: {
+          protocol: 'zigbee',
+          address: '0xr',
+          ts: 1000,
+          score: zigbeeScore(170),
+          raw: 170,
+          lqi: 170,
+          rssi: null,
+          battery: null,
+          source: 'networkmap',
         },
       },
     ])

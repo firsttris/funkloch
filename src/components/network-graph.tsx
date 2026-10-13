@@ -186,7 +186,7 @@ export const NetworkGraph = ({
             >
               {node.name}
             </text>
-            {node.role === 'router' || node.role === 'sleepy_end_device' ? (
+            {['router', 'router_eligible', 'sleepy_end_device'].includes(node.role) ? (
               <text
                 x={node.x}
                 y={node.y + r + 33}

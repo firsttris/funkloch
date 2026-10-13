@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { detailKpis, hourlyChart, offlineIntervals, parentChanges, rawChart } from './detail'
+import {
+  connections,
+  detailKpis,
+  hourlyChart,
+  offlineIntervals,
+  parentChanges,
+  parentSince,
+  rawChart,
+} from './detail'
 import { DAY, HOUR } from './types'
 
 describe('offlineIntervals', () => {
@@ -70,5 +78,47 @@ describe('charts', () => {
     ])
     expect(chart.median).toEqual([1, 2, null, 3])
     expect(chart.x).toEqual([0, 1, 1.001, 10800])
+  })
+})
+
+describe('connections', () => {
+  const link = (fromId: number, toId: number, parent: boolean, lqi: number) => ({
+    fromId,
+    toId,
+    otherId: fromId === 1 ? toId : fromId,
+    parent,
+    lqi,
+  })
+
+  test('one entry per device; the uplink wins over its reverse neighbor link', () => {
+    const result = connections(
+      1,
+      [link(2, 1, false, 90), link(1, 2, true, 80), link(3, 1, true, 40), link(1, 4, false, 200)],
+      (l) => l.lqi,
+    )
+    expect(result.map((c) => [c.otherId, c.kind])).toEqual([
+      [2, 'parent'],
+      [3, 'child'],
+      [4, 'neighbor'],
+    ])
+  })
+
+  test('children and neighbors by link quality', () => {
+    const result = connections(1, [link(3, 1, true, 40), link(5, 1, true, 120)], (l) => l.lqi)
+    expect(result.map((c) => c.otherId)).toEqual([5, 3])
+  })
+})
+
+describe('parentSince', () => {
+  test('the start of the unbroken run up to the newest snapshot', () => {
+    const history = [
+      { ts: 1, parent: 'a' },
+      { ts: 2, parent: 'b' },
+      { ts: 3, parent: 'a' },
+      { ts: 4, parent: 'a' },
+    ]
+    expect(parentSince(history, 'a')).toBe(3)
+    expect(parentSince(history, 'b')).toBeNull()
+    expect(parentSince([], 'a')).toBeNull()
   })
 })

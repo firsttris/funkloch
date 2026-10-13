@@ -15,6 +15,12 @@ export type Zigbee2mqttOptions = {
 }
 
 export const MIN_NETWORKMAP_HOURS = 1
+/** A router that sent its own linkquality within this time needs no reading from the map */
+export const HEARD_WINDOW = 2 * 3_600_000
+
+/** Addresses with a reading of their own within the window */
+export const heardSince = (lastOwn: ReadonlyMap<string, number>, now: number) =>
+  new Set([...lastOwn].filter(([, ts]) => now - ts < HEARD_WINDOW).map(([address]) => address))
 /** The first map a few minutes after start, when the device list is in */
 export const FIRST_MAP_AFTER = 5 * 60_000
 
@@ -33,6 +39,8 @@ export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter =
   let status: AdapterStatus = { connected: false, error: null, since: null }
   let client: mqtt.MqttClient | null = null
   let byName = new Map<string, string>()
+  /** Time of each device's last own linkquality */
+  const lastOwn = new Map<string, number>()
 
   let lastRequest: number | null = null
 
@@ -62,15 +70,20 @@ export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter =
       status = { ...status, connected: false, error: error.message }
     })
     client.on('message', (topic, message, packet) => {
+      const now = Date.now()
       const result = parseMessage(
-        { baseTopic: options.baseTopic, byName, now: Date.now() },
+        { baseTopic: options.baseTopic, byName, now, heard: heardSince(lastOwn, now) },
         topic,
         message.toString(),
         packet.retain,
       )
       if (result.devices) byName = nameMap(result.devices)
       if (result.invalid) options.onInvalid?.(result.invalid)
-      for (const observation of result.observations) emit(observation)
+      for (const observation of result.observations) {
+        if (observation.kind === 'measurement' && observation.measurement.source === 'message')
+          lastOwn.set(observation.measurement.address, observation.measurement.ts)
+        emit(observation)
+      }
     })
 
     const startedAt = Date.now()

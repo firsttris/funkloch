@@ -26,6 +26,12 @@ Images without `/api` (for example the Home Assistant add-on before 2024) only o
 their link quality 0–3, but no RSSI: these devices have no signal chart, and their traffic light
 stays *unknown*. Funkloch logs which API it found at start (`otbr REST API found`).
 
+## Roles
+
+A full Thread device that is still a child shows as *router-eligible (REED)*; when Thread makes it a
+router, Funkloch reports the role change. Routers get an uplink towards the border router on the
+map, see [Repeaters](repeaters.md).
+
 ## Names
 
 The border router knows extended addresses and, with SRP, host names. Give each device a name

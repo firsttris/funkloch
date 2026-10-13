@@ -7,6 +7,8 @@ export type Role =
   | 'coordinator'
   | 'border_router'
   | 'router'
+  /** A Thread child that may become a router (REED) when the mesh needs one */
+  | 'router_eligible'
   | 'end_device'
   | 'sleepy_end_device'
   | 'unknown'

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
+  deviceItemSchema,
   devicesSchema,
   diagnosticsSchema,
   energyScanSchema,
@@ -54,6 +55,23 @@ describe('toDeviceInfo', () => {
   })
 })
 
+describe('router eligibility', () => {
+  const item = (role: string | undefined, fullThreadDevice: boolean) =>
+    deviceItemSchema.parse({
+      id: 'cccccccccccccccc',
+      type: 'threadDevice',
+      attributes: { role, mode: { rxOnWhenIdle: true, fullThreadDevice } },
+    })
+
+  test('a full Thread device that is a child is router-eligible, then a router', () => {
+    expect(toDeviceInfo(item('child', true)).role).toBe('router_eligible')
+    expect(toDeviceInfo(item('router', true)).role).toBe('router')
+    expect(toDeviceInfo(item('leader', true)).role).toBe('router')
+    expect(toDeviceInfo(item('child', false)).role).toBe('end_device')
+    expect(toDeviceInfo(item(undefined, true)).role).toBe('router')
+  })
+})
+
 describe('fromDiagnostics', () => {
   const { measurements, links } = fromDiagnostics(diagnostics, 1000, new Set(['96518e5497d5b9f3']))
 
@@ -68,13 +86,54 @@ describe('fromDiagnostics', () => {
     ).toBe(true)
   })
 
-  test('the children hang on their router, routers on their best neighbor', () => {
-    expect(links.filter((l) => l.parent).map((l) => [l.from, l.to])).toEqual([
+  test('the children hang on their router, the router on the border router', () => {
+    expect(
+      links
+        .filter((l) => l.parent)
+        .map((l) => [l.from, l.to])
+        .sort(),
+    ).toEqual([
+      ['0011223344556677', '2a55d952bc7b4008'],
       ['2a55d952bc7b4008', '96518e5497d5b9f3'],
       ['f2f307043724e8d0', '2a55d952bc7b4008'],
-      ['0011223344556677', '2a55d952bc7b4008'],
     ])
     expect(links).toHaveLength(4)
+  })
+
+  test("a router's uplink leads towards the border router, even when a farther router hears it better", () => {
+    const br = 'aaaaaaaaaaaaaaaa'
+    const near = 'bbbbbbbbbbbbbbbb'
+    const repeater = 'cccccccccccccccc'
+    const entry = (extAddress: string, averageRssi: number) => ({
+      extAddress,
+      linkMargin: averageRssi + 100,
+      averageRssi,
+    })
+    const diag = (extAddress: string, routerNeighbors: ReturnType<typeof entry>[]) =>
+      networkDiagnosticSchema.parse({
+        id: extAddress,
+        type: 'threadNetworkDiagnostic',
+        attributes: { extAddress, routerNeighbors, children: [] },
+      })
+    const { links: chain } = fromDiagnostics(
+      [
+        diag(br, [entry(near, -60)]),
+        // the near router hears the repeater well, the repeater is not in the border router's table
+        diag(near, [entry(br, -61), entry(repeater, -55)]),
+        diag(repeater, [entry(near, -56)]),
+      ],
+      0,
+      new Set([br]),
+    )
+    expect(
+      chain
+        .filter((l) => l.parent)
+        .map((l) => [l.from, l.to])
+        .sort(),
+    ).toEqual([
+      [near, br],
+      [repeater, near],
+    ])
   })
 
   test('nothing in, nothing out', () => {

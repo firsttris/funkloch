@@ -50,6 +50,7 @@
   "role_coordinator": "Coordinator",
   "role_border_router": "Border router",
   "role_router": "Router",
+  "role_router_eligible": "Router-eligible (REED)",
   "role_end_device": "End device",
   "role_sleepy_end_device": "Sleepy end device",
   "role_unknown": "Unknown",
@@ -276,5 +277,7 @@
   "energy_title": "2.4 GHz interference",
   "page_not_found_title": "Page not found",
   "page_not_found_text": "This address does not exist in Funkloch.",
-  "error_text": "The page could not be loaded. Reload it or try again in a moment."
+  "error_text": "The page could not be loaded. Reload it or try again in a moment.",
+  "links_children": "Connected through this device: {count}",
+  "link_since": "since {date}"
 }

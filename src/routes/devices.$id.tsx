@@ -105,6 +105,7 @@ function DevicePage() {
   const rawLabel = protocol?.rawLabel ?? ''
   const from = data.now - { '24h': 1, '7d': 7, '30d': 30 }[data.range] * 86_400_000
   const below = data.current && data.weakRaw !== null && data.current.raw < data.weakRaw
+  const children = data.links.filter((l) => l.kind === 'child').length
   const markers = data.events
     .filter(
       (e) => e.ts >= from && (e.type === 'offline' || e.type === 'online' || e.kind === 'topology'),
@@ -299,6 +300,11 @@ function DevicePage() {
               {data.topologyTs !== null ? (
                 <CardHint>{m.links_hint({ ago: ago(data.topologyTs, data.now) })}</CardHint>
               ) : null}
+              {children > 0 ? (
+                <p className="m-0 mt-1 text-[13px] font-medium">
+                  {m.links_children({ count: children })}
+                </p>
+              ) : null}
             </div>
             {data.links.length === 0 ? (
               <p className="text-foreground-subtle">{m.links_none()}</p>
@@ -310,19 +316,26 @@ function DevicePage() {
                     className="grid grid-cols-[minmax(0,1fr)_72px] items-center gap-x-3 gap-y-1 border-b border-border-subtle py-[9px]"
                   >
                     <div className="flex min-w-0 flex-col">
-                      <Link
-                        to="/devices/$id"
-                        params={{ id: link.id }}
-                        className="font-semibold no-underline"
-                      >
-                        {link.name}
-                      </Link>
+                      <span className="inline-flex min-w-0 items-center gap-2">
+                        <StatusDot status={link.status} />
+                        <Link
+                          to="/devices/$id"
+                          params={{ id: link.id }}
+                          className="truncate font-semibold no-underline"
+                        >
+                          {link.name}
+                        </Link>
+                        <span className="sr-only">{statusLabel(link.status)}</span>
+                      </span>
                       <span className="text-xs text-foreground-subtle">
                         {{ parent: m.link_parent, child: m.link_child, neighbor: m.link_neighbor }[
                           link.kind
                         ]({
                           role: roleLabel(link.role),
                         })}
+                        {link.since !== null
+                          ? ` · ${m.link_since({ date: dateTime(link.since) })}`
+                          : ''}
                       </span>
                     </div>
                     <LinkQuality lqi={link.lqi} rssi={link.rssi} protocol={device.protocol} />

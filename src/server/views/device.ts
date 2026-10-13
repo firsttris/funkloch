@@ -1,11 +1,13 @@
 import '@tanstack/react-start/server-only'
 import { PROTOCOLS } from '~/adapters/registry'
 import {
+  connections,
   type Range as DetailRange,
   detailKpis,
   hourlyChart,
   offlineIntervals,
   parentChanges,
+  parentSince,
   RANGES,
   rawChart,
   usesRawSamples,
@@ -25,18 +27,16 @@ import {
   latestSnapshot,
   linksOf,
   messagesPerHour,
-  parentHistory,
+  parentsOverTime,
   rawSamples,
   recentScores,
   samplesSince,
 } from '~/db/queries'
 import type { ViewContext } from './context'
-import { protocolInfo } from './shared'
+import { deviceRows, protocolInfo } from './shared'
 
-const linkKind = (deviceId: number, link: { fromId: number; parent: boolean }) => {
-  if (!link.parent) return 'neighbor' as const
-  return link.fromId === deviceId ? ('parent' as const) : ('child' as const)
-}
+/** How long back a child's parent history is read for "connected since" */
+const SINCE_WINDOW = 90 * DAY
 
 /** Null when there is no such device */
 export const deviceView = ({ db, now, settings }: ViewContext, id: number, range: DetailRange) => {
@@ -61,21 +61,29 @@ export const deviceView = ({ db, now, settings }: ViewContext, id: number, range
   const score = recent ?? medians.at(-1)?.median ?? null
   const availability = availabilityOf(db, device.id, from, now)
   const snapshot = latestSnapshot(db, device.protocol)
+  const statusOf = new Map(
+    deviceRows(db, now, 24, settings.thresholds).rows.map((r) => [r.id, r.status]),
+  )
   const deviceLinks = snapshot
-    ? linksOf(db, device.id, snapshot.id)
-        .map((l) => ({
-          id: l.otherId,
-          name: displayName(l),
-          role: l.role as Role,
-          kind: linkKind(device.id, l),
-          lqi: l.lqi,
-          rssi: l.rssi,
-        }))
-        .sort(
-          (a, b) =>
-            ['parent', 'child', 'neighbor'].indexOf(a.kind) -
-              ['parent', 'child', 'neighbor'].indexOf(b.kind) || (b.lqi ?? 0) - (a.lqi ?? 0),
-        )
+    ? connections(device.id, linksOf(db, device.id, snapshot.id), (l) =>
+        meta ? meta.linkScore(l) : l.lqi,
+      ).map((l) => ({
+        id: l.otherId,
+        name: displayName(l),
+        role: l.role as Role,
+        kind: l.kind,
+        lqi: l.lqi,
+        rssi: l.rssi,
+        status: statusOf.get(l.otherId) ?? ('unknown' as const),
+        // A child connected through this device: since when, to see a repeater take over
+        since:
+          l.kind === 'child'
+            ? parentSince(
+                parentsOverTime(db, l.otherId, device.protocol, now - SINCE_WINDOW),
+                String(device.id),
+              )
+            : null,
+      }))
     : []
   const messageFrom = now - 47 * HOUR
   return {
@@ -104,7 +112,9 @@ export const deviceView = ({ db, now, settings }: ViewContext, id: number, range
     weakRaw: meta?.rawAtScore?.(settings.thresholds.weak) ?? null,
     kpis: {
       ...detailKpis(weekHourly, samplesSince(db, device.id, now - 48 * HOUR), now),
-      parentChanges: parentChanges(parentHistory(db, device.id, device.protocol, now - 7 * DAY)),
+      parentChanges: parentChanges(
+        parentsOverTime(db, device.id, device.protocol, now - 7 * DAY).map((p) => p.parent),
+      ),
     },
     chart,
     offline: offlineIntervals(availability.changes, availability.onlineAtStart, from, now),

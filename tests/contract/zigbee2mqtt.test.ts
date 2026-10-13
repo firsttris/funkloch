@@ -29,7 +29,7 @@ describe.skipIf(recordings.length === 0)('recorded Zigbee2MQTT messages', () => 
       const text =
         typeof record.payload === 'string' ? record.payload : JSON.stringify(record.payload)
       const result = parseMessage(
-        { baseTopic, byName, now: Date.parse(record.ts) },
+        { baseTopic, byName, now: Date.parse(record.ts), heard: new Set() },
         record.topic,
         text,
         record.retain,
