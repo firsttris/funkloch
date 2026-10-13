@@ -39,7 +39,7 @@ export const isSameOrigin = (request: { url: string; headers: Headers }) => {
 
 /** Only paths on this site, never "//evil.example" or absolute URLs */
 export const safeRedirect = (target: string | null | undefined, fallback = '/') =>
-  target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\')
+  target?.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\')
     ? target
     : fallback
 
