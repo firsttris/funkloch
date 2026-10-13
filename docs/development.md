@@ -58,8 +58,8 @@ mkdocs build --strict                # when docs/ or mkdocs.yml changed
 | API | `tests/api` | the pages' data from the seeded demo at a fixed time |
 | Contract | `tests/contract` | every recorded Zigbee2MQTT message and OTBR answer passes the schemas |
 | Integration | `tests/integration` | the Zigbee adapter and MQTT notifications against Mosquitto |
-| E2E | `tests/e2e` | Chromium, Firefox and WebKit against the demo; login and settings |
-| Container | release workflow | the image starts on amd64 and arm64 and `/healthz` turns green |
+| E2E | `tests/e2e` | Chromium, Firefox and WebKit against the demo; login and settings; in CI in two halves at once |
+| Container | CI, when `docker/`, `serve.ts`, the package files, `vite.config.ts` or the migrations change | the image starts on amd64 and arm64, each on its own runner, and `/healthz` turns green |
 
 ## Fixtures
 
@@ -68,6 +68,7 @@ Recordings from real networks keep the schemas honest: see [Recording fixtures](
 ## Releases
 
 **Actions → Bump version → Run workflow** raises the version and pushes the tag; the tag starts
-**Release**: all checks, the container test, the image `tristanteu/funkloch` for amd64 and arm64
-on Docker Hub, and the GitHub release. **Actions → Update screenshots** renews the pictures in
+**Release**: all checks, the image `tristanteu/funkloch` for amd64 and arm64 on Docker Hub, and
+the GitHub release. The image is started in CI whenever what it is built from changes; its build
+cache is the release's, so the release builds on layers that are already there. **Actions → Update screenshots** renews the pictures in
 `docs/screenshots` from the demo.
