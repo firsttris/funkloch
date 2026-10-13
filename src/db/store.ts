@@ -298,3 +298,16 @@ export const storeBridgeState = (db: Db, protocol: string, online: boolean, ts: 
     deviceId: null,
   })
 }
+
+/** A name of the user's own, e.g. for Thread devices that only have an address; empty clears it */
+export const setCustomName = (db: Db, deviceId: number, name: string) => {
+  const trimmed = name.trim()
+  return (
+    db
+      .update(devices)
+      .set({ customName: trimmed === '' ? null : trimmed })
+      .where(eq(devices.id, deviceId))
+      .returning({ id: devices.id })
+      .get() !== undefined
+  )
+}

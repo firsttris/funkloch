@@ -143,3 +143,14 @@ export const settings = sqliteTable('settings', {
   value: text('value', { mode: 'json' }).notNull(),
   updatedAt: integer('updated_at').notNull().default(sql`(unixepoch() * 1000)`),
 })
+
+/** Admin sessions; only the SHA-256 of the token is stored */
+export const sessions = sqliteTable(
+  'sessions',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    createdAt: integer('created_at').notNull(),
+    expiresAt: integer('expires_at').notNull(),
+  },
+  (t) => [index('sessions_expires').on(t.expiresAt)],
+)

@@ -39,7 +39,11 @@ const until = async (check: () => boolean, timeout = 10_000) => {
 describe.skipIf(!url)('Zigbee2MQTT adapter with a broker', () => {
   const { db, cleanup } = tempDb()
   const ingest = createIngest(db, createLog('silent'))
-  const adapter = createZigbee2mqttAdapter({ url: url ?? '', baseTopic: base, networkmapHours: 6 })
+  const adapter = createZigbee2mqttAdapter({
+    url: url ?? '',
+    baseTopic: base,
+    networkmapHours: () => 6,
+  })
   let stop: () => Promise<void> = async () => {}
   let publisher: mqtt.MqttClient
 

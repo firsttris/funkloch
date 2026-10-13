@@ -51,14 +51,14 @@ export const startRuntime = (config: Config): Runtime => {
   const log = createLog(config.LOG_LEVEL)
   const startedAt = Date.now()
   const db = openDatabase(config, startedAt)
+  const settingsDefaults = defaultsFrom(config)
+  const settings = () => loadSettings(db, settingsDefaults)
   const adapters = config.FUNKLOCH_DEMO
     ? [createDemoAdapter(zigbeeMeta), createDemoAdapter(threadMeta)]
-    : adaptersFromConfig(config, log)
+    : adaptersFromConfig(config, log, () => settings().networkmapHours)
   if (adapters.length === 0) {
     log.warn('No adapter is on: set ZIGBEE2MQTT_MQTT_URL or OTBR_URL, or FUNKLOCH_DEMO=1')
   }
-  const settingsDefaults = defaultsFrom(config)
-  const settings = () => loadSettings(db, settingsDefaults)
   const ingest = createIngest(db, log)
   const stopAdapters = adapters.map((adapter) => adapter.start(ingest.emit))
   const mqttOut = config.ZIGBEE2MQTT_MQTT_URL

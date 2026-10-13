@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { appInfoQuery } from '~/lib/app-info'
 import { useLiveUpdates } from '~/lib/use-live-updates'
 import { getLocale } from '~/paraglide/runtime.js'
 import appCss from '~/styles.css?url'
@@ -17,6 +18,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(appInfoQuery),
   component: RootComponent,
 })
 

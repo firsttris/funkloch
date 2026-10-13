@@ -282,3 +282,12 @@ export const eventsOfType = (db: Db, type: string, from: number) =>
     .where(and(eq(events.type, type), gte(events.ts, from)))
     .orderBy(desc(events.ts))
     .all()
+
+/** Every device that is not removed, for the names in the settings */
+export const activeDevices = (db: Db) =>
+  db
+    .select()
+    .from(devices)
+    .where(isNull(devices.removedAt))
+    .orderBy(asc(devices.protocol), asc(devices.name))
+    .all()

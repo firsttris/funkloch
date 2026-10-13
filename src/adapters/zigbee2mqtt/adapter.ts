@@ -9,19 +9,35 @@ export type Zigbee2mqttOptions = {
   username?: string
   password?: string
   baseTopic: string
-  /** Hours between two network map requests; never below 1, the scan loads the network */
-  networkmapHours: number
+  /** Hours between two network map requests, read each time (settings); never below 1 */
+  networkmapHours: () => number
   onInvalid?: (message: string) => void
 }
 
 export const MIN_NETWORKMAP_HOURS = 1
+/** The first map a few minutes after start, when the device list is in */
+export const FIRST_MAP_AFTER = 5 * 60_000
+
+/** A map is due when the interval has passed since the last one (or the first wait since start) */
+export const networkmapDue = (
+  last: number | null,
+  startedAt: number,
+  now: number,
+  hours: number,
+) => {
+  const interval = Math.max(hours, MIN_NETWORKMAP_HOURS) * 3_600_000
+  return last === null ? now - startedAt >= FIRST_MAP_AFTER : now - last >= interval
+}
 
 export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter => {
   let status: AdapterStatus = { connected: false, error: null, since: null }
   let client: mqtt.MqttClient | null = null
   let byName = new Map<string, string>()
 
+  let lastRequest: number | null = null
+
   const requestTopology = () => {
+    lastRequest = Date.now()
     client?.publish(
       `${options.baseTopic}/bridge/request/networkmap`,
       JSON.stringify({ type: 'raw', routes: false }),
@@ -57,14 +73,15 @@ export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter =
       for (const observation of result.observations) emit(observation)
     })
 
-    const hours = Math.max(options.networkmapHours, MIN_NETWORKMAP_HOURS)
-    // The first map a few minutes after start, when the device list is in
-    const first = setTimeout(requestTopology, 5 * 60_000)
-    const timer = setInterval(requestTopology, hours * 3_600_000)
+    const startedAt = Date.now()
+    // A manual request counts as well, so it pushes the next scheduled one back
+    const timer = setInterval(() => {
+      if (networkmapDue(lastRequest, startedAt, Date.now(), options.networkmapHours()))
+        requestTopology()
+    }, 60_000)
 
     return () =>
       new Promise<void>((resolve) => {
-        clearTimeout(first)
         clearInterval(timer)
         if (!client) return resolve()
         client.end(false, {}, () => resolve())

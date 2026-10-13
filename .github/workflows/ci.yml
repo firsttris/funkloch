@@ -87,7 +87,7 @@ jobs:
         # Firefox refuses to start as root with a $HOME owned by another user
         env:
           HOME: /root
-        run: bunx playwright test ${{ github.event_name == 'pull_request' && '--project=chromium' || '--project=chromium --project=firefox --project=webkit' }}
+        run: bunx playwright test ${{ github.event_name == 'pull_request' && '--project=chromium --project=auth' || '--project=chromium --project=firefox --project=webkit --project=auth' }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

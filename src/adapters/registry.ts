@@ -12,7 +12,11 @@ export const PROTOCOLS: Record<string, ProtocolMeta> = {
 }
 
 /** An adapter is on when its environment variable is set. */
-export const adaptersFromConfig = (config: Config, log: Log): Adapter[] => {
+export const adaptersFromConfig = (
+  config: Config,
+  log: Log,
+  networkmapHours: () => number,
+): Adapter[] => {
   const adapters: Adapter[] = []
   if (config.ZIGBEE2MQTT_MQTT_URL) {
     adapters.push(
@@ -21,7 +25,7 @@ export const adaptersFromConfig = (config: Config, log: Log): Adapter[] => {
         username: config.ZIGBEE2MQTT_MQTT_USER,
         password: config.ZIGBEE2MQTT_MQTT_PASSWORD,
         baseTopic: config.ZIGBEE2MQTT_BASE_TOPIC,
-        networkmapHours: config.ZIGBEE2MQTT_NETWORKMAP_HOURS,
+        networkmapHours,
         onInvalid: (message) =>
           log.warn({ message }, 'zigbee2mqtt payload does not match the schema'),
       }),

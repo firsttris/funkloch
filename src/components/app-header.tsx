@@ -1,4 +1,6 @@
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { appInfoQuery } from '~/lib/app-info'
 import { cn } from '~/lib/cn'
 import { m } from '~/paraglide/messages.js'
 import { getLocale, setLocale } from '~/paraglide/runtime.js'
@@ -31,6 +33,7 @@ const navLink =
 
 export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
   const other = getLocale() === 'de' ? 'en' : 'de'
+  const { data: info } = useSuspenseQuery(appInfoQuery)
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const nav = [
     {
@@ -41,6 +44,7 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
     { to: '/network', label: m.nav_network(), active: pathname.startsWith('/network') },
     { to: '/heatmap', label: m.nav_heatmap(), active: pathname.startsWith('/heatmap') },
     { to: '/events', label: m.nav_events(), active: pathname.startsWith('/events') },
+    { to: '/settings', label: m.nav_settings(), active: pathname.startsWith('/settings') },
   ] as const
   return (
     <header className="border-b border-border bg-surface">
@@ -96,6 +100,16 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
           >
             {m.language_switch()}
           </button>
+          {info.auth ? (
+            <form method="post" action="/auth/logout">
+              <button
+                type="submit"
+                className="min-h-10 cursor-pointer rounded-md border border-border bg-surface px-3 text-xs text-foreground-muted hover:bg-track"
+              >
+                {m.logout()}
+              </button>
+            </form>
+          ) : null}
         </div>
       </div>
     </header>
