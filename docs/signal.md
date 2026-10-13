@@ -37,8 +37,10 @@ at least 24 hourly values; a single bad reading does not move it.
 A device is **offline** when
 
 - Zigbee2MQTT reports it offline (availability), or
-- it has been silent for three times its usual interval between messages (median over 7 days), at
-  least 30 minutes.
+- it has been silent for three times its usual interval between messages, at least 30 minutes.
+  The usual interval is the gap a moment of the last 7 days typically falls into (the median of
+  the gaps, weighted by their length), so a remote that sends bursts of presses seconds apart
+  keeps the long pauses between them as its interval.
 
 A device without a known interval is judged by the report only. Coordinators and border routers
 are never marked offline from silence; their state comes from the bridge.

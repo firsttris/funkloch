@@ -1,4 +1,3 @@
-import { median } from './stats'
 import { DAY, MINUTE } from './types'
 
 export const MIN_SILENCE = 30 * MINUTE
@@ -6,14 +5,27 @@ export const SILENCE_FACTOR = 3
 export const INTERVAL_WINDOW = 7 * DAY
 
 /**
- * The device's usual gap between two messages: the median gap over the given timestamps
- * (the last 7 days). Null when there are fewer than three messages to judge from.
+ * The device's usual gap between two messages over the given timestamps (the last 7 days): the
+ * gap a moment in that time typically falls into, i.e. the median of the gaps weighted by their
+ * length. A plain median would follow the count of gaps, and a remote that sends bursts of
+ * presses a second apart would get an interval of seconds and turn offline every evening.
+ * Null when there are fewer than three messages to judge from.
  */
 export const typicalInterval = (timestamps: readonly number[]): number | null => {
   if (timestamps.length < 3) return null
   const sorted = [...timestamps].sort((a, b) => a - b)
-  const gaps = sorted.slice(1).map((ts, i) => ts - (sorted[i] as number))
-  return median(gaps.filter((gap) => gap > 0))
+  const gaps = sorted
+    .slice(1)
+    .map((ts, i) => ts - (sorted[i] as number))
+    .filter((gap) => gap > 0)
+    .sort((a, b) => a - b)
+  const half = gaps.reduce((sum, gap) => sum + gap, 0) / 2
+  let covered = 0
+  for (const gap of gaps) {
+    covered += gap
+    if (covered >= half) return gap
+  }
+  return null
 }
 
 /** How long a device may stay silent before it counts as offline; null: never by silence alone. */
