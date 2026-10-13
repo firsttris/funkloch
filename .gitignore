@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.output/
+.tanstack/
+.vite/
+data/
+*.db
+*.db-shm
+*.db-wal
+src/paraglide/
+test-results/
+playwright-report/
+coverage/
+recordings/
+.env
