@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { tempDb } from '~/db/test-db'
-import { type AuthOptions, handleAuth, hasAdmin } from './auth'
+import { type AuthOptions, handleAuth, hasAdmin, resetAdmin } from './auth'
 
 let cleanup = () => {}
 afterEach(() => cleanup())
@@ -75,6 +75,15 @@ describe('first start', () => {
     )
     expect(again?.headers.get('location')).toBe('/login')
     expect((await handleAuth(page('/setup'), options))?.headers.get('location')).toBe('/login')
+  })
+
+  test('a reset forgets the password and ends every session', async () => {
+    const { db, options } = setup()
+    const cookie = await signUp(options)
+    resetAdmin(db)
+    expect(hasAdmin(db)).toBe(false)
+    expect((await handleAuth(page('/', cookie), options))?.headers.get('location')).toBe('/setup')
+    expect(await signUp(options, 'a new password')).toMatch(/^funkloch_session=/)
   })
 })
 

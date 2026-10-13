@@ -21,6 +21,8 @@ export const configSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8090),
   DATA_DIR: z.string().min(1).default('./data'),
   FUNKLOCH_DEMO: flag,
+  /** Forget the admin password at start, for a forgotten one; remove it again afterwards */
+  FUNKLOCH_RESET_PASSWORD: flag,
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 })
 

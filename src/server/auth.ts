@@ -16,7 +16,7 @@ import {
 } from '~/core/auth'
 import { DAY } from '~/core/types'
 import type { Db } from '~/db/client'
-import { sessions } from '~/db/schema'
+import { sessions, settings } from '~/db/schema'
 import { getSetting, setSetting } from '~/db/store'
 
 const ADMIN_KEY = 'admin'
@@ -31,6 +31,12 @@ export const setAdminPassword = async (db: Db, password: string) =>
 export const verifyAdminPassword = async (db: Db, password: string) => {
   const admin = getSetting<Admin>(db, ADMIN_KEY)
   return admin ? Bun.password.verify(password, admin.hash) : false
+}
+
+/** Forgets the password and every session, so the next visit sets a new password (/setup) */
+export const resetAdmin = (db: Db) => {
+  db.delete(settings).where(eq(settings.key, ADMIN_KEY)).run()
+  db.delete(sessions).run()
 }
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex')

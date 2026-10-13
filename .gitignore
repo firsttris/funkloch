@@ -13,3 +13,4 @@ playwright-report/
 coverage/
 /recordings/
 .env
+/site/

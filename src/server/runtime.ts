@@ -12,6 +12,7 @@ import { type Db, openDb } from '~/db/client'
 import { createDemoAdapter } from '~/demo/adapter'
 import { seedDemo } from '~/demo/seed'
 import { startScheduler } from '~/jobs/scheduler'
+import { resetAdmin } from './auth'
 import { createIngest } from './ingest'
 import { createLiveFeed, type LiveFeed } from './live'
 import { createLog, type Log } from './log'
@@ -51,6 +52,10 @@ export const startRuntime = (config: Config): Runtime => {
   const log = createLog(config.LOG_LEVEL)
   const startedAt = Date.now()
   const db = openDatabase(config, startedAt)
+  if (config.FUNKLOCH_RESET_PASSWORD && !config.FUNKLOCH_DEMO) {
+    resetAdmin(db)
+    log.warn('FUNKLOCH_RESET_PASSWORD: password removed, set a new one at /setup, then unset it')
+  }
   const settingsDefaults = defaultsFrom(config)
   const settings = () => loadSettings(db, settingsDefaults)
   const adapters = config.FUNKLOCH_DEMO

@@ -11,6 +11,7 @@ One Docker container next to Zigbee2MQTT and your OTBR, read-only, no cloud, ope
 [![CI](https://github.com/firsttris/funkloch/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/funkloch/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/firsttris/funkloch?logo=github&label=release)](https://github.com/firsttris/funkloch/releases/latest)
 [![Docker image](https://img.shields.io/badge/docker-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/funkloch)
+[![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Ffunkloch-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/funkloch/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
 ```bash
@@ -22,7 +23,8 @@ docker run -d --name funkloch --network host -v funkloch-data:/data \
 [Features](#-features) •
 [Screenshots](#-screenshots) •
 [Alternatives](#-funkloch-and-the-alternatives) •
-[FAQ](#-faq)
+[FAQ](#-faq) •
+[Documentation](https://firsttris.github.io/funkloch/)
 
 <img src="docs/screenshots/devices.png" alt="Funkloch device list: Zigbee and Thread devices with signal bar, 24-hour sparkline, trend, last seen and parent device, worst first" width="900">
 
@@ -35,8 +37,8 @@ its neighbor table. Both are snapshots: they don't tell you that the sensor in t
 getting worse since Friday, or that the socket on the terrace drops every evening.
 
 - **History instead of a snapshot**: every message is kept, condensed to hourly medians for a year.
-- **Early warning**: falling trends, devices that go silent and parent changes stand out before a
-  device is gone.
+- **Early warning**: falling trends, devices that go silent, evenings that are always weak and
+  parent changes stand out before a device is gone, with a message by ntfy, webhook or MQTT.
 - **Both networks in one list**: Zigbee and Thread on one 0–100 % scale, each chart in its own raw
   unit (LQI, RSSI).
 - **Read-only**: Funkloch never switches, pairs or reconfigures anything.
@@ -53,6 +55,7 @@ Image=docker.io/tristanteu/funkloch:latest
 Network=host
 Volume=funkloch-data:/data
 Environment=ZIGBEE2MQTT_MQTT_URL=mqtt://localhost:1883
+Environment=OTBR_URL=http://localhost:8081
 Environment=TZ=Europe/Berlin
 AutoUpdate=registry
 
@@ -71,25 +74,27 @@ services:
       - funkloch-data:/data
     environment:
       ZIGBEE2MQTT_MQTT_URL: mqtt://localhost:1883
+      OTBR_URL: http://localhost:8081
       TZ: Europe/Berlin
     restart: unless-stopped
 volumes:
   funkloch-data:
 ```
 
-Then open `http://<host>:8090`. Each network is on when its variable is set:
+Then open `http://<host>:8090` and set the admin password. Each network is on when its variable is
+set:
 
 | Variable | Meaning | Default |
 |---|---|---|
 | `ZIGBEE2MQTT_MQTT_URL` | MQTT broker of Zigbee2MQTT, e.g. `mqtt://localhost:1883`; empty: Zigbee off | |
 | `ZIGBEE2MQTT_MQTT_USER`, `ZIGBEE2MQTT_MQTT_PASSWORD` | broker login | |
 | `ZIGBEE2MQTT_BASE_TOPIC` | Zigbee2MQTT base topic | `zigbee2mqtt` |
-| `ZIGBEE2MQTT_NETWORKMAP_HOURS` | hours between two network maps, at least 1 | `6` |
-| `OTBR_URL` | REST API of the OpenThread Border Router (Thread support follows) | |
+| `OTBR_URL` | REST API of the OpenThread Border Router, e.g. `http://localhost:8081`; empty: Thread off | |
 | `PORT` | port of the web UI | `8090` |
-| `DATA_DIR` | SQLite database | `/data` |
 | `TZ` | time zone for day boundaries | `UTC` |
 | `FUNKLOCH_DEMO` | `1` starts with a demo network instead | |
+
+Reverse proxy, backups, password reset and every variable: [installation guide](https://firsttris.github.io/funkloch/installation.html).
 
 ## ✨ Features
 
@@ -97,34 +102,45 @@ Then open `http://<host>:8090`. Each network is on when its variable is set:
 
 - **Traffic light** per device from the median of the last hour: good, fair, weak, offline.
 - **Sparkline** of the last 24 hours or 7 days, **trend** over 72 hours, last seen and the
-  **parent** it is connected through.
-- **Filter** by protocol; worst devices first.
+  **parent** it is connected through; worst devices first, filter by protocol.
+- **2.4 GHz energy scan**: interference per channel 11–26, the Zigbee and Thread channels marked.
 
 ### 📈 Device history
 
 - **Raw value chart** (LQI or RSSI): every message for 24 hours, hourly median with min–max band
   for 7 and 30 days, offline stretches and the weak threshold drawn in.
-- **Messages per hour**, **parent changes**, **connections** from the latest network map, and the
-  device's **events**.
+- **Messages per hour**, **parent changes**, **connections** and the device's **events**.
 
-### 🔌 Reachability
+### 🕸️ Network map and heatmap
 
-- **Offline** when Zigbee2MQTT says so, or when a device stays silent for three times its usual
-  interval (at least 30 minutes).
+- **Network map** of the Zigbee mesh and the Thread network: link quality on every line, a
+  device's way to the coordinator, older snapshots to compare.
+- **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
+  that drops every evening) and **slow declines** pointed out.
 
-### 🗄️ Storage
+### 🔔 Events and notifications
 
-- **One SQLite file**: raw readings for 14 days, hourly rollups for a year.
+- **Events**: offline and back, below threshold, falling trend, recurring pattern, parent or role
+  change, new or removed device, bridge offline, noisy channel; CSV export.
+- **Notifications** by **ntfy**, **webhook** (JSON) or **MQTT**, with a wait time for offline and
+  weak signal, one message per device and hour, in German or English.
 
-Network map, heatmap, Thread, events and notifications (ntfy, webhook, MQTT) follow; see the
-roadmap in the issues.
+### 🔒 Self-hosted
+
+- **Login** with one admin password (argon2), sessions in the database.
+- **One SQLite file**: raw readings for 14 days, hourly values for a year, both adjustable.
+- **German and English** interface, light and dark.
 
 ## 📸 Screenshots
 
 <table>
   <tr>
     <td><img src="docs/screenshots/device.png" alt="Funkloch device detail: LQI history of a Zigbee temperature sensor over 7 days with min–max band, offline stretch and weak threshold"></td>
-    <td><img src="docs/screenshots/devices-dark.png" alt="Funkloch device list in dark mode"></td>
+    <td><img src="docs/screenshots/network.png" alt="Funkloch network map of a Zigbee mesh: coordinator in the middle, routers and end devices, link quality on every line"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/heatmap-dark.png" alt="Funkloch heatmap in dark mode: signal quality of every Zigbee and Thread device by hour over 7 days, with a recurring evening dropout"></td>
+    <td><img src="docs/screenshots/events.png" alt="Funkloch events: offline, weak signal, falling trend and parent changes by day, with notification rules for ntfy, webhook and MQTT"></td>
   </tr>
 </table>
 
@@ -135,7 +151,8 @@ Funkloch is made for watching signal quality over time, not for controlling devi
 | | What it is | Where Funkloch differs |
 |---|---|---|
 | [Zigbee2MQTT frontend](https://www.zigbee2mqtt.io/guide/usage/frontend.html) | controls devices, shows current LQI and a network map | keeps the history and trends of every device |
-| [Home Assistant](https://www.home-assistant.io/) | home automation with entity history | linkquality history only per entity, nothing for Thread links |
+| [Home Assistant](https://www.home-assistant.io/) | home automation with entity history | linkquality history only per entity, no mesh history, nothing for Thread links |
+| [OTBR web UI](https://openthread.io/guides/border-router) | the border router's own pages | Thread topology and RSSI over time, next to Zigbee |
 | Prometheus + Grafana with an exporter | general monitoring | no setup of exporters and dashboards, Thread included |
 
 ## ❓ FAQ
@@ -149,10 +166,34 @@ are the Zigbee2MQTT network map (at most hourly, every 6 hours by default) and O
 
 Yes. Each network is on when its variable is set; with one network the protocol filter disappears.
 
+### Which Thread border routers work?
+
+Those running the OpenThread Border Router (ot-br-posix) with its REST API, including the Home
+Assistant add-on. Newer images give RSSI per device; older ones only the topology. Details:
+[Thread](https://firsttris.github.io/funkloch/thread.html).
+
+### How do I get notified when a Zigbee device goes offline?
+
+Set up ntfy, a webhook or MQTT under **Events → Notifications**. Funkloch waits 60 minutes by
+default, so a short dropout sends nothing. See [notifications](https://firsttris.github.io/funkloch/notifications.html).
+
 ### Can I try it without my own network?
 
 Yes: `docker run --rm -p 8090:8090 -e FUNKLOCH_DEMO=1 tristanteu/funkloch` starts with a demo
 network of 13 devices and 30 days of history.
+
+## 📚 Documentation
+
+The full documentation, with search, is at **[firsttris.github.io/funkloch](https://firsttris.github.io/funkloch/)**.
+
+| | |
+|---|---|
+| [Installation](https://firsttris.github.io/funkloch/installation.html) | Quadlet, Compose, variables, reverse proxy, backup, password reset |
+| [Zigbee2MQTT](https://firsttris.github.io/funkloch/zigbee2mqtt.html) | what Funkloch reads and the one request it sends |
+| [Thread (OTBR)](https://firsttris.github.io/funkloch/thread.html) | REST API, older images, names |
+| [Signal, trend and reachability](https://firsttris.github.io/funkloch/signal.html) | score formulas, traffic light, trend, offline rule, patterns |
+| [Events and notifications](https://firsttris.github.io/funkloch/notifications.html) | rules, ntfy, webhook and MQTT payload |
+| [Development](https://firsttris.github.io/funkloch/development.html) | building, checks, architecture, releases |
 
 ## 🛠️ Development
 
@@ -165,8 +206,9 @@ bun run demo          # http://localhost:8090 with the demo network
 ```
 
 Bun, TanStack Start (React), TanStack Router, Query and Table, Zod, SQLite with Drizzle, mqtt.js,
-Tailwind 4, uPlot, Paraglide (German and English). Checks and architecture: [CLAUDE.md](CLAUDE.md).
-Fixtures from your own network: [docs/recording.md](docs/recording.md).
+Tailwind 4, uPlot, d3-force, Paraglide (German and English). Architecture, tests and releases:
+[Development](https://firsttris.github.io/funkloch/development.html); fixtures from your own network:
+[Recording fixtures](https://firsttris.github.io/funkloch/recording.html).
 
 ## 🤝 Contributing
 

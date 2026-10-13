@@ -2,9 +2,14 @@
 
 ## Documentation
 
-The documentation is in `docs/` (<https://firsttris.github.io/funkloch/>, MkDocs Material follows
-with release 1.0). Read the pages that touch the change before starting:
-[docs/recording.md](docs/recording.md) for the fixture recorder. The implementation plan (architecture, data model, score
+The documentation is in `docs/` (<https://firsttris.github.io/funkloch/>, MkDocs Material, built
+and published by `.github/workflows/docs.yml`). Read the pages that touch the change before
+starting: [installation](docs/installation.md) (variables, proxy, password reset),
+[zigbee2mqtt](docs/zigbee2mqtt.md) and [thread](docs/thread.md) (what each adapter reads and
+sends), [signal](docs/signal.md) (score, traffic light, trend, reachability, patterns),
+[notifications](docs/notifications.md) (events, rules, payload),
+[development](docs/development.md) (architecture, test layers, releases) and
+[recording](docs/recording.md) (fixture recorder). The implementation plan (architecture, data model, score
 formulas, roadmap) is the Claude Docs page "Funkloch – Implementierungsplan"
 (<https://claude.ai/code/artifact/179f31f8-d644-46ab-9c72-2a9d550dc5b5>), the mockup of every page
 is <https://claude.ai/artifact/1pij6DRM1RCDewuDfF9HMp>; ask for them when a detail is not settled
@@ -49,6 +54,7 @@ bun run test                         # unit, contract and database tests (Vitest
 bun run build
 bun run e2e                          # Playwright, demo mode; needs the build
 MQTT_TEST_URL=mqtt://localhost:1883 bun run test:integration   # with a broker at hand
+mkdocs build --strict                # when docs/ or mkdocs.yml changed
 ```
 
 Outside the Playwright image, point Playwright at a local Chromium with
@@ -87,10 +93,11 @@ Technology choices follow `tech-stack.md` in firsttris/workflows. Deviations and
 Architecture rules:
 
 - Logic lives in pure functions in `src/core`, without a framework, with unit tests. Server
-  functions (`src/server/api.ts`) are thin adapters: fetch with `src/db/queries.ts`, shape with
-  `src/core`.
+  functions (`src/server/fn/*`) are thin adapters: views in `src/server/views` fetch with
+  `src/db/queries.ts` and shape with `src/core`; `tests/api` checks the views against the demo.
 - The core knows no protocols. Each adapter (`src/adapters/zigbee2mqtt`, `src/adapters/otbr`)
-  delivers devices, measurements and links as `Observation`s, and owns its score formula
+  delivers devices, measurements, links and channel scans as `Observation`s (a device list says
+  whether it is complete; Thread's never is), and owns its score formula
   (`meta.ts`, built from `linearScore` in the core) and its raw-value display.
 - An adapter is on when its environment variable is set (`ZIGBEE2MQTT_MQTT_URL`, `OTBR_URL`).
 - Zod at every boundary: environment (`src/config.ts`), MQTT payloads, OTBR answers, server
@@ -117,5 +124,15 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
   Zigbee, RSSI for Thread), which is why `hourly` keeps raw median, min and max as well.
 - Traffic light and trend run on hourly medians (the last 60 minutes for the current status),
   never on single readings.
+- Login: one admin password (argon2id), set at `/setup` on the first visit; `handleAuth` in
+  `src/server.ts` runs before the app, checks the session cookie and refuses cross-site writes.
+  The demo has no login. `FUNKLOCH_RESET_PASSWORD=1` forgets the password at start.
+- Notifications: events get a `delivery` state; `decide()` in `src/core/notify.ts` holds the rules,
+  `src/server/notify` the channels (ntfy, webhook, MQTT on the Zigbee2MQTT broker).
+- The demo must not depend on the hour it starts at beyond what the story needs (the terrace socket
+  is weak in the evening); after changing `src/demo`, seed it at many start times and compare the
+  events.
+- The OTBR schemas and `tests/fixtures/otbr-spec` follow the spec until recordings from a real
+  border router arrive; then the recordings decide.
 - Fixtures: `bun run record` on the user's server (see `docs/recording.md`); recordings go to
   `tests/fixtures/recordings/<version>/` next to older ones, never over them.

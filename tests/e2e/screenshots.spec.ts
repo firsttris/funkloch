@@ -20,5 +20,24 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.locator('canvas').first()).toBeVisible()
       await page.screenshot({ path: `${DIR}/device${suffix}.png`, fullPage: true })
     })
+
+    test('network map', async ({ page }) => {
+      await page.goto('/network')
+      await page.getByRole('link', { name: 'Temperatursensor Keller, End Device' }).click()
+      await expect(page.getByText('Hops zum Koordinator')).toBeVisible()
+      await page.screenshot({ path: `${DIR}/network${suffix}.png`, fullPage: true })
+    })
+
+    test('heatmap', async ({ page }) => {
+      await page.goto('/heatmap')
+      await expect(page.getByTestId('heat-row')).toHaveCount(13)
+      await page.screenshot({ path: `${DIR}/heatmap${suffix}.png`, fullPage: true })
+    })
+
+    test('events', async ({ page }) => {
+      await page.goto('/events')
+      await expect(page.getByTestId('event').first()).toBeVisible()
+      await page.screenshot({ path: `${DIR}/events${suffix}.png`, fullPage: true })
+    })
   })
 }

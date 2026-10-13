@@ -1,0 +1,60 @@
+site_name: Funkloch
+site_description: Signal history for Zigbee2MQTT and Thread devices, self-hosted
+site_url: https://firsttris.github.io/funkloch/
+repo_url: https://github.com/firsttris/funkloch
+repo_name: firsttris/funkloch
+edit_uri: edit/main/docs/
+copyright: AGPL-3.0 · © Tristan Teufel and contributors
+# installation.html instead of installation/, as the README links them
+use_directory_urls: false
+
+theme:
+  name: material
+  language: en
+  icon:
+    logo: material/access-point
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - Networks:
+      - Zigbee2MQTT: zigbee2mqtt.md
+      - Thread (OTBR): thread.md
+  - Using Funkloch:
+      - Signal, trend and reachability: signal.md
+      - Events and notifications: notifications.md
+  - Development:
+      - Development: development.md
+      - Recording fixtures: recording.md
