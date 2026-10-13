@@ -10,7 +10,7 @@ Images with the `/api` resources (ot-br-posix from 2024 on) give the most:
 
 | Every | Request | For |
 |---|---|---|
-| 15 min | `updateDeviceCollectionTask`, then `GET /api/devices` | the devices: extended address, role, host name from SRP, vendor and model where known |
+| 15 min | `updateDeviceCollectionTask`, then `GET /api/devices` | the devices: extended address, role and host name from SRP (the list carries no vendor or model) |
 | 15 min | `GET /node/dataset/active` | the channel (only the channel is read, never the keys) |
 | 5 min | `getNetworkDiagnosticTask` to each router (`routerNeighbors`, `children`) | one reading per device: RSSI and link margin as its parent or best neighbor hears it |
 | 1 h | the same diagnostics | the mesh for the network map |

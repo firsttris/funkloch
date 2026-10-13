@@ -1,5 +1,6 @@
-// A border router for tests: answers the REST resources Funkloch reads from the spec fixtures
-// (tests/fixtures/otbr-spec). Tasks complete on the first look.
+// A border router for tests: answers the REST resources Funkloch reads from the fixtures
+// (tests/fixtures/otbr-spec) and is as strict as ot-br-posix (main, 65a0ce9) about headers and
+// task attributes. Tasks complete on the first look.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -20,18 +21,78 @@ export type FakeOtbr = {
   failTasks: Set<string>
 }
 
-/** The numeric attributes each task requires (src/rest/actions/*.cpp Validate) */
-const REQUIRED: Record<string, string[]> = {
-  updateDeviceCollectionTask: ['maxAge', 'maxRetries', 'deviceCount', 'timeout'],
-  getNetworkDiagnosticTask: ['timeout'],
-  getEnergyScanTask: ['timeout', 'count', 'period', 'scanDuration'],
+const JSON_API = 'application/vnd.api+json'
+
+/**
+ * The border router compares the Accept header of /api requests as one string with these
+ * (src/rest/rest_web_server.cpp; an absent header arrives as "*\/*") and answers 406 otherwise.
+ */
+const ACCEPTED = ['*/*', JSON_API, 'application/json']
+
+/** The names getNetworkDiagnosticTask accepts in "types" (src/rest/diagnostic_types.hpp) */
+const DIAGNOSTIC_TYPES = new Set([
+  'extAddress',
+  'rloc16',
+  'mode',
+  'timeout',
+  'connectivity',
+  'route',
+  'leaderData',
+  'networkData',
+  'ipv6Addresses',
+  'macCounters',
+  'batteryLevel',
+  'supplyVoltage',
+  'childTable',
+  'channelPages',
+  'maxChildTimeout',
+  'lDevIdSubject',
+  'iDevIdCert',
+  'eui',
+  'threadVersion',
+  'vendorName',
+  'vendorModel',
+  'vendorSwVersion',
+  'threadStackVersion',
+  'children',
+  'childIpv6Addresses',
+  'routerNeighbors',
+  'mleCounters',
+])
+
+const isNumber = (value: unknown) => typeof value === 'number'
+
+/** An extended address (16 hex digits) or an RLOC16 like "0x5000" (action.cpp ReadDestination) */
+const isDestination = (value: unknown) =>
+  typeof value === 'string' && (value.length === 16 || value.length === 6)
+
+const isChannelMask = (value: unknown) =>
+  Array.isArray(value) && value.every((c) => isNumber(c) && c >= 11 && c <= 26)
+
+const isTypeList = (value: unknown) =>
+  Array.isArray(value) && value.every((t) => typeof t === 'string' && DIAGNOSTIC_TYPES.has(t))
+
+/** Each task's Validate in src/rest/actions/*.cpp; an unknown task is invalid */
+const VALIDATE: Record<string, (a: Record<string, unknown>) => boolean> = {
+  updateDeviceCollectionTask: (a) =>
+    isNumber(a.maxAge) && isNumber(a.maxRetries) && isNumber(a.deviceCount) && isNumber(a.timeout),
+  getNetworkDiagnosticTask: (a) =>
+    isNumber(a.timeout) && isDestination(a.destination) && isTypeList(a.types),
+  getEnergyScanTask: (a) =>
+    isNumber(a.timeout) &&
+    isDestination(a.destination) &&
+    isChannelMask(a.channelMask) &&
+    isNumber(a.count) &&
+    isNumber(a.period) &&
+    isNumber(a.scanDuration),
 }
 
 const valid = (task: Item) =>
-  (REQUIRED[task.type] ?? []).every((key) => typeof task.attributes[key] === 'number')
+  typeof task.attributes === 'object' && (VALIDATE[task.type]?.(task.attributes) ?? false)
 
 export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
   const devices = fixture('devices.json')
+  const deviceIds = new Set((devices.data as Item[]).map((d) => d.id))
   const diagnostics: Item[] = fixture('diagnostics.json').data
   const legacy = variant === 'legacy' ? fixture('legacy-diagnostics.json') : null
   const actions = new Map<string, Item & { relationships?: unknown }>()
@@ -63,18 +124,26 @@ export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
       if (pathname === '/node/dataset/active') return Response.json({ Channel: 15 })
       return new Response('Not Found', { status: 404 })
     }
+    if (pathname.startsWith('/api/') && !ACCEPTED.includes(request.headers.get('accept') ?? '*/*'))
+      return new Response('Not Acceptable', { status: 406 })
     if (pathname === '/api/devices') return Response.json(devices)
     if (pathname === '/node/dataset/active')
       return Response.json({ channel: 25, networkKey: 'secret' })
     if (pathname === '/api/actions' && request.method === 'POST') {
-      if (request.headers.get('content-type') !== 'application/vnd.api+json')
-        return new Response('Unsupported Media Type', { status: 415 })
+      const contentType = request.headers.get('content-type')
+      if (!contentType) return new Response('Not Acceptable', { status: 406 })
+      if (contentType !== JSON_API) return new Response('Unsupported Media Type', { status: 415 })
       const body = (await request.json()) as { data: Item[] }
       // The whole list is refused when one task lacks a required attribute (rest_web_server.cpp)
       if (!body.data.every(valid)) return new Response('Unprocessable', { status: 422 })
       const items = body.data.map((task) => {
         const id = crypto.randomUUID()
-        const failed = failTasks.has(task.type)
+        // An extended address must name a device of the collection (services.cpp LookupAddress)
+        const unknown =
+          typeof task.attributes.destination === 'string' &&
+          task.attributes.destination.length === 16 &&
+          !deviceIds.has(task.attributes.destination)
+        const failed = failTasks.has(task.type) || unknown
         const result = failed ? undefined : resultOf(task)
         const item = {
           id,

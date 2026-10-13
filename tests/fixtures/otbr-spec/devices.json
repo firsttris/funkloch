@@ -9,8 +9,7 @@
         "extAddress": "96518e5497d5b9f3",
         "hostname": "otbr.local",
         "role": "leader",
-        "mode": { "fullThreadDevice": true, "rxOnWhenIdle": true, "fullNetworkData": true },
-        "networkName": "OpenThread-1234"
+        "mode": { "fullThreadDevice": true, "rxOnWhenIdle": true, "fullNetworkData": true }
       }
     },
     {
@@ -31,9 +30,7 @@
         "rloc16": "0x5001",
         "extAddress": "f2f307043724e8d0",
         "role": "child",
-        "mode": { "fullThreadDevice": false, "rxOnWhenIdle": false, "fullNetworkData": false },
-        "vendorName": "Eve",
-        "vendorModel": "Door & Window"
+        "mode": { "fullThreadDevice": false, "rxOnWhenIdle": false, "fullNetworkData": false }
       }
     },
     {

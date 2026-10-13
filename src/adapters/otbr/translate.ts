@@ -45,8 +45,9 @@ export const toDeviceInfo = (item: DeviceItem): DeviceInfo => {
     address,
     name: nameOf(item, address),
     role,
-    model: item.attributes.vendorModel ?? null,
-    vendor: item.attributes.vendorName ?? null,
+    // The device collection carries no vendor or model (src/rest/json.cpp DeviceInfo2Json)
+    model: null,
+    vendor: null,
     power: role === 'sleepy_end_device' ? 'battery' : role === 'unknown' ? 'unknown' : 'mains',
     networkAddress: item.attributes.rloc16 ?? null,
   }

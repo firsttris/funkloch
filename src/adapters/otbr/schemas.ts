@@ -18,15 +18,12 @@ export const deviceItemSchema = z.looseObject({
     rloc16: z.string().optional(),
     role: z.string().optional(),
     hostname: z.string().optional(),
-    eui: z.string().optional(),
     mode: z
       .looseObject({
         rxOnWhenIdle: z.boolean().optional(),
         fullThreadDevice: z.boolean().optional(),
       })
       .optional(),
-    vendorName: z.string().optional(),
-    vendorModel: z.string().optional(),
   }),
 })
 

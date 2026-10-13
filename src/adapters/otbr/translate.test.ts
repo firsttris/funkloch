@@ -47,8 +47,8 @@ describe('toDeviceInfo', () => {
         name: 'f2f307043724e8d0',
         role: 'sleepy_end_device',
         power: 'battery',
-        vendor: 'Eve',
-        model: 'Door & Window',
+        vendor: null,
+        model: null,
       },
       { address: '0011223344556677', role: 'end_device' },
     ])
