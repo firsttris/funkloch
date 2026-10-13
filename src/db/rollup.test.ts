@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { HOUR, MINUTE } from '~/core/types'
+import { storeChannelScan } from './channels'
 import { checkReachability } from './reachability'
 import { applyRetention } from './retention'
 import { rollupPending } from './rollup'
-import { devices, events, hourly, samples } from './schema'
+import { channelScans, devices, events, hourly, samples } from './schema'
 import { addEvent, applyDevices, storeBatch } from './store'
 import { tempDb } from './test-db'
 
@@ -119,6 +120,16 @@ describe('checkReachability', () => {
 })
 
 describe('applyRetention', () => {
+  test('drops energy scans after the hourly retention', () => {
+    const db = setup()
+    storeChannelScan(db, T0, [{ channel: 11, energy: -60 }])
+    storeChannelScan(db, T0 + 300 * 24 * HOUR, [{ channel: 11, energy: -62 }])
+    applyRetention(db, T0 + 400 * 24 * HOUR)
+    expect(db.select().from(channelScans).all()).toEqual([
+      { ts: T0 + 300 * 24 * HOUR, channel: 11, energy: -62 },
+    ])
+  })
+
   test('drops raw samples after 14 days and keeps the hourly rows', () => {
     const db = setup()
     storeBatch(db, [sample(T0, 50), sample(T0 + 20 * 24 * HOUR, 50)], [])

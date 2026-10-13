@@ -28,7 +28,7 @@ export const Checkbox = ({
 }: ComponentProps<'input'> & { label: string; children?: ReactNode }) => (
   <div className={cn('flex min-h-10 items-center gap-2.5 text-[13px]', className)}>
     <label className="flex cursor-pointer items-center gap-2.5">
-      <input type="checkbox" className="size-[18px] accent-primary" {...props} />
+      <input type="checkbox" className="size-[18px] shrink-0 accent-primary" {...props} />
       {label}
     </label>
     {children}

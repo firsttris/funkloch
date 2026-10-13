@@ -14,6 +14,9 @@ export type OtbrOptions = {
   onMode?: (mode: 'api' | 'legacy') => void
 }
 
+/** Failed cycles in a row before the border router counts as offline (one lost answer is not) */
+export const OFFLINE_AFTER = 3
+
 /** Polls the border router's REST API; a cycle never overlaps the one before. */
 export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
   let status: AdapterStatus = { connected: false, error: null, since: null }
@@ -32,6 +35,14 @@ export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
     let again = false
     let stopped = false
     let mode: 'api' | 'legacy' | null = null
+    let failures = 0
+    /** What the bridge events last said; null before the first answer or verdict */
+    let reported: boolean | null = null
+    const report = (online: boolean) => {
+      if (reported === online) return
+      reported = online
+      emit({ kind: 'bridge', protocol: threadMeta.id, ts: Date.now(), online })
+    }
 
     const run = (): void => {
       if (stopped) return
@@ -43,10 +54,14 @@ export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
         .cycle()
         .then((result) => {
           if (result.ok) {
+            failures = 0
+            report(true)
             if (!status.connected) status = { connected: true, error: null, since: Date.now() }
             if (mode !== result.value) options.onMode?.(result.value)
             mode = result.value
           } else {
+            failures++
+            if (failures >= OFFLINE_AFTER) report(false)
             if (status.connected || status.error === null) options.onProblem?.(result.error)
             status = {
               connected: false,

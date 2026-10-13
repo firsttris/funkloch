@@ -212,8 +212,8 @@
   "rule_trend": "Trend 3 Tage fallend",
   "rule_pattern": "Wiederkehrendes Muster",
   "rule_topology": "Parent- oder Rollenwechsel",
-  "rule_network": "Neues oder entferntes Gerät, Bridge offline",
-  "channels_title": "Störpegel 2,4 GHz",
+  "rule_network": "Neues oder entferntes Gerät, Bridge offline, gestörter Kanal",
+  "channels_title": "Kanäle",
   "channel_ntfy_server": "ntfy-Server",
   "channel_ntfy_topic": "ntfy-Topic",
   "channel_ntfy_token": "ntfy-Token (optional)",
@@ -273,8 +273,9 @@
   "settings_password_changed": "Passwort geändert. Andere Browser müssen sich neu anmelden.",
   "settings_password_wrong": "Das aktuelle Passwort stimmt nicht.",
   "settings_password_demo": "Im Demo-Modus gibt es keine Anmeldung.",
-  "channels_source": "Energy-Scan · {ago}",
-  "channels_label": "Störpegel je Kanal 11 bis 26 in dBm: {values}",
-  "channels_network": "{protocol} · Kanal {channel}",
-  "channels_busy": "WLAN-Überlagerung"
+  "energy_source": "Energy-Scan · {ago}",
+  "energy_label": "Störpegel je Kanal 11 bis 26 in dBm: {values}",
+  "energy_network": "{protocol} · Kanal {channel}",
+  "energy_busy": "WLAN-Überlagerung",
+  "energy_title": "Störpegel 2,4 GHz"
 }

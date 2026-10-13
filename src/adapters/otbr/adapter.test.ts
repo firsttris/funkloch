@@ -61,4 +61,32 @@ describe('OTBR adapter', () => {
     expect(topologies).toHaveLength(2)
     await stop()
   })
+
+  test('the border router counts as offline after three failed cycles, then back', async () => {
+    const otbr = createFakeOtbr()
+    const adapter = createOtbrAdapter({
+      url: 'http://otbr.test:8081',
+      fetcher: otbr.fetch,
+      taskPollMs: 0,
+      cycleMs: 10,
+    })
+    const bridge: boolean[] = []
+    const stop = adapter.start((o) => {
+      if (o.kind === 'bridge') bridge.push(o.online)
+    })
+    await until(() => bridge.length === 1)
+    otbr.fail.set('/api/devices', 503)
+    otbr.fail.set('/api/actions', 503)
+    // the devices are due again only after 15 minutes: a requested map hits the failing actions
+    for (let i = 0; i < 3; i++) {
+      adapter.requestTopology?.()
+      await new Promise((r) => setTimeout(r, 20))
+    }
+    await until(() => bridge.length === 2)
+    otbr.fail.clear()
+    adapter.requestTopology?.()
+    await until(() => bridge.length === 3)
+    expect(bridge).toEqual([true, false, true])
+    await stop()
+  })
 })

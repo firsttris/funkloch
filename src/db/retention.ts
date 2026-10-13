@@ -1,7 +1,7 @@
 import { lt } from 'drizzle-orm'
 import { DAY } from '~/core/types'
 import type { Db } from './client'
-import { events, hourly, samples, snapshots } from './schema'
+import { channelScans, events, hourly, samples, snapshots } from './schema'
 
 export type Retention = { samplesDays: number; hourlyDays: number }
 
@@ -20,6 +20,9 @@ export const applyRetention = (db: Db, now: number, retention = DEFAULT_RETENTIO
     .run()
   db.delete(events)
     .where(lt(events.ts, now - retention.hourlyDays * DAY))
+    .run()
+  db.delete(channelScans)
+    .where(lt(channelScans.ts, now - retention.hourlyDays * DAY))
     .run()
   const sqlite = db.$client
   const { freelist_count: free } = sqlite.query('pragma freelist_count').get() as {

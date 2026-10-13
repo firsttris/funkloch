@@ -212,8 +212,8 @@
   "rule_trend": "Trend falling for 3 days",
   "rule_pattern": "Recurring pattern",
   "rule_topology": "Parent or role change",
-  "rule_network": "New or removed device, bridge offline",
-  "channels_title": "2.4 GHz interference",
+  "rule_network": "New or removed device, bridge offline, noisy channel",
+  "channels_title": "Channels",
   "channel_ntfy_server": "ntfy server",
   "channel_ntfy_topic": "ntfy topic",
   "channel_ntfy_token": "ntfy token (optional)",
@@ -273,8 +273,9 @@
   "settings_password_changed": "Password changed. Other browsers have to sign in again.",
   "settings_password_wrong": "The current password is wrong.",
   "settings_password_demo": "The demo has no login.",
-  "channels_source": "Energy scan · {ago}",
-  "channels_label": "Interference per channel 11 to 26 in dBm: {values}",
-  "channels_network": "{protocol} · channel {channel}",
-  "channels_busy": "Wi-Fi overlap"
+  "energy_source": "Energy scan · {ago}",
+  "energy_label": "Interference per channel 11 to 26 in dBm: {values}",
+  "energy_network": "{protocol} · channel {channel}",
+  "energy_busy": "Wi-Fi overlap",
+  "energy_title": "2.4 GHz interference"
 }

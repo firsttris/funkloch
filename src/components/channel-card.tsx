@@ -37,16 +37,16 @@ export const ChannelCard = ({ channels, now }: { channels: Channels; now: number
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 id="channels-title" className="m-0 text-sm font-semibold">
-          {m.channels_title()}
+          {m.energy_title()}
         </h2>
         <span className="text-xs text-foreground-subtle">
-          {m.channels_source({ ago: ago(channels.ts, now) })}
+          {m.energy_source({ ago: ago(channels.ts, now) })}
         </span>
       </div>
       <div className="flex flex-col gap-1">
         <div
           role="img"
-          aria-label={m.channels_label({ values: described })}
+          aria-label={m.energy_label({ values: described })}
           className="flex h-[90px] items-end gap-1 border-b border-border"
         >
           {channels.bars.map((bar) => (
@@ -80,12 +80,12 @@ export const ChannelCard = ({ channels, now }: { channels: Channels; now: number
         {channels.networks.map((n) => (
           <span key={n.protocol} className="inline-flex items-center gap-1.5">
             <Swatch color={networkColor(n.protocol)} />
-            {m.channels_network({ protocol: n.label, channel: n.channel })}
+            {m.energy_network({ protocol: n.label, channel: n.channel })}
           </span>
         ))}
         <span className="inline-flex items-center gap-1.5">
           <Swatch color="var(--channel-busy)" />
-          {m.channels_busy()}
+          {m.energy_busy()}
         </span>
       </div>
     </section>

@@ -23,6 +23,7 @@ test.afterAll(() => server.close())
 test('rules and channels are saved and a test message reaches the webhook', async ({ page }) => {
   const port = (server.address() as AddressInfo).port
   await page.goto('/events')
+  await expect(page.getByText('Kanäle', { exact: true })).toBeVisible()
   const topology = page.getByRole('checkbox', { name: 'Parent- oder Rollenwechsel' })
   await expect(topology).not.toBeChecked()
   await topology.check()
