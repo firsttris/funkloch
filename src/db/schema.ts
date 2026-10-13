@@ -132,7 +132,8 @@ export const events = sqliteTable(
     deviceId: integer('device_id').references(() => devices.id, { onDelete: 'cascade' }),
     /** Values for the localized text, as JSON */
     details: text('details', { mode: 'json' }).$type<EventDetails>(),
-    notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
+    /** Notification state: null pending, sent, skipped (rule off, too old, duplicate) or failed */
+    delivery: text('delivery'),
   },
   (t) => [index('events_ts').on(t.ts), index('events_device_ts').on(t.deviceId, t.ts)],
 )

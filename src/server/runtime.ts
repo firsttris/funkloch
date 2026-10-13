@@ -15,6 +15,9 @@ import { startScheduler } from '~/jobs/scheduler'
 import { createIngest } from './ingest'
 import { createLiveFeed, type LiveFeed } from './live'
 import { createLog, type Log } from './log'
+import type { MqttPublisher } from './notify/channels'
+import { createMqttPublisher } from './notify/mqtt'
+import { runNotifications } from './notify/notifier'
 import { defaultsFrom, loadSettings } from './settings'
 import type { ViewContext } from './views/context'
 
@@ -28,6 +31,8 @@ export type Runtime = {
   viewContext: () => ViewContext
   /** Tells the open pages what changed */
   live: LiveFeed
+  /** Publishes notifications on the Zigbee2MQTT broker, if there is one */
+  mqttPublish: MqttPublisher | null
   stop: () => Promise<void>
 }
 
@@ -56,7 +61,24 @@ export const startRuntime = (config: Config): Runtime => {
   const settings = () => loadSettings(db, settingsDefaults)
   const ingest = createIngest(db, log)
   const stopAdapters = adapters.map((adapter) => adapter.start(ingest.emit))
-  const stopScheduler = startScheduler(db, log, settings)
+  const mqttOut = config.ZIGBEE2MQTT_MQTT_URL
+    ? createMqttPublisher({
+        url: config.ZIGBEE2MQTT_MQTT_URL,
+        username: config.ZIGBEE2MQTT_MQTT_USER,
+        password: config.ZIGBEE2MQTT_MQTT_PASSWORD,
+      })
+    : null
+  let notifying = false
+  const notify = (now: number) => {
+    if (notifying) return
+    notifying = true
+    runNotifications(db, now, settings(), mqttOut?.publish ?? null, log)
+      .catch((error) => log.error({ err: error }, 'notifications failed'))
+      .finally(() => {
+        notifying = false
+      })
+  }
+  const stopScheduler = startScheduler(db, log, settings, { minutely: notify })
   const live = createLiveFeed(db)
   log.info(
     {
@@ -72,11 +94,22 @@ export const startRuntime = (config: Config): Runtime => {
   const stop = async () => {
     live.stop()
     stopScheduler()
+    await mqttOut?.close()
     await Promise.all(stopAdapters.map((stopAdapter) => stopAdapter()))
     ingest.stop()
     db.$client.close()
   }
-  return { config, db, log, adapters, startedAt, viewContext, live, stop }
+  return {
+    config,
+    db,
+    log,
+    adapters,
+    startedAt,
+    viewContext,
+    live,
+    mqttPublish: mqttOut?.publish ?? null,
+    stop,
+  }
 }
 
 // Kept on globalThis so a hot reload in dev does not start a second set of adapters

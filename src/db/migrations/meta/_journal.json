@@ -15,6 +15,20 @@
       "when": 1791874939813,
       "tag": "0001_event_state",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791875721770,
+      "tag": "0002_event_delivery",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791875722576,
+      "tag": "0003_drop_notified",
+      "breakpoints": true
     }
   ]
 }

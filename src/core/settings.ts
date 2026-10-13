@@ -34,6 +34,10 @@ export const settingsSchema = z
       network: rule({}),
       pattern: rule({}),
     }),
+    /** Language of the notifications */
+    language: z.enum(['de', 'en']),
+    /** Address of this Funkloch, for links in notifications; empty: no links */
+    publicUrl: z.url().or(z.literal('')),
     channels: z.object({
       ntfy: z.object({
         server: z.url().or(z.literal('')),
@@ -60,6 +64,8 @@ export const DEFAULT_SETTINGS: Settings = {
     network: { enabled: true },
     pattern: { enabled: true },
   },
+  language: 'de',
+  publicUrl: '',
   channels: {
     ntfy: { server: 'https://ntfy.sh', topic: '', token: '' },
     webhook: { url: '' },

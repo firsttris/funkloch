@@ -63,9 +63,18 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
     }
   }
 
+  // Samples are keyed by device and millisecond; a burst within one millisecond moves on by 1 ms
+  const lastTs = new Map<string, number>()
+  const uniqueTs = (measurement: Measurement): Measurement => {
+    const key = `${measurement.protocol}|${measurement.address}`
+    const ts = Math.max(measurement.ts, (lastTs.get(key) ?? -1) + 1)
+    lastTs.set(key, ts)
+    return ts === measurement.ts ? measurement : { ...measurement, ts }
+  }
+
   const emit = (observation: Observation) => {
     if (observation.kind === 'measurement') {
-      measurements.push(observation.measurement)
+      measurements.push(uniqueTs(observation.measurement))
       return
     }
     if (observation.kind === 'seen') {

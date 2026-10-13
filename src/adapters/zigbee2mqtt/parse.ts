@@ -180,6 +180,8 @@ export const parseMessage = (
 ): ParseResult => {
   const prefix = `${ctx.baseTopic}/`
   if (!topic.startsWith(prefix)) return { observations: [] }
+  // An empty payload clears a retained topic (device renamed or removed, bridge restarted)
+  if (text === '') return { observations: [] }
   const rest = topic.slice(prefix.length)
   const payload = parseJson(text)
 
@@ -191,8 +193,7 @@ export const parseMessage = (
   if (rest.endsWith(AVAILABILITY_SUFFIX)) {
     const name = rest.slice(0, -AVAILABILITY_SUFFIX.length)
     const owner = ctx.byName.get(name)
-    // An empty payload clears the retained topic when a device is renamed or removed
-    if (!owner || text === '') return { observations: [] }
+    if (!owner) return { observations: [] }
     const result = availabilitySchema.safeParse(payload)
     if (!result.success) return invalid(topic, result.error)
     return {

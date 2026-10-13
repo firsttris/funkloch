@@ -119,6 +119,10 @@ describe('parseMessage', () => {
     expect(legacy.observations[0]).toMatchObject({ report: { online: true } })
   })
 
+  test('an empty payload clears a retained topic and is ignored, without a schema warning', () => {
+    expect(parseMessage(ctx, 'zigbee2mqtt/bridge/devices', '', true)).toEqual({ observations: [] })
+  })
+
   test('an empty availability payload clears the topic and is ignored', () => {
     expect(
       parseMessage(ctx, 'zigbee2mqtt/Küche/Lampe/availability', '', true).observations,
