@@ -218,7 +218,7 @@ function DevicesPage() {
             label={m.kpi_weak()}
             value={data.counts.weak}
             tone={data.counts.weak > 0 ? 'weak' : undefined}
-            hint={m.kpi_weak_hint()}
+            hint={m.kpi_weak_hint({ weak: data.thresholds.weak })}
           />
           <KpiCard
             label={m.kpi_down()}
@@ -306,7 +306,9 @@ function DevicesPage() {
 
           <div className="flex flex-wrap gap-x-6 gap-y-1.5 px-[18px] py-3 text-xs text-foreground-subtle">
             <span>{m.table_footer_scale()}</span>
-            <span>{m.table_footer_bands()}</span>
+            <span>
+              {m.table_footer_bands({ ...data.thresholds, mid: data.thresholds.good - 1 })}
+            </span>
             <span>{m.table_footer_click()}</span>
           </div>
         </Card>

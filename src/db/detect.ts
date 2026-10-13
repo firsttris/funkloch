@@ -2,12 +2,13 @@
 // with the same data makes no second event.
 import { and, eq, gte, isNull, lt, notInArray } from 'drizzle-orm'
 import { signalTransition, trendTransition } from '~/core/events'
+import { findPattern, PATTERN_DAYS } from '~/core/patterns'
 import type { Thresholds } from '~/core/score'
 import { trend } from '~/core/trend'
 import { DAY, MINUTE, type Trend } from '~/core/types'
 import type { Db } from './client'
 import { INFRASTRUCTURE_ROLES } from './reachability'
-import { devices, hourly, samples } from './schema'
+import { devices, events, hourly, samples } from './schema'
 import { addEvent } from './store'
 
 const listed = (db: Db) =>
@@ -118,4 +119,52 @@ export const detectTrends = (db: Db, now: number) => {
     }
   })
   return changed
+}
+
+/**
+ * Recurring weak hours (e.g. every evening): run once a day; a pattern already reported for the
+ * device in the last week is not reported again.
+ */
+export const detectPatterns = (
+  db: Db,
+  now: number,
+  thresholds: Thresholds,
+  hourOfDay: (ts: number) => number = (ts) => new Date(ts).getHours(),
+) => {
+  const from = now - PATTERN_DAYS * DAY
+  const rows = db
+    .select({
+      deviceId: hourly.deviceId,
+      hour: hourly.hour,
+      median: hourly.median,
+      offlineMinutes: hourly.offlineMinutes,
+      count: hourly.count,
+    })
+    .from(hourly)
+    .where(gte(hourly.hour, from))
+    .all()
+  const byDevice = Map.groupBy(rows, (r) => r.deviceId)
+  const reported = new Set(
+    db
+      .select({ deviceId: events.deviceId, details: events.details })
+      .from(events)
+      .where(and(eq(events.type, 'pattern'), gte(events.ts, from)))
+      .all()
+      .map((e) => `${e.deviceId}:${e.details?.from}-${e.details?.to}`),
+  )
+  let found = 0
+  for (const device of listed(db)) {
+    const pattern = findPattern(byDevice.get(device.id) ?? [], now, thresholds, hourOfDay)
+    if (!pattern || reported.has(`${device.id}:${pattern.from}-${pattern.to}`)) continue
+    found++
+    addEvent(db, {
+      ts: now,
+      kind: 'signal',
+      type: 'pattern',
+      protocol: device.protocol,
+      deviceId: device.id,
+      details: { ...pattern },
+    })
+  }
+  return found
 }

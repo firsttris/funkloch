@@ -2,6 +2,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { deviceView } from '~/server/views/device'
 import { eventsCsv, eventsView } from '~/server/views/events'
+import { heatmapView } from '~/server/views/heatmap'
 import { networkView } from '~/server/views/network'
 import { overviewView } from '~/server/views/overview'
 import { seeded } from './helpers'
@@ -157,8 +158,8 @@ describe('network', () => {
 describe('events', () => {
   test('lists the demo events, newest first, with counts per kind', () => {
     const view = eventsView(env.context, 'all', 30)
-    expect(view.counts).toMatchObject({ all: 8, offline: 3, signal: 3, topology: 2, network: 0 })
-    expect(view.events).toHaveLength(8)
+    expect(view.counts).toMatchObject({ all: 9, offline: 3, signal: 4, topology: 2, network: 0 })
+    expect(view.events).toHaveLength(9)
     const times = view.events.map((e) => e.ts)
     expect(times).toEqual([...times].sort((a, b) => b - a))
     expect(view.events.find((e) => e.type === 'parent_changed')?.device).toBe(
@@ -170,14 +171,43 @@ describe('events', () => {
     expect(eventsView(env.context, 'topology', 30).events.every((e) => e.kind === 'topology')).toBe(
       true,
     )
-    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(8)
+    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(9)
   })
 
   test('the CSV has a header, one line per event and quotes JSON', () => {
     const csv = eventsCsv(env.context, 'all', 30)
     const lines = csv.trim().split('\n')
     expect(lines[0]).toBe('time,kind,type,protocol,device,address,details')
-    expect(lines).toHaveLength(9)
+    expect(lines).toHaveLength(10)
     expect(csv).toContain('"{""from"":""Steckdose Wohnzimmer"",""to"":""Rollladen Schlafzimmer""}"')
+  })
+})
+
+describe('heatmap', () => {
+  test('one row per device with one cell per hour, worst first', () => {
+    const view = heatmapView(env.context, 7)
+    expect(view.rows).toHaveLength(13)
+    for (const row of view.rows) expect(row.cells).toHaveLength(7 * 24)
+    expect(view.rows[0]?.name).toBe('Türsensor Garage')
+    expect(view.rows.at(-1)?.cells).toMatch(/^g+$/)
+    expect(heatmapView(env.context, 30).rows[0]?.cells).toHaveLength(30 * 24)
+  })
+
+  test('the offline stretches show as o, the evening dips of the terrace as w', () => {
+    const view = heatmapView(env.context, 7)
+    const cellar = view.rows.find((r) => r.name === 'Temperatursensor Keller')
+    expect(cellar?.cells).toMatch(/o{5,6}/)
+    const terrace = view.rows.find((r) => r.name === 'Steckdose Terrasse')
+    expect(terrace?.cells.match(/w+/g)?.length).toBeGreaterThanOrEqual(5)
+  })
+
+  test('the findings name the pattern, the falling trends and the outage', () => {
+    const { findings } = heatmapView(env.context, 7)
+    expect(findings.patterns).toMatchObject([{ name: 'Steckdose Terrasse', from: 19, to: 23 }])
+    expect(findings.falling.map((f) => f.name).sort()).toEqual([
+      'Steckdose Terrasse',
+      'Temperatursensor Keller',
+    ])
+    expect(findings.offline.map((f) => f.name)).toEqual(['Türsensor Garage'])
   })
 })

@@ -19,6 +19,7 @@ export const overviewView = (
   return {
     now,
     range,
+    thresholds: settings.thresholds,
     adapters: states,
     protocols: protocolInfo(protocolIds),
     counts: overview.counts,

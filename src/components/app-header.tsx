@@ -39,6 +39,7 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
       active: pathname === '/' || pathname.startsWith('/devices'),
     },
     { to: '/network', label: m.nav_network(), active: pathname.startsWith('/network') },
+    { to: '/heatmap', label: m.nav_heatmap(), active: pathname.startsWith('/heatmap') },
     { to: '/events', label: m.nav_events(), active: pathname.startsWith('/events') },
   ] as const
   return (

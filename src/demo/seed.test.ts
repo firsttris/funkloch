@@ -48,6 +48,7 @@ describe('seedDemo', () => {
       'parent_changed',
       'trend_down',
       'trend_down',
+      'pattern',
       'signal_weak',
     ])
   })

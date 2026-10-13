@@ -259,3 +259,26 @@ export const eventCounts = (db: Db, from: number) =>
       .all()
       .map((r) => [r.kind, r.count]),
   )
+
+/** Hourly cells of every device since `from` */
+export const hourlyCells = (db: Db, from: number) =>
+  db
+    .select({
+      deviceId: hourly.deviceId,
+      hour: hourly.hour,
+      median: hourly.median,
+      offlineMinutes: hourly.offlineMinutes,
+      count: hourly.count,
+    })
+    .from(hourly)
+    .where(gte(hourly.hour, from))
+    .all()
+
+/** Events of one type since `from`, newest first */
+export const eventsOfType = (db: Db, type: string, from: number) =>
+  db
+    .select()
+    .from(events)
+    .where(and(eq(events.type, type), gte(events.ts, from)))
+    .orderBy(desc(events.ts))
+    .all()

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { getRuntime } from '../runtime'
 import { deviceView } from '../views/device'
 import { eventsView } from '../views/events'
+import { heatmapView } from '../views/heatmap'
 import { networkView } from '../views/network'
 import { overviewView } from '../views/overview'
 
@@ -50,3 +51,7 @@ export const getEvents = createServerFn({ method: 'GET' })
     }),
   )
   .handler(({ data }) => eventsView(getRuntime().viewContext(), data.kind, data.days))
+
+export const getHeatmap = createServerFn({ method: 'GET' })
+  .validator(z.object({ days: z.union([z.literal(7), z.literal(30)]) }))
+  .handler(({ data }) => heatmapView(getRuntime().viewContext(), data.days))

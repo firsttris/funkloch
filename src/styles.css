@@ -32,6 +32,12 @@
   --chart-axis: #a1a1aa;
   --chart-gap: #e4e4e7;
   --chart-bar: #52525b;
+
+  --heat-good: #bbf7d0;
+  --heat-mid: #facc15;
+  --heat-weak: #dc2626;
+  --heat-offline: #3f3f46;
+  --heat-none: #f4f4f5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -64,6 +70,12 @@
     --chart-axis: #71717a;
     --chart-gap: #27272a;
     --chart-bar: #a1a1aa;
+
+    --heat-good: #166534;
+    --heat-mid: #ca8a04;
+    --heat-weak: #ef4444;
+    --heat-offline: #d4d4d8;
+    --heat-none: #27272a;
   }
 }
 

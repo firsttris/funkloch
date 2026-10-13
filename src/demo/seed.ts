@@ -3,7 +3,7 @@ import { signalFormat } from '~/adapters/registry'
 import { DEFAULT_SETTINGS } from '~/core/settings'
 import { DAY, HOUR } from '~/core/types'
 import type { Db } from '~/db/client'
-import { detectSignal, detectTrends } from '~/db/detect'
+import { detectPatterns, detectSignal, detectTrends } from '~/db/detect'
 import { checkReachability } from '~/db/reachability'
 import { applyRetention } from '~/db/retention'
 import { rollupPending } from '~/db/rollup'
@@ -56,6 +56,7 @@ export const seedDemo = (db: Db, now: number) => {
   rollupPending(db, now, (HISTORY_DAYS + 1) * DAY)
   checkReachability(db, now)
   detectTrends(db, now)
+  detectPatterns(db, now, DEFAULT_SETTINGS.thresholds)
   detectSignal(
     db,
     now,

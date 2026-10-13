@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as HealthzRouteImport } from './routes/healthz'
+import { Route as HeatmapRouteImport } from './routes/heatmap'
 import { Route as NetworkRouteImport } from './routes/network'
 import { Route as ApiEventsDotcsvRouteImport } from './routes/api/events[.]csv'
 import { Route as DevicesIdRouteImport } from './routes/devices.$id'
@@ -29,6 +30,11 @@ const EventsRoute = EventsRouteImport.update({
 const HealthzRoute = HealthzRouteImport.update({
   id: '/healthz',
   path: '/healthz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HeatmapRoute = HeatmapRouteImport.update({
+  id: '/heatmap',
+  path: '/heatmap',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NetworkRoute = NetworkRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/events': typeof EventsRoute
   '/healthz': typeof HealthzRoute
+  '/heatmap': typeof HeatmapRoute
   '/network': typeof NetworkRoute
   '/api/events.csv': typeof ApiEventsDotcsvRoute
   '/devices/$id': typeof DevicesIdRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/events': typeof EventsRoute
   '/healthz': typeof HealthzRoute
+  '/heatmap': typeof HeatmapRoute
   '/network': typeof NetworkRoute
   '/api/events.csv': typeof ApiEventsDotcsvRoute
   '/devices/$id': typeof DevicesIdRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/events': typeof EventsRoute
   '/healthz': typeof HealthzRoute
+  '/heatmap': typeof HeatmapRoute
   '/network': typeof NetworkRoute
   '/api/events.csv': typeof ApiEventsDotcsvRoute
   '/devices/$id': typeof DevicesIdRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/events'
     | '/healthz'
+    | '/heatmap'
     | '/network'
     | '/api/events.csv'
     | '/devices/$id'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/events'
     | '/healthz'
+    | '/heatmap'
     | '/network'
     | '/api/events.csv'
     | '/devices/$id'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/events'
     | '/healthz'
+    | '/heatmap'
     | '/network'
     | '/api/events.csv'
     | '/devices/$id'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EventsRoute: typeof EventsRoute
   HealthzRoute: typeof HealthzRoute
+  HeatmapRoute: typeof HeatmapRoute
   NetworkRoute: typeof NetworkRoute
   ApiEventsDotcsvRoute: typeof ApiEventsDotcsvRoute
   DevicesIdRoute: typeof DevicesIdRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/healthz'
       fullPath: '/healthz'
       preLoaderRoute: typeof HealthzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/heatmap': {
+      id: '/heatmap'
+      path: '/heatmap'
+      fullPath: '/heatmap'
+      preLoaderRoute: typeof HeatmapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/network': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EventsRoute: EventsRoute,
   HealthzRoute: HealthzRoute,
+  HeatmapRoute: HeatmapRoute,
   NetworkRoute: NetworkRoute,
   ApiEventsDotcsvRoute: ApiEventsDotcsvRoute,
   DevicesIdRoute: DevicesIdRoute,

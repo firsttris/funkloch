@@ -3,7 +3,7 @@ import { hourStart } from '~/core/rollup'
 import type { Settings } from '~/core/settings'
 import { MINUTE } from '~/core/types'
 import type { Db } from '~/db/client'
-import { detectSignal, detectTrends } from '~/db/detect'
+import { detectPatterns, detectSignal, detectTrends } from '~/db/detect'
 import { checkReachability } from '~/db/reachability'
 import { applyRetention } from '~/db/retention'
 import { rollupPending } from '~/db/rollup'
@@ -62,6 +62,7 @@ export const startScheduler = (
     if (local.getHours() === NIGHTLY_HOUR && day !== nightlyDay) {
       nightlyDay = day
       run('retention', () => applyRetention(db, now, current.retention))
+      run('patterns', () => detectPatterns(db, now, current.thresholds))
       if (jobs.nightly) run('nightly jobs', () => jobs.nightly?.(now))
     }
     if (jobs.minutely) run('minutely jobs', () => jobs.minutely?.(now))

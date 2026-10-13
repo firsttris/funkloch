@@ -5,7 +5,8 @@ test.describe('events', () => {
     await page.goto('/')
     await page.getByRole('link', { name: 'Ereignisse' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Ereignisse' })).toBeVisible()
-    await expect(page.getByTestId('event')).toHaveCount(8)
+    await expect(page.getByTestId('event')).toHaveCount(9)
+    await expect(page.getByText(/an \d von 7 Tagen zwischen 19 und 23 Uhr schwach/)).toBeVisible()
     await expect(page.getByText('Unter Schwelle').first()).toBeVisible()
     await expect(page.getByText(/LQI \d+ \(Schwelle LQI 64\)/)).toBeVisible()
     await page.getByRole('button', { name: 'Topologie (2)' }).click()
@@ -24,7 +25,7 @@ test.describe('events', () => {
 
   test('the device link opens the device', async ({ page }) => {
     await page.goto('/events?kind=signal')
-    await page.getByRole('link', { name: 'Steckdose Terrasse' }).click()
+    await page.getByRole('link', { name: 'Steckdose Terrasse' }).first().click()
     await expect(page.getByRole('heading', { level: 1, name: 'Steckdose Terrasse' })).toBeVisible()
   })
 })
