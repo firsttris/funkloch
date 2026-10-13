@@ -23,10 +23,14 @@ export type BridgeDevice = z.infer<typeof bridgeDeviceSchema>
 
 export const bridgeDevicesSchema = z.array(bridgeDeviceSchema)
 
-/** A device's state message; only the fields Funkloch reads are checked. */
+/**
+ * A device's state message; only the fields Funkloch reads are checked. A battery outside 0–100
+ * (zigbee-herdsman-converters passes the raw value on for `dontDividePercentage` devices,
+ * src/converters/fromZigbee.ts) is left out instead of costing the reading.
+ */
 export const deviceStateSchema = z.looseObject({
   linkquality: z.number().min(0).max(255).nullish(),
-  battery: z.number().min(0).max(100).nullish(),
+  battery: z.number().min(0).max(100).nullish().catch(null),
 })
 
 /** 2.x publishes {"state":"online"}, 1.x and the legacy option a plain string. */
