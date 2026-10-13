@@ -5,8 +5,10 @@
 The documentation is in `docs/` (<https://firsttris.github.io/funkloch/>, MkDocs Material follows
 with release 1.0). Read the pages that touch the change before starting:
 [docs/recording.md](docs/recording.md) for the fixture recorder. The implementation plan (architecture, data model, score
-formulas, roadmap) is the Claude Docs page "Funkloch – Implementierungsplan"; ask for it when a
-detail is not settled here. Links in the README point to the GitHub Pages site, not to `docs/*.md`.
+formulas, roadmap) is the Claude Docs page "Funkloch – Implementierungsplan"
+(<https://claude.ai/code/artifact/179f31f8-d644-46ab-9c72-2a9d550dc5b5>), the mockup of every page
+is <https://claude.ai/artifact/1pij6DRM1RCDewuDfF9HMp>; ask for them when a detail is not settled
+here. Links in the README point to the GitHub Pages site, not to `docs/*.md`.
 
 ## Reference implementations
 
@@ -71,7 +73,7 @@ Outside the Playwright image, point Playwright at a local Chromium with
 
 Technology choices follow `tech-stack.md` in firsttris/workflows. Deviations and additions:
 
-- **d3-force** for the network map (phase 2): `tech-stack.md` names nothing for graph layout.
+- **d3-force** for the network map: `tech-stack.md` names nothing for graph layout.
   d3-force only computes positions, is small and leaves the drawing to our own SVG, in line with
   the rule against big visualization libraries.
 - **No Nitro**: `serve.ts` serves the Vite build with `Bun.serve`. Funkloch is one long-running

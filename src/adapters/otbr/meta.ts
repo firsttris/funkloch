@@ -23,4 +23,9 @@ export const threadMeta: ProtocolMeta = {
     [lqi === null ? null : `LQI ${lqi}`, rssi === null ? null : `${rssi} dBm`.replace('-', '−')]
       .filter(Boolean)
       .join(' · '),
+  linkScore: ({ lqi, rssi }) => (lqi === null || rssi === null ? null : threadScore(rssi, lqi)),
+  formatLink: ({ lqi, rssi }) =>
+    [lqi === null ? '–' : String(lqi), rssi === null ? null : String(rssi).replace('-', '−')]
+      .filter(Boolean)
+      .join(' · '),
 }

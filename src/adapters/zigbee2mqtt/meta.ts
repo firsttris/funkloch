@@ -12,4 +12,6 @@ export const zigbeeMeta: ProtocolMeta = {
   raw: { label: 'LQI', min: 0, max: ZIGBEE_LQI_MAX, unit: '' },
   rawAtScore: (score) => Math.round(scoreToRaw(score, 0, ZIGBEE_LQI_MAX)),
   formatRaw: ({ raw }) => `LQI ${Math.round(raw)}`,
+  linkScore: ({ lqi }) => (lqi === null ? null : zigbeeScore(lqi)),
+  formatLink: ({ lqi }) => (lqi === null ? '–' : String(Math.round(lqi))),
 }

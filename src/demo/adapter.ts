@@ -2,7 +2,7 @@
 import type { Adapter, AdapterStatus, ProtocolMeta } from '~/adapters/types'
 import type { Observation } from '~/core/types'
 import { DEMO_DEVICES } from './devices'
-import { demoDeviceInfos, measurementAt, random, scoreAt } from './generate'
+import { demoDeviceInfos, linksAt, measurementAt, random, scoreAt } from './generate'
 
 export const LIVE_EVERY_MS = 3000
 
@@ -11,7 +11,10 @@ export const createDemoAdapter = (meta: ProtocolMeta, clock: () => number = Date
   const devices = DEMO_DEVICES.filter((d) => d.protocol === meta.id)
   const online = devices.filter((d) => !(d.offline ?? []).some(([, to]) => to === 0))
 
+  let send: (observation: Observation) => void = () => {}
+
   const start = (emit: (observation: Observation) => void) => {
+    send = emit
     const now = clock()
     emit({ kind: 'devices', protocol: meta.id, ts: now, devices: demoDeviceInfos(meta.id) })
     emit({ kind: 'bridge', protocol: meta.id, ts: now, online: true })
@@ -28,5 +31,11 @@ export const createDemoAdapter = (meta: ProtocolMeta, clock: () => number = Date
     return async () => clearInterval(timer)
   }
 
-  return { meta, start, status: () => status }
+  // The demo answers a map request at once, with the topology of now
+  const requestTopology = () => {
+    const ts = clock()
+    send({ kind: 'topology', topology: { protocol: meta.id, ts, links: linksAt(meta.id, 0, ts) } })
+  }
+
+  return { meta, start, status: () => status, requestTopology }
 }

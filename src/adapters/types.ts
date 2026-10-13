@@ -10,6 +10,10 @@ export type ProtocolMeta = {
   rawAtScore: ((score: number) => number) | null
   /** The raw values as shown in the device list, e.g. "LQI 38" */
   formatRaw: (sample: { raw: number; lqi: number | null; rssi: number | null }) => string
+  /** Score of a link in a topology, for its colour; null when the link carries no value */
+  linkScore: (link: { lqi: number | null; rssi: number | null }) => number | null
+  /** The short label on a link in the network map, e.g. "38" or "1 · −88" */
+  formatLink: (link: { lqi: number | null; rssi: number | null }) => string
 }
 
 export type AdapterStatus = { connected: boolean; error: string | null; since: number | null }
