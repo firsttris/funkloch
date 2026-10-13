@@ -31,6 +31,10 @@ export const devices = sqliteTable(
     reportedOnline: integer('reported_online', { mode: 'boolean' }),
     /** Effective state after the silence rule, kept so changes become events */
     online: integer('online', { mode: 'boolean' }).notNull().default(true),
+    /** The signal is below the weak threshold (the last signal event said so) */
+    signalWeak: integer('signal_weak', { mode: 'boolean' }).notNull().default(false),
+    /** Trend at the last hourly check: down, flat, up or none */
+    trend: text('trend'),
     /** Median gap between messages over 7 days, refreshed by the hourly job */
     typicalInterval: integer('typical_interval'),
     firstSeen: integer('first_seen').notNull(),

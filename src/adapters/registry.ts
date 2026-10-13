@@ -1,4 +1,5 @@
 import type { Config } from '~/config'
+import type { SignalFormat } from '~/db/detect'
 import type { Log } from '~/server/log'
 import { threadMeta } from './otbr/meta'
 import type { Adapter, ProtocolMeta } from './types'
@@ -31,4 +32,14 @@ export const adaptersFromConfig = (config: Config, log: Log): Adapter[] => {
     log.warn('OTBR_URL is set, but the Thread adapter is not available yet')
   }
   return adapters
+}
+
+/** Values in the protocol's own unit for event texts */
+export const signalFormat: SignalFormat = {
+  value: (protocol, sample) => PROTOCOLS[protocol]?.formatRaw(sample) ?? String(sample.raw),
+  threshold: (protocol, weak) => {
+    const meta = PROTOCOLS[protocol]
+    const raw = meta?.rawAtScore?.(weak)
+    return meta && raw !== undefined ? `${meta.raw.label} ${raw}` : `${weak} %`
+  },
 }

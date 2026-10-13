@@ -4,7 +4,7 @@ import { checkReachability } from './reachability'
 import { applyRetention } from './retention'
 import { rollupPending } from './rollup'
 import { devices, events, hourly, samples } from './schema'
-import { applyDevices, storeBatch } from './store'
+import { addEvent, applyDevices, storeBatch } from './store'
 import { tempDb } from './test-db'
 
 let cleanup = () => {}
@@ -126,5 +126,25 @@ describe('applyRetention', () => {
     applyRetention(db, T0 + 20 * 24 * HOUR)
     expect(db.select().from(samples).all()).toHaveLength(1)
     expect(db.select().from(hourly).all()).toHaveLength(1)
+  })
+
+  test('drops events after the hourly retention', () => {
+    const db = setup()
+    addEvent(db, {
+      ts: T0,
+      kind: 'network',
+      type: 'device_added',
+      protocol: 'zigbee',
+      deviceId: null,
+    })
+    addEvent(db, {
+      ts: T0 + 400 * 24 * HOUR,
+      kind: 'network',
+      type: 'device_added',
+      protocol: 'zigbee',
+      deviceId: null,
+    })
+    applyRetention(db, T0 + 400 * 24 * HOUR)
+    expect(db.select().from(events).all()).toHaveLength(1)
   })
 })

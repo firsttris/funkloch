@@ -1,7 +1,8 @@
 // Writes observations into the database. Each function is one step; the ingest in
 // src/server/ingest.ts decides when to call which.
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { diffDevices } from '~/core/devices'
+import { parentChangesBetween } from '~/core/events'
 import type { DeviceInfo, Measurement, PowerSource, Role, Topology } from '~/core/types'
 import type { Db } from './client'
 import { devices, type EventDetails, events, links, samples, settings, snapshots } from './schema'
@@ -80,11 +81,25 @@ export const applyDevices = (db: Db, protocol: string, incoming: DeviceInfo[], t
         })
       }
     }
+    const before = new Map(known.map((d) => [d.address, d]))
     for (const device of changed) {
-      tx.update(devices)
+      const row = tx
+        .update(devices)
         .set(infoColumns(device))
         .where(and(eq(devices.protocol, protocol), eq(devices.address, device.address)))
-        .run()
+        .returning({ id: devices.id })
+        .get()
+      const oldRole = before.get(device.address)?.role
+      if (row && oldRole && oldRole !== device.role) {
+        addEvent(tx, {
+          ts,
+          kind: 'topology',
+          type: 'role_changed',
+          protocol,
+          deviceId: row.id,
+          details: { from: oldRole, to: device.role },
+        })
+      }
     }
     if (removed.length > 0) {
       const gone = tx
@@ -185,9 +200,19 @@ export const storeReportedAvailability = (
   return deviceId
 }
 
-/** Stores a topology snapshot; links to devices Funkloch does not know are left out. */
+/**
+ * Stores a topology snapshot; links to devices Funkloch does not know are left out. A device
+ * whose parent differs from the previous snapshot of the protocol gets a topology event.
+ */
 export const storeTopology = (db: Db, topology: Topology) =>
   db.transaction((tx) => {
+    const previous = tx
+      .select({ id: snapshots.id })
+      .from(snapshots)
+      .where(and(eq(snapshots.protocol, topology.protocol), lt(snapshots.ts, topology.ts)))
+      .orderBy(desc(snapshots.ts))
+      .limit(1)
+      .get()
     const ids = new Map(
       tx
         .select({ id: devices.id, address: devices.address })
@@ -216,6 +241,32 @@ export const storeTopology = (db: Db, topology: Topology) =>
         })
         .onConflictDoNothing()
         .run()
+    }
+    if (previous) {
+      const linksOf = (snapshotId: number) =>
+        tx
+          .select({ from: links.fromId, to: links.toId, parent: links.parent })
+          .from(links)
+          .where(eq(links.snapshotId, snapshotId))
+          .all()
+      const names = new Map(
+        tx
+          .select({ id: devices.id, name: devices.name, customName: devices.customName })
+          .from(devices)
+          .where(eq(devices.protocol, topology.protocol))
+          .all()
+          .map((d) => [d.id, d.customName ?? d.name]),
+      )
+      for (const change of parentChangesBetween(linksOf(previous.id), linksOf(snapshot.id))) {
+        addEvent(tx, {
+          ts: topology.ts,
+          kind: 'topology',
+          type: 'parent_changed',
+          protocol: topology.protocol,
+          deviceId: change.device,
+          details: { from: names.get(change.from) ?? null, to: names.get(change.to) ?? null },
+        })
+      }
     }
     return snapshot.id
   })

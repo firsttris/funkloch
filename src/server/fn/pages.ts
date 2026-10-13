@@ -4,6 +4,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { getRuntime } from '../runtime'
 import { deviceView } from '../views/device'
+import { eventsView } from '../views/events'
 import { networkView } from '../views/network'
 import { overviewView } from '../views/overview'
 
@@ -40,3 +41,12 @@ export const requestTopology = createServerFn({ method: 'POST' })
     adapter.requestTopology()
     return { requested: true }
   })
+
+export const getEvents = createServerFn({ method: 'GET' })
+  .validator(
+    z.object({
+      kind: z.enum(['all', 'offline', 'signal', 'topology', 'network']),
+      days: z.union([z.literal(7), z.literal(30), z.literal(90)]),
+    }),
+  )
+  .handler(({ data }) => eventsView(getRuntime().viewContext(), data.kind, data.days))

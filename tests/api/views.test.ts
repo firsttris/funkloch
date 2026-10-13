@@ -1,6 +1,7 @@
 // Ebene 5: the views behind the server functions, on a seeded database
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { deviceView } from '~/server/views/device'
+import { eventsCsv, eventsView } from '~/server/views/events'
 import { networkView } from '~/server/views/network'
 import { overviewView } from '~/server/views/overview'
 import { seeded } from './helpers'
@@ -68,7 +69,15 @@ describe('device detail', () => {
     expect(view?.offline).toHaveLength(1)
     expect(view?.chart.x.length).toBeGreaterThan(160)
     expect(view?.messages.values).toHaveLength(48)
-    expect(view?.events.map((e) => e.type)).toEqual(['online', 'offline'])
+    expect(view?.events.map((e) => e.type)).toEqual([
+      'signal_weak',
+      'trend_down',
+      'parent_changed',
+      'online',
+      'offline',
+      'parent_changed',
+    ])
+    expect(view?.events[0]?.details).toMatchObject({ threshold: 'LQI 64' })
   })
 
   test('24 h reads raw samples, 30 days one point per hour', () => {
@@ -142,5 +151,33 @@ describe('network', () => {
     expect(view.nodes).toEqual([])
     expect(view.protocol).toBe('zwave')
     expect(view.canRequest).toBe(false)
+  })
+})
+
+describe('events', () => {
+  test('lists the demo events, newest first, with counts per kind', () => {
+    const view = eventsView(env.context, 'all', 30)
+    expect(view.counts).toMatchObject({ all: 8, offline: 3, signal: 3, topology: 2, network: 0 })
+    expect(view.events).toHaveLength(8)
+    const times = view.events.map((e) => e.ts)
+    expect(times).toEqual([...times].sort((a, b) => b - a))
+    expect(view.events.find((e) => e.type === 'parent_changed')?.device).toBe(
+      'Temperatursensor Keller',
+    )
+  })
+
+  test('filters by kind and range', () => {
+    expect(eventsView(env.context, 'topology', 30).events.every((e) => e.kind === 'topology')).toBe(
+      true,
+    )
+    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(8)
+  })
+
+  test('the CSV has a header, one line per event and quotes JSON', () => {
+    const csv = eventsCsv(env.context, 'all', 30)
+    const lines = csv.trim().split('\n')
+    expect(lines[0]).toBe('time,kind,type,protocol,device,address,details')
+    expect(lines).toHaveLength(9)
+    expect(csv).toContain('"{""from"":""Steckdose Wohnzimmer"",""to"":""Rollladen Schlafzimmer""}"')
   })
 })

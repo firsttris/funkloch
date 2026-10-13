@@ -10,13 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as NetworkRouteImport } from './routes/network'
+import { Route as ApiEventsDotcsvRouteImport } from './routes/api/events[.]csv'
 import { Route as DevicesIdRouteImport } from './routes/devices.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthzRoute = HealthzRouteImport.update({
@@ -29,6 +36,11 @@ const NetworkRoute = NetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEventsDotcsvRoute = ApiEventsDotcsvRouteImport.update({
+  id: '/api/events.csv',
+  path: '/api/events.csv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevicesIdRoute = DevicesIdRouteImport.update({
   id: '/devices/$id',
   path: '/devices/$id',
@@ -37,35 +49,62 @@ const DevicesIdRoute = DevicesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/healthz': typeof HealthzRoute
   '/network': typeof NetworkRoute
+  '/api/events.csv': typeof ApiEventsDotcsvRoute
   '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/healthz': typeof HealthzRoute
   '/network': typeof NetworkRoute
+  '/api/events.csv': typeof ApiEventsDotcsvRoute
   '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/healthz': typeof HealthzRoute
   '/network': typeof NetworkRoute
+  '/api/events.csv': typeof ApiEventsDotcsvRoute
   '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/healthz' | '/network' | '/devices/$id'
+  fullPaths:
+    | '/'
+    | '/events'
+    | '/healthz'
+    | '/network'
+    | '/api/events.csv'
+    | '/devices/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz' | '/network' | '/devices/$id'
-  id: '__root__' | '/' | '/healthz' | '/network' | '/devices/$id'
+  to:
+    | '/'
+    | '/events'
+    | '/healthz'
+    | '/network'
+    | '/api/events.csv'
+    | '/devices/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/events'
+    | '/healthz'
+    | '/network'
+    | '/api/events.csv'
+    | '/devices/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EventsRoute: typeof EventsRoute
   HealthzRoute: typeof HealthzRoute
   NetworkRoute: typeof NetworkRoute
+  ApiEventsDotcsvRoute: typeof ApiEventsDotcsvRoute
   DevicesIdRoute: typeof DevicesIdRoute
 }
 
@@ -76,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/healthz': {
@@ -92,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NetworkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/events.csv': {
+      id: '/api/events.csv'
+      path: '/api/events.csv'
+      fullPath: '/api/events.csv'
+      preLoaderRoute: typeof ApiEventsDotcsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devices/$id': {
       id: '/devices/$id'
       path: '/devices/$id'
@@ -104,8 +157,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EventsRoute: EventsRoute,
   HealthzRoute: HealthzRoute,
   NetworkRoute: NetworkRoute,
+  ApiEventsDotcsvRoute: ApiEventsDotcsvRoute,
   DevicesIdRoute: DevicesIdRoute,
 }
 export const routeTree = rootRouteImport

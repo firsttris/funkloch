@@ -186,7 +186,7 @@ export const eventsOf = (db: Db, deviceId: number, limit = 20) =>
     .select()
     .from(events)
     .where(eq(events.deviceId, deviceId))
-    .orderBy(desc(events.ts))
+    .orderBy(desc(events.ts), desc(events.id))
     .limit(limit)
     .all()
 
@@ -226,3 +226,36 @@ export const devicesOfProtocol = (db: Db, protocol: string) =>
     .from(devices)
     .where(and(eq(devices.protocol, protocol), isNull(devices.removedAt)))
     .all()
+
+/** Events since `from`, newest first, with the device's name and address */
+export const eventsSince = (db: Db, from: number, kind: string | null, limit = 1000) =>
+  db
+    .select({
+      id: events.id,
+      ts: events.ts,
+      kind: events.kind,
+      type: events.type,
+      protocol: events.protocol,
+      details: events.details,
+      deviceId: events.deviceId,
+      name: devices.name,
+      customName: devices.customName,
+      address: devices.address,
+    })
+    .from(events)
+    .leftJoin(devices, eq(devices.id, events.deviceId))
+    .where(and(gte(events.ts, from), kind ? eq(events.kind, kind) : undefined))
+    .orderBy(desc(events.ts), desc(events.id))
+    .limit(limit)
+    .all()
+
+export const eventCounts = (db: Db, from: number) =>
+  Object.fromEntries(
+    db
+      .select({ kind: events.kind, count: sql<number>`count(*)` })
+      .from(events)
+      .where(gte(events.ts, from))
+      .groupBy(events.kind)
+      .all()
+      .map((r) => [r.kind, r.count]),
+  )

@@ -40,7 +40,16 @@ describe('seedDemo', () => {
         .from(events)
         .all()
         .map((e) => e.type),
-    ).toEqual(['offline', 'offline', 'online'])
+    ).toEqual([
+      'offline',
+      'offline',
+      'online',
+      'parent_changed',
+      'parent_changed',
+      'trend_down',
+      'trend_down',
+      'signal_weak',
+    ])
   })
 
   test('the history is the same for the same seed and time', () => {

@@ -39,6 +39,7 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
       active: pathname === '/' || pathname.startsWith('/devices'),
     },
     { to: '/network', label: m.nav_network(), active: pathname.startsWith('/network') },
+    { to: '/events', label: m.nav_events(), active: pathname.startsWith('/events') },
   ] as const
   return (
     <header className="border-b border-border bg-surface">

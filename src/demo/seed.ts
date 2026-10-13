@@ -1,6 +1,9 @@
 import { eq } from 'drizzle-orm'
+import { signalFormat } from '~/adapters/registry'
+import { DEFAULT_SETTINGS } from '~/core/settings'
 import { DAY, HOUR } from '~/core/types'
 import type { Db } from '~/db/client'
+import { detectSignal, detectTrends } from '~/db/detect'
 import { checkReachability } from '~/db/reachability'
 import { applyRetention } from '~/db/retention'
 import { rollupPending } from '~/db/rollup'
@@ -52,5 +55,13 @@ export const seedDemo = (db: Db, now: number) => {
 
   rollupPending(db, now, (HISTORY_DAYS + 1) * DAY)
   checkReachability(db, now)
+  detectTrends(db, now)
+  detectSignal(
+    db,
+    now,
+    DEFAULT_SETTINGS.thresholds,
+    DEFAULT_SETTINGS.rules.signal.minutes,
+    signalFormat,
+  )
   applyRetention(db, now)
 }

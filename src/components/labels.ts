@@ -65,29 +65,78 @@ type EventLike = {
   details: Record<string, string | number | boolean | null>
 }
 
-export const eventTitle = (event: EventLike) => {
+const TITLES: Record<string, () => string> = {
+  offline: m.event_offline,
+  online: m.event_online,
+  device_added: m.event_device_added,
+  device_removed: m.event_device_removed,
+  bridge_online: m.event_bridge_online,
+  bridge_offline: m.event_bridge_offline,
+  signal_weak: m.event_signal_weak,
+  signal_recovered: m.event_signal_recovered,
+  trend_down: m.event_trend_down,
+  parent_changed: m.event_parent_changed,
+  role_changed: m.event_role_changed,
+  pattern: m.event_pattern,
+}
+
+export const eventTitle = (event: EventLike) =>
+  TITLES[event.type]?.() ?? m.event_other({ type: event.type })
+
+const text = (value: string | number | boolean | null | undefined) =>
+  value === null || value === undefined ? '–' : String(value)
+
+/** The localized line after the title, from the event's details */
+export const eventDetail = (event: EventLike) => {
+  const d = event.details
   switch (event.type) {
     case 'offline':
-      return m.event_offline()
-    case 'online':
-      return m.event_online()
+      return d.reason === 'reported' ? m.event_offline_reported() : m.event_offline_silent()
+    case 'signal_weak':
+      return m.event_signal_weak_detail({
+        value: text(d.value),
+        threshold: text(d.threshold),
+        minutes: text(d.minutes),
+      })
+    case 'signal_recovered':
+      return m.event_signal_recovered_detail({ value: text(d.value) })
+    case 'trend_down':
+      return m.event_trend_down_detail({ change: text(d.change).replace('-', '−') })
+    case 'parent_changed':
+      return m.event_change_detail({ from: text(d.from), to: text(d.to) })
+    case 'role_changed':
+      return m.event_change_detail({
+        from: roleLabel(text(d.from) as Role),
+        to: roleLabel(text(d.to) as Role),
+      })
     case 'device_added':
-      return m.event_device_added()
-    case 'device_removed':
-      return m.event_device_removed()
-    case 'bridge_online':
-      return m.event_bridge_online()
-    case 'bridge_offline':
-      return m.event_bridge_offline()
+      return d.role ? roleLabel(d.role as Role) : ''
+    case 'pattern':
+      return m.event_pattern_detail({ days: text(d.days), from: text(d.from), to: text(d.to) })
     default:
-      return m.event_other({ type: event.type })
+      return ''
   }
 }
 
-export const eventDetail = (event: EventLike) => {
-  if (event.type !== 'offline') return ''
-  return event.details.reason === 'reported' ? m.event_offline_reported() : m.event_offline_silent()
+export const KIND_TONE: Record<string, string> = {
+  offline: 'bg-track text-foreground',
+  signal: 'bg-weak-bg text-weak',
+  topology: 'bg-thread-bg text-thread',
+  network: 'bg-track text-foreground-muted',
 }
 
+const KINDS: Record<string, () => string> = {
+  offline: m.kind_offline,
+  signal: m.kind_signal,
+  topology: m.kind_topology,
+  network: m.kind_network,
+}
+
+export const kindLabel = (kind: string) => KINDS[kind]?.() ?? kind
+
 export const eventColor = (event: EventLike) =>
-  event.type === 'offline' ? 'bg-offline' : event.kind === 'signal' ? 'bg-weak' : 'bg-foreground'
+  event.type === 'offline'
+    ? 'bg-offline'
+    : event.kind === 'signal' && event.type !== 'signal_recovered'
+      ? 'bg-weak'
+      : 'bg-foreground'

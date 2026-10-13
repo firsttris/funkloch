@@ -49,9 +49,11 @@ export const startRuntime = (config: Config): Runtime => {
   if (adapters.length === 0) {
     log.warn('No adapter is on: set ZIGBEE2MQTT_MQTT_URL or OTBR_URL, or FUNKLOCH_DEMO=1')
   }
+  const settingsDefaults = defaultsFrom(config)
+  const settings = () => loadSettings(db, settingsDefaults)
   const ingest = createIngest(db, log)
   const stopAdapters = adapters.map((adapter) => adapter.start(ingest.emit))
-  const stopScheduler = startScheduler(db, log)
+  const stopScheduler = startScheduler(db, log, settings)
   log.info(
     {
       adapters: adapters.map((a) => a.meta.id),
@@ -61,13 +63,7 @@ export const startRuntime = (config: Config): Runtime => {
     'funkloch started',
   )
 
-  const settingsDefaults = defaultsFrom(config)
-  const viewContext = (): ViewContext => ({
-    db,
-    now: Date.now(),
-    settings: loadSettings(db, settingsDefaults),
-    adapters,
-  })
+  const viewContext = (): ViewContext => ({ db, now: Date.now(), settings: settings(), adapters })
 
   const stop = async () => {
     stopScheduler()
