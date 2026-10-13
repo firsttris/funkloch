@@ -10,9 +10,18 @@ One Docker container next to Zigbee2MQTT and your OTBR, read-only, no cloud, ope
 
 [![CI](https://github.com/firsttris/funkloch/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/funkloch/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/firsttris/funkloch?logo=github&label=release)](https://github.com/firsttris/funkloch/releases/latest)
-[![Docker image](https://img.shields.io/badge/docker-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/funkloch)
+[![Docker pulls](https://img.shields.io/docker/pulls/tristanteu/funkloch?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/funkloch)
 [![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Ffunkloch-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/funkloch/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+<br>
+[![Zigbee2MQTT 1.x | 2.x](https://img.shields.io/badge/Zigbee2MQTT-1.x%20%7C%202.x-ffc135?logo=zigbee&logoColor=black)](https://firsttris.github.io/funkloch/zigbee2mqtt.html)
+[![Thread: OpenThread Border Router](https://img.shields.io/badge/Thread-OpenThread%20Border%20Router-3b4fb5)](https://firsttris.github.io/funkloch/thread.html)
+[![amd64 | arm64](https://img.shields.io/badge/image-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://firsttris.github.io/funkloch/installation.html)
+[![Bun](https://img.shields.io/badge/Bun-1.4-000000?logo=bun&logoColor=white)](https://bun.sh/)
+[![TanStack Start](https://img.shields.io/badge/TanStack%20Start-React%2019-20232a?logo=react&logoColor=61dafb)](https://tanstack.com/start)
+[![SQLite](https://img.shields.io/badge/SQLite-one%20file-003b57?logo=sqlite&logoColor=white)](https://firsttris.github.io/funkloch/installation.html#backup-and-data)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Deutsch | English](https://img.shields.io/badge/UI-Deutsch%20%7C%20English-1d4ed8)](https://firsttris.github.io/funkloch/)
 
 ```bash
 docker run -d --name funkloch --network host -v funkloch-data:/data \
