@@ -78,7 +78,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
     power: 'battery',
     model: 'WXKG11LM',
     vendor: 'Aqara',
-    interval: 90,
+    interval: 45,
     level: [
       [720, 32],
       [0, 30],
@@ -178,8 +178,8 @@ export const DEMO_DEVICES: DemoDevice[] = [
     interval: 2,
     level: [
       [720, 52],
-      [96, 50],
-      [0, 30],
+      [96, 52],
+      [0, 27],
     ],
     noise: 5,
     eveningDip: 28,

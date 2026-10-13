@@ -1,1 +1,106 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/* Zinc look of the mockup. Every colour is a token, redefined for dark mode. */
+:root {
+  --background: #f4f4f5;
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --border: #e4e4e7;
+  --border-subtle: #f4f4f5;
+  --foreground: #18181b;
+  --foreground-muted: #3f3f46;
+  --foreground-subtle: #52525b;
+  --primary: #18181b;
+  --primary-foreground: #ffffff;
+  --track: #f4f4f5;
+
+  --status-good: #15803d;
+  --status-mid: #a16207;
+  --status-weak: #b91c1c;
+  --status-offline: #71717a;
+  --status-unknown: #a1a1aa;
+  --weak-bg: #fef2f2;
+
+  --zigbee: #c2410c;
+  --zigbee-bg: #fff1e8;
+  --thread: #1d4ed8;
+  --thread-bg: #eef3ff;
+
+  --chart-grid: #e4e4e7;
+  --chart-axis: #a1a1aa;
+  --chart-gap: #e4e4e7;
+  --chart-bar: #52525b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090b;
+    --surface: #18181b;
+    --surface-muted: #1f1f23;
+    --border: #2e2e33;
+    --border-subtle: #232327;
+    --foreground: #fafafa;
+    --foreground-muted: #d4d4d8;
+    --foreground-subtle: #a1a1aa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --track: #27272a;
+
+    --status-good: #4ade80;
+    --status-mid: #facc15;
+    --status-weak: #f87171;
+    --status-offline: #a1a1aa;
+    --status-unknown: #71717a;
+    --weak-bg: #3b1416;
+
+    --zigbee: #fb923c;
+    --zigbee-bg: #3a1d0e;
+    --thread: #93b4ff;
+    --thread-bg: #172345;
+
+    --chart-grid: #2e2e33;
+    --chart-axis: #71717a;
+    --chart-gap: #27272a;
+    --chart-bar: #a1a1aa;
+  }
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-track: var(--track);
+  --color-good: var(--status-good);
+  --color-mid: var(--status-mid);
+  --color-weak: var(--status-weak);
+  --color-offline: var(--status-offline);
+  --color-unknown: var(--status-unknown);
+  --color-weak-bg: var(--weak-bg);
+  --color-zigbee: var(--zigbee);
+  --color-zigbee-bg: var(--zigbee-bg);
+  --color-thread: var(--thread);
+  --color-thread-bg: var(--thread-bg);
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans text-sm leading-[1.45] antialiased;
+  }
+  a {
+    @apply text-foreground;
+  }
+}

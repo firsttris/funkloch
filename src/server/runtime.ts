@@ -1,5 +1,6 @@
 // The one long-running part of the process: database, adapters, ingest and jobs. Started once,
 // on the first import of the server entry (src/server.ts), in dev and in production alike.
+import '@tanstack/react-start/server-only'
 import { mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { threadMeta } from '~/adapters/otbr/meta'

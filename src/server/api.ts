@@ -209,16 +209,3 @@ export const getDeviceDetail = createServerFn({ method: 'GET' })
   })
 
 export type DeviceDetail = Awaited<ReturnType<typeof getDeviceDetail>>
-
-/** For /healthz: the database answers and the adapters are connected */
-export const health = () => {
-  const runtime = getRuntime()
-  let database = true
-  try {
-    runtime.db.$client.query('select 1').get()
-  } catch {
-    database = false
-  }
-  const adapters = adapterStates()
-  return { ok: database && adapters.every((a) => a.connected), database, adapters }
-}
