@@ -3,17 +3,33 @@ name: Release
 # The checks (ci.yml), then the shared Docker release from firsttris/workflows: amd64 and arm64
 # each on its own native runner, pushed to Docker Hub, then the GitHub release. The image itself is
 # started in ci.yml whenever what it is built from changes, so the release does not wait for it.
+# The checks run only when main's CI did not already test the code (the release commit from
+# "Bump version" only raises the version).
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
 
 jobs:
+  tested:
+    uses: firsttris/workflows/.github/workflows/tested-on-main.yml@ccr-161f105b-9ns022
+    permissions:
+      actions: read
+      contents: read
+
   checks:
+    needs: tested
+    if: needs.tested.outputs.tested != 'true'
     uses: ./.github/workflows/ci.yml
+    # The CI's image check keeps the build cache in GHCR
+    permissions:
+      contents: read
+      packages: write
 
   docker:
-    needs: checks
+    needs: [tested, checks]
+    # The checks either passed or were not needed
+    if: ${{ !cancelled() && needs.tested.result == 'success' && needs.checks.result != 'failure' }}
     uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
     with:
       image: tristanteu/funkloch
