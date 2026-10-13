@@ -10,8 +10,8 @@ import { Card, CardHeader, CardTitle } from '~/components/ui/card'
 import { ChipFilter } from '~/components/ui/chip-filter'
 import { Segmented } from '~/components/ui/segmented'
 import { cn } from '~/lib/cn'
+import { dateFormat, dayKey } from '~/lib/format'
 import { m } from '~/paraglide/messages.js'
-import { getLocale } from '~/paraglide/runtime.js'
 import { getEvents } from '~/server/fn/pages'
 import type { EventsView } from '~/server/views/events'
 
@@ -60,18 +60,13 @@ const KIND_COUNT: Record<(typeof KINDS)[number], (inputs: { count: number }) => 
 
 /** Events by local day, newest day first: "Heute · Di 13.10." */
 const byDay = (events: Event[], now: number) => {
-  const format = new Intl.DateTimeFormat(getLocale(), {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  })
-  const today = new Date(now).toDateString()
+  const format = dateFormat({ weekday: 'short', day: '2-digit', month: '2-digit' })
+  const today = dayKey(now)
   const groups = new Map<string, { label: string; items: Event[] }>()
   for (const event of events) {
-    const date = new Date(event.ts)
-    const key = date.toDateString()
+    const key = dayKey(event.ts)
     const label =
-      key === today ? m.events_today({ date: format.format(date) }) : format.format(date)
+      key === today ? m.events_today({ date: format.format(event.ts) }) : format.format(event.ts)
     const group = groups.get(key) ?? { label, items: [] }
     group.items.push(event)
     groups.set(key, group)
@@ -79,8 +74,7 @@ const byDay = (events: Event[], now: number) => {
   return [...groups.values()]
 }
 
-const time = (ts: number) =>
-  new Intl.DateTimeFormat(getLocale(), { hour: '2-digit', minute: '2-digit' }).format(ts)
+const time = (ts: number) => dateFormat({ hour: '2-digit', minute: '2-digit' }).format(ts)
 
 function EventsPage() {
   const search = Route.useSearch()

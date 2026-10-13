@@ -7,9 +7,8 @@ import { Card, CardHeader, CardHint, CardTitle } from '~/components/ui/card'
 import { ChipFilter } from '~/components/ui/chip-filter'
 import { Segmented } from '~/components/ui/segmented'
 import { cn } from '~/lib/cn'
-import { duration } from '~/lib/format'
+import { dateFormat, duration } from '~/lib/format'
 import { m } from '~/paraglide/messages.js'
-import { getLocale } from '~/paraglide/runtime.js'
 import { getHeatmap } from '~/server/fn/pages'
 
 const searchSchema = z.object({
@@ -80,11 +79,7 @@ function HeatmapPage() {
   const { data } = useSuspenseQuery(heatmapQuery(search.days))
   const rows =
     search.protocol === 'all' ? data.rows : data.rows.filter((r) => r.protocol === search.protocol)
-  const dayFormat = new Intl.DateTimeFormat(getLocale(), {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  })
+  const dayFormat = dateFormat({ weekday: 'short', day: '2-digit', month: '2-digit' })
   const step = data.days === 7 ? 1 : 5
   const dayTicks = Array.from(
     { length: data.days },

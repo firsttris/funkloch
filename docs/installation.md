@@ -92,7 +92,7 @@ Each network is on when its variable is set; everything else has a default.
 | `OTBR_URL` | REST API of the OpenThread Border Router, e.g. `http://localhost:8081`; empty: Thread off | |
 | `PORT` | port of the web UI | `8090` |
 | `DATA_DIR` | folder of the SQLite database | `/data` |
-| `TZ` | time zone for day boundaries, the heatmap and the 3 a.m. jobs | `UTC` |
+| `TZ` | time zone for day boundaries, the heatmap, the 3 a.m. jobs and every date and time on the pages, whatever the browser's zone | `UTC` |
 | `LOG_LEVEL` | `trace` to `fatal` | `info` |
 | `FUNKLOCH_RESET_PASSWORD` | `1`: forget the admin password at start | |
 | `FUNKLOCH_DEMO` | `1`: a demo network instead of your own, no login | |

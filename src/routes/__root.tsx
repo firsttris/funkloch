@@ -1,7 +1,8 @@
-import type { QueryClient } from '@tanstack/react-query'
+import { type QueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { appInfoQuery } from '~/lib/app-info'
+import { setTimeZone } from '~/lib/time-zone'
 import { useLiveUpdates } from '~/lib/use-live-updates'
 import { getLocale } from '~/paraglide/runtime.js'
 import appCss from '~/styles.css?url'
@@ -24,6 +25,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   useLiveUpdates()
+  // Before any page renders a date, so server and browser write the same one
+  setTimeZone(useSuspenseQuery(appInfoQuery).data.timeZone)
   return (
     <RootDocument>
       <Outlet />

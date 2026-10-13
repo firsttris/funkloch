@@ -5,7 +5,8 @@ import { useEffect, useRef } from 'react'
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 import type { ChartSeries } from '~/core/detail'
-import { getLocale } from '~/paraglide/runtime.js'
+import { dateFormat } from '~/lib/format'
+import { timeZone } from '~/lib/time-zone'
 
 export type ChartMarker = { ts: number; label: string }
 
@@ -44,12 +45,12 @@ const options = (props: Props, root: HTMLElement, width: number): uPlot.Options 
   const marker = cssVar(root, '--foreground')
   const font = `11px ${cssVar(root, '--font-mono') || 'monospace'}`
   const short = props.to - props.from <= 2 * 86_400_000
-  const dateFormat = new Intl.DateTimeFormat(
-    getLocale(),
+  const axisFormat = dateFormat(
     short
       ? { hour: '2-digit', minute: '2-digit' }
       : { weekday: 'short', day: '2-digit', month: '2-digit' },
   )
+  const zone = timeZone()
   // Five ticks across the protocol's range: 0, 64, 128, 191, 255 for LQI
   const yTicks = [0, 1, 2, 3, 4].map((i) =>
     Math.round(props.yMin + ((props.yMax - props.yMin) * i) / 4),
@@ -106,6 +107,8 @@ const options = (props: Props, root: HTMLElement, width: number): uPlot.Options 
     height: props.height ?? 240,
     legend: { show: false },
     cursor: { y: false, points: { size: 6 } },
+    // Ticks on whole hours and days of the server's time zone, as the labels
+    ...(zone ? { tzDate: (ts: number) => uPlot.tzDate(new Date(ts * 1000), zone) } : {}),
     scales: {
       x: { time: true, range: () => [props.from / 1000, props.to / 1000] },
       y: { range: () => [props.yMin, props.yMax] },
@@ -117,7 +120,7 @@ const options = (props: Props, root: HTMLElement, width: number): uPlot.Options 
         space: short ? 60 : 90,
         grid: { show: false },
         ticks: { stroke: axis, size: 4 },
-        values: (_u, splits) => splits.map((s) => dateFormat.format(s * 1000)),
+        values: (_u, splits) => splits.map((s) => axisFormat.format(s * 1000)),
       },
       {
         stroke: text,

@@ -1,6 +1,7 @@
 import { DAY, HOUR, MINUTE } from '~/core/types'
 import { m } from '~/paraglide/messages.js'
 import { getLocale } from '~/paraglide/runtime.js'
+import { timeZone } from './time-zone'
 
 /** "vor 5 min", relative to the `now` the server sent, so server and client render the same */
 export const ago = (ts: number | null, now: number) => {
@@ -26,15 +27,23 @@ export const number = (value: number, digits = 0) =>
 export const percent = (value: number) =>
   `${value > 0 ? '+' : value < 0 ? '−' : ''}${number(Math.abs(value))} %`
 
-/** "Di 13.10. 05:48" in the browser's time zone */
+/** A date format in the page's language and the server's time zone (lib/time-zone.ts) */
+export const dateFormat = (options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat(getLocale(), { ...options, timeZone: timeZone() })
+
+/** "Di 13.10. 05:48" */
 export const dateTime = (ts: number) =>
-  new Intl.DateTimeFormat(getLocale(), {
+  dateFormat({
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   }).format(ts)
+
+/** "2026-10-13": the calendar day of a moment in the server's time zone, to group by */
+export const dayKey = (ts: number) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: timeZone() }).format(ts)
 
 /** "IKEA E1603", but "Eve Energy" rather than "Eve Eve Energy" */
 export const modelText = (vendor: string | null, model: string | null) =>
