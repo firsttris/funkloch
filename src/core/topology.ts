@@ -1,5 +1,5 @@
-// The network map as data: nodes, deduplicated edges, hops to the root and the radial start of
-// the layout (map-layout.ts).
+// The network map as data: nodes, deduplicated edges and the way to the root. The drawing is laid
+// out in map-tree.ts.
 import { band } from './score'
 import type { Band, Role, Status } from './types'
 
@@ -91,82 +91,14 @@ export const hopsToRoot = (
   return hops
 }
 
-/**
- * Start positions as a radial tree: every root in the middle, each subtree gets a slice of the
- * circle as wide as its number of leaves, one ring per hop. Devices without a parent hang off the
- * middle as well. A good start keeps parents and children on the same side.
- */
-export const radialTree = (nodes: readonly MapNode[], edges: readonly MapEdge[], ring = 160) => {
-  const ids = new Set(nodes.map((n) => n.id))
-  const roots = new Set(nodes.filter((n) => isRoot(n.role)).map((n) => n.id))
-  const parentOf = new Map(
-    edges.filter((e) => e.parent && ids.has(e.a) && ids.has(e.b)).map((e) => [e.a, e.b]),
-  )
-  const children = new Map<number | null, number[]>()
-  for (const node of [...nodes].sort((a, b) => a.id - b.id)) {
-    if (roots.has(node.id)) continue
-    const parent = parentOf.get(node.id)
-    const key = parent !== undefined && !roots.has(parent) ? parent : null
-    children.set(key, [...(children.get(key) ?? []), node.id])
-  }
-  const leaves = (id: number | null, seen: Set<number | null>): number => {
-    if (seen.has(id)) return 1
-    seen.add(id)
-    const kids = children.get(id) ?? []
-    return kids.length === 0 ? 1 : kids.reduce((sum, kid) => sum + leaves(kid, seen), 0)
-  }
-  const positions = new Map<number, { x: number; y: number }>()
-  for (const root of roots) positions.set(root, { x: 0, y: 0 })
-  const place = (
-    id: number | null,
-    from: number,
-    to: number,
-    depth: number,
-    seen: Set<number | null>,
-  ) => {
-    if (seen.has(id)) return
-    seen.add(id)
-    if (id !== null) {
-      const angle = (from + to) / 2
-      positions.set(id, { x: Math.cos(angle) * ring * depth, y: Math.sin(angle) * ring * depth })
-    }
-    const kids = children.get(id) ?? []
-    const total = kids.reduce((sum, kid) => sum + leaves(kid, new Set()), 0)
-    let start = from
-    for (const kid of kids) {
-      const span = ((to - from) * leaves(kid, new Set())) / Math.max(total, 1)
-      place(kid, start, start + span, depth + 1, seen)
-      start += span
-    }
-  }
-  place(null, -Math.PI / 2, (3 * Math.PI) / 2, 0, new Set())
-  return positions
-}
-
-/** Key of an edge by its two ends, as the map uses it */
-export const edgeKey = (edge: { a: number; b: number }) => `${edge.a}-${edge.b}`
-
-/**
- * What the map lights up for a device: the device, its way along the parents to the root, and
- * the devices it has a line to. Everything else steps back.
- */
-export const focusOf = (
+/** The device and its parents up to the root, in that order; a loop ends the way */
+export const wayToRoot = (
   id: number,
   edges: readonly { a: number; b: number; parent: boolean }[],
 ) => {
-  const nodes = new Set([id])
-  const lines = new Set<string>()
-  for (const edge of edges) {
-    if (edge.a !== id && edge.b !== id) continue
-    lines.add(edgeKey(edge))
-    nodes.add(edge.a === id ? edge.b : edge.a)
-  }
-  const parentEdge = new Map(edges.filter((e) => e.parent).map((e) => [e.a, e]))
-  const visited = new Set([id])
-  for (let up = parentEdge.get(id); up && !visited.has(up.b); up = parentEdge.get(up.b)) {
-    visited.add(up.b)
-    lines.add(edgeKey(up))
-    nodes.add(up.b)
-  }
-  return { nodes, lines }
+  const parentOf = new Map(edges.filter((e) => e.parent).map((e) => [e.a, e.b]))
+  const way = [id]
+  for (let up = parentOf.get(id); up !== undefined && !way.includes(up); up = parentOf.get(up))
+    way.push(up)
+  return way
 }

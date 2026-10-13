@@ -1,8 +1,8 @@
 import '@tanstack/react-start/server-only'
 import { PROTOCOLS } from '~/adapters/registry'
-import { placeEdgeLabels } from '~/core/edge-labels'
-import { layout } from '~/core/map-layout'
-import { hopsToRoot, isRoot, type MapNode, mapEdges } from '~/core/topology'
+import { deviceKind } from '~/core/device-kind'
+import { signalBars } from '~/core/map-tree'
+import { hopsToRoot, isRoot, type MapNode, mapEdges, wayToRoot } from '~/core/topology'
 import { DAY, type Role, type Status } from '~/core/types'
 import { devicesOfProtocol, displayName, linksOfSnapshot, snapshotsOf } from '~/db/queries'
 import type { ViewContext } from './context'
@@ -12,7 +12,9 @@ export const SNAPSHOT_DAYS = 7
 
 /**
  * The map of one protocol at one snapshot (the newest without `snapshotId`): nodes with status
- * and position, one edge per pair, and the facts of the selected device.
+ * and kind, one edge per pair with its value and signal bars, and the facts of the selected device
+ * with its way to the root. The browser lays the tree out (core/map-tree.ts), since it unfolds
+ * lists.
  */
 export const networkView = (
   { db, now, settings, adapters }: ViewContext,
@@ -30,6 +32,9 @@ export const networkView = (
   const status = (id: number, role: Role): Status =>
     isRoot(role) ? 'unknown' : (rows.get(id)?.status ?? 'unknown')
 
+  const kinds = new Map(
+    devices.map((d) => [d.id, deviceKind(displayName(d), d.role as Role, d.model)]),
+  )
   const nodes: MapNode[] = devices.map((d) => ({
     id: d.id,
     name: displayName(d),
@@ -47,20 +52,15 @@ export const networkView = (
       }))
     : []
   const edges = mapEdges(links, meta?.linkScore ?? (() => null), offline)
-  const map = layout(nodes, edges)
-  const positions = new Map(map.positions.map((p) => [p.id, p]))
   const labelOf = (edge: (typeof edges)[number]) => meta?.formatLink(edge) ?? ''
-  // Only parent lines carry their value on the map
-  const labelSpots = placeEdgeLabels(
-    nodes,
-    map.positions,
-    edges.filter((e) => e.parent).map((e) => ({ a: e.a, b: e.b, text: labelOf(e) })),
-  )
+  const barsOf = (edge: (typeof edges)[number]) =>
+    edge.quality === 'offline' ? 0 : signalBars(meta?.linkScore(edge) ?? null)
   const roots = new Set(nodes.filter((n) => isRoot(n.role)).map((n) => n.id))
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
   const selected = selectedId === null ? null : (byId.get(selectedId) ?? null)
   const parentEdge = selected ? edges.find((e) => e.parent && e.a === selected.id) : undefined
+  const uplink = new Map(edges.filter((e) => e.parent).map((e) => [e.a, e]))
   const states = adapterStates(adapters)
 
   return {
@@ -72,18 +72,14 @@ export const networkView = (
     snapshot: snapshot ? { id: snapshot.id, ts: snapshot.ts } : null,
     canRequest: adapters.some((a) => a.meta.id === protocol && a.requestTopology !== undefined),
     networkmapHours: settings.networkmapHours,
-    /** Size of the drawing in pixels; it grows with the network */
-    size: { width: map.width, height: map.height },
-    nodes: nodes.map((n) => ({
-      ...n,
-      x: positions.get(n.id)?.x ?? 0,
-      y: positions.get(n.id)?.y ?? 0,
-      root: roots.has(n.id),
-    })),
+    nodes: nodes.map((n) => ({ ...n, root: roots.has(n.id), kind: kinds.get(n.id) ?? 'device' })),
     edges: edges.map((e) => ({
-      ...e,
+      a: e.a,
+      b: e.b,
+      parent: e.parent,
+      quality: e.quality,
       label: labelOf(e),
-      labelAt: labelSpots.get(`${e.a}-${e.b}`) ?? null,
+      bars: barsOf(e),
     })),
     selected: selected
       ? {
@@ -93,6 +89,24 @@ export const networkView = (
           parentLink: parentEdge ? (meta?.formatLink(parentEdge) ?? null) : null,
           hops: hopsToRoot(selected.id, edges, roots),
           neighbors: edges.filter((e) => e.a === selected.id || e.b === selected.id).length,
+          /** The device, then each parent up to the root, with the link to the next one */
+          way: wayToRoot(selected.id, edges).flatMap((id) => {
+            const n = byId.get(id)
+            const up = uplink.get(id)
+            return n
+              ? [
+                  {
+                    id,
+                    name: n.name,
+                    root: roots.has(id),
+                    kind: kinds.get(id) ?? 'device',
+                    quality: up?.quality ?? null,
+                    label: up ? labelOf(up) : null,
+                    bars: up ? barsOf(up) : 0,
+                  },
+                ]
+              : []
+          }),
         }
       : null,
   }

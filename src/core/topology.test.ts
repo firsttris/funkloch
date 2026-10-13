@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { focusOf, hopsToRoot, type MapNode, mapEdges, radialTree } from './topology'
+import { hopsToRoot, mapEdges, wayToRoot } from './topology'
 
 const score = ({ lqi }: { lqi: number | null }) =>
   lqi === null ? null : Math.round((lqi / 255) * 100)
@@ -62,51 +62,16 @@ describe('hopsToRoot', () => {
   })
 })
 
-describe('radialTree', () => {
-  const nodes: MapNode[] = [
-    { id: 1, name: 'Koordinator', role: 'coordinator', status: 'unknown' },
-    { id: 2, name: 'Router', role: 'router', status: 'good' },
-    { id: 3, name: 'Sensor', role: 'end_device', status: 'weak' },
-    { id: 4, name: 'Allein', role: 'end_device', status: 'offline' },
-  ]
-  const edges = mapEdges(
-    [
-      { from: 2, to: 1, lqi: 200, rssi: null, parent: true },
-      { from: 3, to: 2, lqi: 40, rssi: null, parent: true },
-    ],
-    score,
-    new Set(),
-  )
-
-  test('the radial start puts a child further out than its parent, on its side', () => {
-    const start = radialTree(nodes, edges)
-    const router = start.get(2)
-    const sensor = start.get(3)
-    expect(Math.hypot(sensor?.x ?? 0, sensor?.y ?? 0)).toBeGreaterThan(
-      Math.hypot(router?.x ?? 0, router?.y ?? 0),
-    )
-    expect(Math.sign(sensor?.x ?? 0)).toBe(Math.sign(router?.x ?? 0))
-  })
-})
-
-describe('focusOf', () => {
+describe('wayToRoot', () => {
   const lines = [
     { a: 2, b: 1, parent: true },
     { a: 3, b: 2, parent: true },
-    { a: 4, b: 3, parent: true },
-    { a: 5, b: 1, parent: true },
     { a: 3, b: 5, parent: false },
   ]
 
-  test('the device, its way to the root and its direct lines', () => {
-    expect(focusOf(4, lines)).toEqual({
-      nodes: new Set([4, 3, 2, 1]),
-      lines: new Set(['4-3', '3-2', '2-1']),
-    })
-    expect(focusOf(3, lines)).toEqual({
-      nodes: new Set([3, 2, 4, 5, 1]),
-      lines: new Set(['3-2', '4-3', '3-5', '2-1']),
-    })
+  test('the device and its parents up to the root', () => {
+    expect(wayToRoot(3, lines)).toEqual([3, 2, 1])
+    expect(wayToRoot(1, lines)).toEqual([1])
   })
 
   test('a loop of parents ends', () => {
@@ -114,6 +79,6 @@ describe('focusOf', () => {
       { a: 1, b: 2, parent: true },
       { a: 2, b: 1, parent: true },
     ]
-    expect(focusOf(1, loop).nodes).toEqual(new Set([1, 2]))
+    expect(wayToRoot(1, loop)).toEqual([1, 2])
   })
 })

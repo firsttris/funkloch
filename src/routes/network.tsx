@@ -1,16 +1,20 @@
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, stripSearchParams, useNavigate } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
 import { roleLabel, statusLabel } from '~/components/labels'
-import { NetworkGraph, SNAPSHOT_DAYS_CLIENT } from '~/components/network-graph'
+import { NetworkTree, SNAPSHOT_DAYS_CLIENT } from '~/components/network-tree'
+import { KIND_ICON, SignalBars } from '~/components/network-tree-parts'
 import { StatusDot } from '~/components/status'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardTitle } from '~/components/ui/card'
 import { Segmented } from '~/components/ui/segmented'
+import { cn } from '~/lib/cn'
 import { dateTime, number } from '~/lib/format'
 import { m } from '~/paraglide/messages.js'
 import { getNetwork, requestTopology } from '~/server/fn/pages'
+import type { NetworkView } from '~/server/views/network'
 
 const searchSchema = z.object({
   protocol: z.string().max(40).optional().catch(undefined),
@@ -84,8 +88,7 @@ function NetworkPage() {
             {data.edges.length === 0 && data.nodes.length <= 1 ? (
               <p className="px-3 py-16 text-center text-foreground-subtle">{m.network_empty()}</p>
             ) : (
-              <NetworkGraph
-                size={data.size}
+              <NetworkTree
                 nodes={data.nodes}
                 edges={data.edges}
                 selectedId={data.selected?.id ?? null}
@@ -138,6 +141,7 @@ function NetworkPage() {
                     <dt className="text-foreground-subtle">{m.network_neighbors()}</dt>
                     <dd className="m-0 font-mono">{number(data.selected.neighbors)}</dd>
                   </dl>
+                  {data.selected.way.length > 1 ? <Way way={data.selected.way} /> : null}
                   {data.selected.root ? null : (
                     <Link
                       to="/devices/$id"
@@ -219,9 +223,58 @@ function NetworkPage() {
   )
 }
 
-const Line = ({ color, dash, width = 3 }: { color: string; dash?: string; width?: number }) => (
-  <svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true">
-    <line x1="0" y1="5" x2="22" y2="5" stroke={color} strokeWidth={width} strokeDasharray={dash} />
+/** The selected device and each parent up to the root, as a chain of small tiles */
+type WayStep = NonNullable<NetworkView['selected']>['way'][number]
+
+const Way = ({ way }: { way: WayStep[] }) => (
+  <div className="flex flex-col">
+    <span className="mb-1 text-xs font-medium text-foreground-subtle">{m.network_way()}</span>
+    {way.map((step, i) => {
+      const Icon = KIND_ICON[step.kind]
+      const previous = way[i - 1]
+      return (
+        <div
+          key={step.id}
+          className="relative grid grid-cols-[28px_1fr_auto] items-center gap-2.5 py-1"
+        >
+          {previous ? (
+            <span
+              aria-hidden="true"
+              className="absolute -top-2 left-[13px] h-3.5 border-l-2"
+              style={{
+                borderColor:
+                  previous.quality === 'weak' ? 'var(--status-weak)' : 'var(--chart-axis)',
+              }}
+            />
+          ) : null}
+          <span
+            className={cn(
+              'grid size-7 place-items-center rounded-lg',
+              step.root
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-surface-muted text-foreground-muted shadow-[inset_0_0_0_1px_var(--border)]',
+            )}
+          >
+            <Icon size={15} strokeWidth={1.7} aria-hidden="true" />
+          </span>
+          <span className="truncate text-[13px] font-medium">{step.name}</span>
+          {step.label ? (
+            <span className="flex items-center gap-1.5 font-mono text-[11.5px]">
+              <SignalBars bars={step.bars} quality={step.quality} />
+              {step.label}
+            </span>
+          ) : (
+            <span />
+          )}
+        </div>
+      )
+    })}
+  </div>
+)
+
+const Swatch = ({ children }: { children: ReactNode }) => (
+  <svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true" className="shrink-0">
+    {children}
   </svg>
 )
 
@@ -229,54 +282,59 @@ const Legend = () => (
   <Card className="flex flex-col gap-2.5 px-[18px] py-4 text-[13px] text-foreground-muted">
     <CardTitle className="text-sm">{m.legend_title()}</CardTitle>
     <span className="flex items-center gap-2.5">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-        <rect x="2" y="2" width="18" height="18" rx="5" className="fill-primary" />
-      </svg>
-      {m.legend_root()}
+      <Swatch>
+        <rect x="3" y="1" width="20" height="20" rx="6" className="fill-primary" />
+      </Swatch>
+      {m.legend_tile_root()}
     </span>
     <span className="flex items-center gap-2.5">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-        <circle
-          cx="11"
-          cy="11"
-          r="8.5"
-          className="fill-surface stroke-foreground"
+      <Swatch>
+        <rect x="3" y="1" width="20" height="20" rx="6" className="fill-surface stroke-border" />
+        <circle cx="21" cy="3" r="3" fill="var(--status-good)" />
+      </Swatch>
+      {m.legend_tile_router()}
+    </span>
+    <span className="flex items-center gap-2.5">
+      <Swatch>
+        <circle cx="7" cy="11" r="4" fill="var(--status-good)" />
+        <circle cx="19" cy="11" r="4" fill="var(--status-weak)" />
+      </Swatch>
+      {m.legend_dot()}
+    </span>
+    <span className="flex items-center gap-2.5">
+      <Swatch>
+        <line x1="0" y1="11" x2="26" y2="11" stroke="var(--chart-axis)" strokeWidth="2" />
+      </Swatch>
+      {m.legend_line()}
+    </span>
+    <span className="flex items-center gap-2.5">
+      <Swatch>
+        <line x1="0" y1="11" x2="26" y2="11" stroke="var(--status-weak)" strokeWidth="2" />
+      </Swatch>
+      {m.legend_line_weak()}
+    </span>
+    <span className="flex items-center gap-2.5">
+      <Swatch>
+        <line
+          x1="0"
+          y1="11"
+          x2="26"
+          y2="11"
+          stroke="var(--status-offline)"
           strokeWidth="2"
+          strokeDasharray="4 4"
         />
-      </svg>
-      {m.legend_router()}
+      </Swatch>
+      {m.legend_line_offline()}
     </span>
     <span className="flex items-center gap-2.5">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-        <circle
-          cx="11"
-          cy="11"
-          r="5.5"
-          className="fill-surface stroke-foreground-subtle"
-          strokeWidth="2"
-        />
-      </svg>
-      {m.legend_end_device()}
-    </span>
-    <span className="flex items-center gap-2.5">
-      <Line color="var(--status-good)" />
-      {m.status_good()}
-    </span>
-    <span className="flex items-center gap-2.5">
-      <Line color="var(--status-mid)" />
-      {m.status_mid()}
-    </span>
-    <span className="flex items-center gap-2.5">
-      <Line color="var(--status-weak)" />
-      {m.status_weak()}
-    </span>
-    <span className="flex items-center gap-2.5">
-      <Line color="var(--status-offline)" dash="5 4" />
-      {m.status_offline()}
-    </span>
-    <span className="flex items-center gap-2.5">
-      <Line color="var(--chart-grid)" width={2} />
-      {m.legend_neighbor()}
+      <Swatch>
+        <line x1="0" y1="11" x2="26" y2="11" stroke="var(--chart-axis)" strokeWidth="1.5" />
+        {[4, 13, 22].map((x) => (
+          <circle key={x} cx={x} cy="11" r="1.8" fill="var(--foreground-subtle)" />
+        ))}
+      </Swatch>
+      {m.legend_flow()}
     </span>
     <span className="text-xs text-foreground-subtle">{m.legend_link_values()}</span>
   </Card>

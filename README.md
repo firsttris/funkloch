@@ -122,9 +122,10 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 ### 🕸️ Network map and heatmap
 
-- **Network map** of the Zigbee mesh and the Thread network: link quality on every line, a
-  device's way to the coordinator lit up on hover, older snapshots to compare. It grows with the
-  network, so names stay readable with a hundred devices.
+- **Network map** of the Zigbee mesh and the Thread network as a tree: the coordinator on top,
+  each router with the devices that talk through it, signal bars on every link, problems in red.
+  Drag and zoom, search, "problems only", a device's way to the coordinator lit up on hover, older
+  snapshots to compare.
 - **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and
   whether their signal got better; repeaters without sensors get a history from the network map.
 - **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
@@ -148,7 +149,7 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 <table>
   <tr>
     <td><img src="docs/screenshots/device.png" alt="Funkloch device detail: LQI history of a Zigbee temperature sensor over 7 days with min–max band, offline stretch and weak threshold"></td>
-    <td><img src="docs/screenshots/network.png" alt="Funkloch network map of a Zigbee mesh: coordinator in the middle, routers and end devices, link quality on every line"></td>
+    <td><img src="docs/screenshots/network.png" alt="Funkloch network map of a Zigbee mesh: the coordinator on top, routers below with their devices, signal bars on every link"></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/heatmap-dark.png" alt="Funkloch heatmap in dark mode: signal quality of every Zigbee and Thread device by hour over 7 days, with a recurring evening dropout"></td>
@@ -219,7 +220,7 @@ bun run demo          # http://localhost:8090 with the demo network
 ```
 
 Bun, TanStack Start (React), TanStack Router, Query and Table, Zod, SQLite with Drizzle, mqtt.js,
-Tailwind 4, uPlot, d3-force, Paraglide (German and English). Architecture, tests and releases:
+Tailwind 4, uPlot, Paraglide (German and English). Architecture, tests and releases:
 [Development](https://firsttris.github.io/funkloch/development.html); fixtures from your own network:
 [Recording fixtures](https://firsttris.github.io/funkloch/recording.html).
 

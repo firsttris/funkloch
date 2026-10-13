@@ -79,9 +79,8 @@ Outside the Playwright image, point Playwright at a local Chromium with
 
 Technology choices follow `tech-stack.md` in firsttris/workflows. Deviations and additions:
 
-- **d3-force** for the network map: `tech-stack.md` names nothing for graph layout.
-  d3-force only computes positions, is small and leaves the drawing to our own SVG, in line with
-  the rule against big visualization libraries.
+- **The network map lays itself out** (`src/core/map-tree.ts`, a tree in the manner of the UniFi
+  topology): no graph library, in line with the rule against big visualization libraries.
 - **No Nitro**: `serve.ts` serves the Vite build with `Bun.serve`. Funkloch is one long-running
   process that holds the MQTT connection and the jobs; the server bundle is self-contained
   (`ssr.noExternal`), so the image needs no `node_modules`.

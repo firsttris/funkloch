@@ -13,7 +13,7 @@ and your border router, read-only, no cloud.
 |---|---|
 | **Devices** | traffic light, signal, 24 h or 7 day sparkline, 72 h trend, last seen and parent of every device, worst first; key figures and the 2.4 GHz energy scan |
 | **Device** | raw value chart (LQI for Zigbee, RSSI for Thread) for 24 hours, 7 or 30 days, messages per hour, parent changes, connections and events |
-| **Network map** | the mesh from the latest Zigbee network map or Thread diagnostics, older snapshots, a device's way to the coordinator or border router (lit up on hover); large networks scroll instead of shrinking |
+| **Network map** | the mesh from the latest Zigbee network map or Thread diagnostics as a tree: routers below the coordinator or border router, their devices listed under them; search, problems only, a device's way to the root lit up, older snapshots |
 | **Heatmap** | every device by hour over 7 or 30 days, recurring weak hours and slow declines |
 | **Events** | offline and back, weak signal, falling trend, parent and role changes, new and removed devices, noisy channel; CSV export and notification rules |
 | **Settings** | thresholds, intervals, retention, names for devices, password |

@@ -121,194 +121,247 @@
   }
 }
 
-/* Network map (components/network-graph*.tsx). It builds up from the root outwards: every part
-   waits --map-delay, set by its hops. Fill mode "backwards" only holds the start state during the
-   delay, so dimming by opacity still works once a part is in. */
-.map-dot {
-  fill: var(--chart-grid);
+/* Network map (components/network-tree*.tsx), in the manner of the UniFi topology: tiles on a
+   dotted canvas, grey elbow lines, colour only where something is wrong. It builds up from the
+   root: every part waits --topo-delay. Dots run along each line towards the parent. */
+.topo-frame {
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      transparent 40%,
+      color-mix(in srgb, var(--foreground) 4%, transparent) 100%
+    ),
+    radial-gradient(var(--chart-grid) 1px, transparent 1.3px) 0 0 / 20px 20px,
+    var(--surface-muted);
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
 }
 
-.map-line,
-.map-label,
-.map-device {
-  transition: opacity 0.25s ease;
+.topo-frame.dragging {
+  cursor: grabbing;
 }
 
-.map-dimmed {
-  opacity: 0.16;
+.topo-world {
+  transform-origin: 0 0;
 }
 
-.map-line-base {
-  animation: map-draw 0.7s ease-out var(--map-delay) backwards;
+.topo-world.gliding {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.map-line-offline {
-  animation: map-fade 0.5s ease-out var(--map-delay) backwards;
-}
-
-.map-line-glow {
-  opacity: 0.14;
-  filter: blur(3px);
-  transition: opacity 0.25s ease;
-  animation: map-fade 0.5s ease-out calc(var(--map-delay) + 0.5s) backwards;
-}
-
-.map-lit .map-line-glow {
-  opacity: 0.35;
-}
-
-/* A dot every 48 px runs from the device to its parent */
-.map-line-flow {
-  stroke-dasharray: 1 47;
-  opacity: 0.85;
-  animation:
-    map-flow 2.4s linear infinite,
-    map-fade 0.4s ease-out calc(var(--map-delay) + 0.7s) backwards;
-}
-
-.map-line-flow.map-line-flow-slow {
-  animation-duration: 6s, 0.4s;
-}
-
-.map-label {
-  animation: map-fade 0.4s ease-out calc(var(--map-delay) + 0.5s) backwards;
-}
-
-.map-device {
-  cursor: pointer;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: map-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) var(--map-delay) backwards;
-}
-
-.map-ring {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 2;
-  transition: stroke 0.2s ease;
-}
-
-.map-device:hover .map-ring,
-.map-device:focus-visible .map-ring {
-  stroke: var(--foreground-subtle);
-}
-
-.map-mark,
-.map-root {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.2s ease;
-}
-
-.map-device:hover .map-mark,
-.map-device:focus-visible .map-mark {
-  transform: scale(1.12);
-}
-
-.map-root {
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary) 35%, transparent));
-}
-
-/* The root sends radio waves */
-.map-wave {
+.topo-line {
   fill: none;
-  stroke: var(--primary);
+  stroke: var(--chart-axis);
   stroke-width: 1.5;
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: map-wave 3s ease-out infinite;
+  transition:
+    stroke 0.2s ease,
+    opacity 0.2s ease,
+    stroke-width 0.2s ease;
 }
 
-/* A weak device breathes in red */
-.map-halo {
-  fill: var(--status-weak);
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: map-halo 2.4s ease-in-out infinite;
+.topo-line.weak {
+  stroke: var(--status-weak);
 }
 
-.map-selected {
+.topo-line.offline {
+  stroke-dasharray: 4 5;
+}
+
+.topo-line.lit {
+  stroke: var(--foreground);
+  stroke-width: 2.2;
+}
+
+.topo-line.lit.weak {
+  stroke: var(--status-weak);
+}
+
+.topo-flow {
   fill: none;
-  stroke-width: 2;
-  stroke-dasharray: 4 4;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: map-turn 14s linear infinite;
+  stroke: var(--foreground-subtle);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 0 24;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  animation:
+    topo-run 1.1s linear infinite,
+    topo-fade 0.5s ease-out calc(var(--topo-delay) + 0.6s) backwards;
 }
 
-@keyframes map-draw {
+.topo-flow.weak {
+  stroke: var(--status-weak);
+  opacity: 0.8;
+  animation-duration: 2.6s, 0.5s;
+}
+
+.topo-flow.lit {
+  stroke: var(--foreground);
+  opacity: 1;
+  animation-duration: 0.55s, 0.5s;
+}
+
+.topo-flow.lit.weak {
+  stroke: var(--status-weak);
+}
+
+.topo-draw {
+  stroke-dasharray: 1;
+  animation: topo-draw 0.5s ease-out var(--topo-delay) backwards;
+}
+
+.topo-faded {
+  opacity: 0.22;
+}
+
+.topo-flow.topo-faded {
+  opacity: 0;
+}
+
+.topo-device {
+  transition: opacity 0.2s ease;
+}
+
+.topo-tile {
+  background: linear-gradient(180deg, var(--surface), var(--surface-muted));
+  box-shadow:
+    inset 0 0 0 1px var(--border),
+    0 1px 2px color-mix(in srgb, var(--foreground) 8%, transparent),
+    0 6px 16px -6px color-mix(in srgb, var(--foreground) 22%, transparent);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  animation: topo-pop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) var(--topo-delay) backwards;
+}
+
+.topo-root .topo-tile {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 10px 28px -8px color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.topo-offline .topo-tile {
+  background: var(--track);
+  color: var(--status-offline);
+  box-shadow: inset 0 0 0 1.5px var(--chart-grid);
+  outline: 1.5px dashed var(--chart-axis);
+  outline-offset: -1.5px;
+}
+
+.topo-device:hover .topo-tile,
+.topo-device:focus-visible .topo-tile {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px var(--chart-axis),
+    0 12px 24px -10px color-mix(in srgb, var(--foreground) 35%, transparent);
+}
+
+.topo-device.selected .topo-tile {
+  box-shadow:
+    0 0 0 2px var(--surface-muted),
+    0 0 0 4px var(--foreground);
+}
+
+.topo-label {
+  animation: topo-slide 0.5s ease-out calc(var(--topo-delay) + 80ms) backwards;
+}
+
+/* The coordinator sends radio waves */
+.topo-wave {
+  border: 1.5px solid var(--primary);
+  opacity: 0;
+  animation: topo-wave 3.6s ease-out infinite;
+}
+
+/* A weak device's status dot beats */
+.topo-beat::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: var(--status-weak);
+  opacity: 0;
+  animation: topo-beat 1.8s ease-out infinite;
+}
+
+.topo-more {
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+  animation: topo-fade 0.4s ease-out var(--topo-delay) backwards;
+}
+
+@keyframes topo-run {
+  to {
+    stroke-dashoffset: 24;
+  }
+}
+
+@keyframes topo-draw {
   from {
-    stroke-dasharray: 1;
     stroke-dashoffset: 1;
   }
   to {
-    stroke-dasharray: 1;
     stroke-dashoffset: 0;
   }
 }
 
-@keyframes map-fade {
+@keyframes topo-fade {
   from {
     opacity: 0;
   }
 }
 
-@keyframes map-flow {
-  to {
-    stroke-dashoffset: -96;
-  }
-}
-
-@keyframes map-pop {
+@keyframes topo-pop {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.85);
+    transform: scale(0.6);
   }
 }
 
-@keyframes map-wave {
+@keyframes topo-slide {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+@keyframes topo-wave {
   0% {
     opacity: 0.45;
     transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(3.2);
+    transform: scale(2.6);
   }
 }
 
-@keyframes map-halo {
-  0%,
+@keyframes topo-beat {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.6);
+  }
   100% {
     opacity: 0;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.28;
-    transform: scale(1.45);
-  }
-}
-
-@keyframes map-turn {
-  to {
-    transform: rotate(1turn);
+    transform: scale(1.8);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map .map-line-base,
-  .map .map-line-offline,
-  .map .map-line-glow,
-  .map .map-label,
-  .map .map-device,
-  .map .map-wave,
-  .map .map-halo,
-  .map .map-selected {
+  .topo-frame .topo-tile,
+  .topo-frame .topo-label,
+  .topo-frame .topo-more,
+  .topo-frame .topo-draw,
+  .topo-frame .topo-wave,
+  .topo-frame .topo-beat::after {
     animation: none;
   }
-  .map .map-line-flow {
+  .topo-frame .topo-flow {
     display: none;
+  }
+  .topo-world.gliding {
+    transition: none;
   }
 }
