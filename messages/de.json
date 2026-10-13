@@ -293,5 +293,9 @@
   "legend_line": "Graue Linie: Verbindung zum Parent",
   "legend_line_weak": "Rot: schwache Verbindung",
   "legend_line_offline": "Gestrichelt: offline",
-  "legend_flow": "Wandernde Punkte: Weg der Nachrichten zum Parent"
+  "legend_flow": "Wandernde Punkte: Weg der Nachrichten zum Parent",
+  "network_history": "{label}, letzte 24 Stunden",
+  "network_history_ago": "vor 24 h",
+  "network_history_now": "jetzt {value}",
+  "network_history_empty": "Noch keine Werte in den letzten 24 Stunden."
 }

@@ -2,9 +2,16 @@ import '@tanstack/react-start/server-only'
 import { PROTOCOLS } from '~/adapters/registry'
 import { deviceKind } from '~/core/device-kind'
 import { signalBars } from '~/core/map-tree'
+import { hourlySeries } from '~/core/rollup'
 import { hopsToRoot, isRoot, type MapNode, mapEdges, wayToRoot } from '~/core/topology'
-import { DAY, type Role, type Status } from '~/core/types'
-import { devicesOfProtocol, displayName, linksOfSnapshot, snapshotsOf } from '~/db/queries'
+import { DAY, HOUR, type Role, type Status } from '~/core/types'
+import {
+  devicesOfProtocol,
+  displayName,
+  hourlyOf,
+  linksOfSnapshot,
+  snapshotsOf,
+} from '~/db/queries'
 import type { ViewContext } from './context'
 import { adapterStates, deviceRows, protocolInfo } from './shared'
 
@@ -61,6 +68,23 @@ export const networkView = (
   const selected = selectedId === null ? null : (byId.get(selectedId) ?? null)
   const parentEdge = selected ? edges.find((e) => e.parent && e.a === selected.id) : undefined
   const uplink = new Map(edges.filter((e) => e.parent).map((e) => [e.a, e]))
+  // The selected device's raw value (LQI, RSSI) per hour over the last day, this hour included
+  const dayAgo = now - 23 * HOUR
+  const history =
+    selected && !roots.has(selected.id) && meta
+      ? {
+          label: meta.raw.label,
+          min: meta.raw.min,
+          max: meta.raw.max,
+          values: hourlySeries(
+            hourlyOf(db, selected.id, dayAgo).flatMap((h) =>
+              h.rawMedian === null ? [] : [{ hour: h.hour, value: h.rawMedian }],
+            ),
+            dayAgo,
+            now,
+          ),
+        }
+      : null
   const states = adapterStates(adapters)
 
   return {
@@ -89,6 +113,7 @@ export const networkView = (
           parentLink: parentEdge ? (meta?.formatLink(parentEdge) ?? null) : null,
           hops: hopsToRoot(selected.id, edges, roots),
           neighbors: edges.filter((e) => e.a === selected.id || e.b === selected.id).length,
+          history,
           /** The device, then each parent up to the root, with the link to the next one */
           way: wayToRoot(selected.id, edges).flatMap((id) => {
             const n = byId.get(id)

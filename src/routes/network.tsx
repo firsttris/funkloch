@@ -3,13 +3,15 @@ import { createFileRoute, Link, stripSearchParams, useNavigate } from '@tanstack
 import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
-import { roleLabel, statusLabel } from '~/components/labels'
+import { HistoryArea } from '~/components/history-area'
+import { roleLabel, statusLabel, statusVar } from '~/components/labels'
 import { NetworkTree, SNAPSHOT_DAYS_CLIENT } from '~/components/network-tree'
 import { KIND_ICON, SignalBars } from '~/components/network-tree-parts'
 import { StatusDot } from '~/components/status'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardTitle } from '~/components/ui/card'
 import { Segmented } from '~/components/ui/segmented'
+import type { Status } from '~/core/types'
 import { cn } from '~/lib/cn'
 import { dateTime, number } from '~/lib/format'
 import { m } from '~/paraglide/messages.js'
@@ -141,6 +143,9 @@ function NetworkPage() {
                     <dt className="text-foreground-subtle">{m.network_neighbors()}</dt>
                     <dd className="m-0 font-mono">{number(data.selected.neighbors)}</dd>
                   </dl>
+                  {data.selected.history ? (
+                    <History history={data.selected.history} status={data.selected.status} />
+                  ) : null}
                   {data.selected.way.length > 1 ? <Way way={data.selected.way} /> : null}
                   {data.selected.root ? null : (
                     <Link
@@ -224,6 +229,36 @@ function NetworkPage() {
 }
 
 /** The selected device and each parent up to the root, as a chain of small tiles */
+type DayHistory = NonNullable<NonNullable<NetworkView['selected']>['history']>
+
+/** The selected device's raw value over the last day, as an area that draws itself */
+const History = ({ history, status }: { history: DayHistory; status: Status }) => {
+  const last = history.values.filter((v): v is number => v !== null).at(-1)
+  const title = m.network_history({ label: history.label })
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-foreground-subtle">{title}</span>
+      {last === undefined ? (
+        <p className="m-0 text-[13px] text-foreground-muted">{m.network_history_empty()}</p>
+      ) : (
+        <>
+          <HistoryArea
+            values={history.values}
+            min={history.min}
+            max={history.max}
+            color={statusVar[status]}
+            label={title}
+          />
+          <div className="flex justify-between font-mono text-[11px] text-foreground-subtle">
+            <span>{m.network_history_ago()}</span>
+            <span>{m.network_history_now({ value: number(last) })}</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 type WayStep = NonNullable<NetworkView['selected']>['way'][number]
 
 const Way = ({ way }: { way: WayStep[] }) => (

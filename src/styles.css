@@ -365,3 +365,15 @@
     transition: none;
   }
 }
+
+/* The history line in the network map's details draws itself (components/history-area.tsx) */
+.history-line {
+  stroke-dasharray: 1;
+  animation: topo-draw 0.9s ease-out backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-line {
+    animation: none;
+  }
+}

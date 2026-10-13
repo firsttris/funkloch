@@ -293,5 +293,9 @@
   "legend_line": "Grey line: link to the parent",
   "legend_line_weak": "Red: weak link",
   "legend_line_offline": "Dashed: offline",
-  "legend_flow": "Moving dots: the way messages go to the parent"
+  "legend_flow": "Moving dots: the way messages go to the parent",
+  "network_history": "{label}, last 24 hours",
+  "network_history_ago": "24 h ago",
+  "network_history_now": "now {value}",
+  "network_history_empty": "No values in the last 24 hours yet."
 }

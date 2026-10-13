@@ -131,7 +131,7 @@ describe('device detail', () => {
 })
 
 describe('network', () => {
-  test('the zigbee map: every device placed, one edge per pair, the root in the middle', () => {
+  test('the zigbee map: every device with its kind, one edge per pair with signal bars', () => {
     const view = networkView(env.context, 'zigbee', null, null)
     expect(view.nodes).toHaveLength(9)
     const root = view.nodes.find((n) => n.root)
@@ -139,6 +139,9 @@ describe('network', () => {
     const pairs = view.edges.map((e) => [e.a, e.b].sort().join('-'))
     expect(new Set(pairs).size).toBe(pairs.length)
     expect(view.edges.filter((e) => e.parent)).toHaveLength(8)
+    expect(view.nodes.find((n) => n.name === 'Steckdose Waschküche')?.kind).toBe('plug')
+    for (const e of view.edges.filter((e) => e.quality !== 'offline' && e.parent))
+      expect(e.bars).toBeGreaterThan(0)
     expect(view.snapshots.length).toBeGreaterThan(20)
     expect(view.canRequest).toBe(true)
   })
@@ -152,6 +155,26 @@ describe('network', () => {
       hops: 2,
     })
     expect(view.selected?.parentLink).toMatch(/^\d+$/)
+  })
+
+  test('the selected device has its way to the root and a day of hourly LQI', () => {
+    const id = idOf('Temperatursensor Keller')
+    const view = networkView(env.context, 'zigbee', null, id)
+    expect(view.selected?.way.map((w) => w.name)).toEqual([
+      'Temperatursensor Keller',
+      'Steckdose Waschküche',
+      'Koordinator',
+    ])
+    expect(view.selected?.way.at(-1)).toMatchObject({ root: true, label: null })
+    const history = view.selected?.history
+    expect(history).toMatchObject({ label: 'LQI', min: 0, max: 255 })
+    expect(history?.values).toHaveLength(24)
+    expect(history?.values.filter((v) => v !== null).length).toBeGreaterThan(20)
+  })
+
+  test('the root has no history', () => {
+    const root = networkView(env.context, 'zigbee', null, null).nodes.find((n) => n.root)
+    expect(networkView(env.context, 'zigbee', null, root?.id ?? null).selected?.history).toBeNull()
   })
 
   test('an old snapshot shows the old parent', () => {
