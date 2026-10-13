@@ -5,16 +5,7 @@ import { diffDevices } from '~/core/devices'
 import { parentChangesBetween } from '~/core/events'
 import type { DeviceInfo, Measurement, PowerSource, Role, Topology } from '~/core/types'
 import type { Db } from './client'
-import {
-  channelScans,
-  devices,
-  type EventDetails,
-  events,
-  links,
-  samples,
-  settings,
-  snapshots,
-} from './schema'
+import { devices, type EventDetails, events, links, samples, settings, snapshots } from './schema'
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
 type Conn = Db | Tx
@@ -327,21 +318,3 @@ export const setCustomName = (db: Db, deviceId: number, name: string) => {
       .get() !== undefined
   )
 }
-
-/** One energy scan: energy per channel in dBm */
-export const storeChannelScan = (
-  db: Db,
-  ts: number,
-  channels: readonly { channel: number; energy: number }[],
-) =>
-  db.transaction((tx) => {
-    for (const c of channels) {
-      tx.insert(channelScans)
-        .values({ ts, channel: c.channel, energy: c.energy })
-        .onConflictDoNothing()
-        .run()
-    }
-  })
-
-export const storeNetworkChannel = (db: Db, protocol: string, channel: number) =>
-  setSetting(db, `channel:${protocol}`, channel)

@@ -46,6 +46,22 @@ describe('overview', () => {
     expect(overviewView(env.context, '7d').rows[0]?.spark).toHaveLength(168)
   })
 
+  test('the newest energy scan, with the networks on their quiet channels', () => {
+    const channels = overviewView(env.context, '24h').channels
+    expect(channels?.ts).toBe(env.context.now - 10 * 60_000)
+    expect(channels?.bars).toHaveLength(16)
+    expect(channels?.networks).toEqual([
+      { protocol: 'zigbee', label: 'Zigbee', channel: 15 },
+      { protocol: 'thread', label: 'Thread', channel: 25 },
+    ])
+    const network = channels?.bars.filter((b) => b.network !== null)
+    expect(network?.map((b) => [b.channel, b.busy])).toEqual([
+      [15, false],
+      [25, false],
+    ])
+    expect(channels?.bars.find((b) => b.channel === 17)?.busy).toBe(true)
+  })
+
   test('other thresholds change the traffic light', () => {
     const strict = {
       ...env.context,

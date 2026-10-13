@@ -83,7 +83,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
       [720, 32],
       [0, 30],
     ],
-    noise: 8,
+    noise: 4,
     parents: [[720, zigbee('00158d0005a1b206')]],
   },
   {
@@ -178,7 +178,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
     interval: 2,
     level: [
       [720, 52],
-      [96, 52],
+      [72, 52],
       [0, 27],
     ],
     noise: 5,

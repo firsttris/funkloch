@@ -163,3 +163,34 @@ export const linksAt = (protocol: string, hoursAgo: number, now: number): Link[]
     ]
   })
 }
+
+/** The mockup's energy scan: Wi-Fi on 1, 6 and 11 leaves 15, 20, 25 and 26 quiet */
+const NOISE: Record<number, number> = {
+  11: -64,
+  12: -62,
+  13: -63,
+  14: -67,
+  15: -86,
+  16: -61,
+  17: -59,
+  18: -62,
+  19: -66,
+  20: -89,
+  21: -72,
+  22: -70,
+  23: -71,
+  24: -75,
+  25: -91,
+  26: -93,
+}
+
+export const DEMO_CHANNELS: Record<string, number> = { zigbee: 15, thread: 25 }
+
+/** An energy scan with a little variation from scan to scan */
+export const channelScanAt = (seed: number) => {
+  const rnd = random(seed)
+  return Object.entries(NOISE).map(([channel, energy]) => ({
+    channel: Number(channel),
+    energy: Math.round(energy + (rnd() - 0.5) * 4),
+  }))
+}

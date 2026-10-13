@@ -38,6 +38,7 @@ const RULE: Record<string, RuleKey> = {
   device_removed: 'network',
   bridge_offline: 'network',
   bridge_online: 'network',
+  channel_busy: 'network',
 }
 
 /** The same event of the same device is sent at most once in this time */

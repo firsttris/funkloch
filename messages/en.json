@@ -117,6 +117,7 @@
   "event_device_added": "Joined the network",
   "event_device_removed": "Removed from the network",
   "event_bridge_online": "Bridge back online",
+  "event_channel_busy": "Channel noisy",
   "event_bridge_offline": "Bridge offline",
   "event_other": "{type}",
   "not_found_title": "Device not found",
@@ -179,6 +180,7 @@
   "event_role_changed": "Role changed",
   "event_pattern": "Recurring pattern",
   "event_pattern_detail": "weak on {days} of 7 days between {from}:00 and {to}:00",
+  "event_channel_busy_detail": "Channel {channel}: {energy} dBm in the energy scan",
   "event_bridge_detail_offline": "{label} not reachable",
   "events_today": "Today · {date}",
   "range_90d": "90 days",
@@ -211,7 +213,7 @@
   "rule_pattern": "Recurring pattern",
   "rule_topology": "Parent or role change",
   "rule_network": "New or removed device, bridge offline",
-  "channels_title": "Channels",
+  "channels_title": "2.4 GHz interference",
   "channel_ntfy_server": "ntfy server",
   "channel_ntfy_topic": "ntfy topic",
   "channel_ntfy_token": "ntfy token (optional)",
@@ -270,5 +272,9 @@
   "settings_password_repeat": "Repeat the new password",
   "settings_password_changed": "Password changed. Other browsers have to sign in again.",
   "settings_password_wrong": "The current password is wrong.",
-  "settings_password_demo": "The demo has no login."
+  "settings_password_demo": "The demo has no login.",
+  "channels_source": "Energy scan · {ago}",
+  "channels_label": "Interference per channel 11 to 26 in dBm: {values}",
+  "channels_network": "{protocol} · channel {channel}",
+  "channels_busy": "Wi-Fi overlap"
 }

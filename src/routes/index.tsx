@@ -4,6 +4,7 @@ import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-tab
 import { useMemo } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
+import { ChannelCard } from '~/components/channel-card'
 import { KpiCard } from '~/components/kpi-card'
 import { roleLabel, statusVar, trendColor, trendLabel } from '~/components/labels'
 import { ProtocolBadge } from '~/components/protocol-badge'
@@ -194,38 +195,41 @@ function DevicesPage() {
           />
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
-          <KpiCard
-            label={m.kpi_devices()}
-            value={data.counts.total}
-            hint={data.protocols
-              .map((p) => `${data.counts.byProtocol[p.id] ?? 0} ${p.label}`)
-              .join(' · ')}
-          />
-          <KpiCard
-            label={m.kpi_offline()}
-            value={data.counts.offline}
-            hint={
-              longestOffline
-                ? m.kpi_offline_since({
-                    name: longestOffline.name,
-                    duration: duration(data.now - (longestOffline.lastSeen ?? data.now)),
-                  })
-                : m.kpi_offline_none()
-            }
-          />
-          <KpiCard
-            label={m.kpi_weak()}
-            value={data.counts.weak}
-            tone={data.counts.weak > 0 ? 'weak' : undefined}
-            hint={m.kpi_weak_hint({ weak: data.thresholds.weak })}
-          />
-          <KpiCard
-            label={m.kpi_down()}
-            value={data.counts.down}
-            tone={data.counts.down > 0 ? 'weak' : undefined}
-            hint={m.kpi_down_hint()}
-          />
+        <div className="flex flex-wrap gap-4">
+          <div className="grid min-w-0 flex-[1_1_560px] grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
+            <KpiCard
+              label={m.kpi_devices()}
+              value={data.counts.total}
+              hint={data.protocols
+                .map((p) => `${data.counts.byProtocol[p.id] ?? 0} ${p.label}`)
+                .join(' · ')}
+            />
+            <KpiCard
+              label={m.kpi_offline()}
+              value={data.counts.offline}
+              hint={
+                longestOffline
+                  ? m.kpi_offline_since({
+                      name: longestOffline.name,
+                      duration: duration(data.now - (longestOffline.lastSeen ?? data.now)),
+                    })
+                  : m.kpi_offline_none()
+              }
+            />
+            <KpiCard
+              label={m.kpi_weak()}
+              value={data.counts.weak}
+              tone={data.counts.weak > 0 ? 'weak' : undefined}
+              hint={m.kpi_weak_hint({ weak: data.thresholds.weak })}
+            />
+            <KpiCard
+              label={m.kpi_down()}
+              value={data.counts.down}
+              tone={data.counts.down > 0 ? 'weak' : undefined}
+              hint={m.kpi_down_hint()}
+            />
+          </div>
+          {data.channels ? <ChannelCard channels={data.channels} now={data.now} /> : null}
         </div>
 
         <Card>

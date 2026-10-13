@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { signalFormat } from '~/adapters/registry'
 import { DEFAULT_SETTINGS } from '~/core/settings'
-import { DAY, HOUR } from '~/core/types'
+import { DAY, HOUR, MINUTE } from '~/core/types'
+import { storeChannelScan, storeNetworkChannel } from '~/db/channels'
 import type { Db } from '~/db/client'
 import { detectPatterns, detectSignal, detectTrends } from '~/db/detect'
 import { checkReachability } from '~/db/reachability'
@@ -10,9 +11,20 @@ import { rollupPending } from '~/db/rollup'
 import { devices } from '~/db/schema'
 import { addEvent, applyDevices, ensureDevice, storeBatch, storeTopology } from '~/db/store'
 import { DEMO_DEVICES } from './devices'
-import { availabilityChanges, demoDeviceInfos, HISTORY_DAYS, history, linksAt } from './generate'
+import {
+  availabilityChanges,
+  channelScanAt,
+  DEMO_CHANNELS,
+  demoDeviceInfos,
+  HISTORY_DAYS,
+  history,
+  linksAt,
+} from './generate'
 
 const TOPOLOGY_EVERY_HOURS = 6
+const SCAN_EVERY_HOURS = 6
+/** The newest scan is a few minutes old, as in the mockup */
+const LAST_SCAN_AGO = 10 * MINUTE
 
 /** Fills an empty database with 30 days of the demo network, as if Funkloch had been running. */
 export const seedDemo = (db: Db, now: number) => {
@@ -51,6 +63,12 @@ export const seedDemo = (db: Db, now: number) => {
         links: linksAt(protocol, hoursAgo, now),
       })
     }
+  }
+
+  for (const [protocol, channel] of Object.entries(DEMO_CHANNELS))
+    storeNetworkChannel(db, protocol, channel)
+  for (let hoursAgo = 7 * 24; hoursAgo >= 0; hoursAgo -= SCAN_EVERY_HOURS) {
+    storeChannelScan(db, now - hoursAgo * HOUR - LAST_SCAN_AGO, channelScanAt(hoursAgo + 1))
   }
 
   rollupPending(db, now, (HISTORY_DAYS + 1) * DAY)

@@ -30,6 +30,7 @@ const TITLES: Record<string, (inputs: object, options?: Options) => string> = {
   device_removed: m.event_device_removed,
   bridge_online: m.event_bridge_online,
   bridge_offline: m.event_bridge_offline,
+  channel_busy: m.event_channel_busy,
   signal_weak: m.event_signal_weak,
   signal_recovered: m.event_signal_recovered,
   trend_down: m.event_trend_down,
@@ -74,6 +75,11 @@ export const eventDetail = (event: EventLike, locale?: Locale) => {
       )
     case 'device_added':
       return d.role ? roleLabel(d.role as Role, locale) : ''
+    case 'channel_busy':
+      return m.event_channel_busy_detail(
+        { channel: text(d.channel), energy: text(d.energy).replace('-', '−') },
+        o,
+      )
     case 'pattern':
       return m.event_pattern_detail({ days: text(d.days), from: text(d.from), to: text(d.to) }, o)
     default:

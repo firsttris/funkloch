@@ -11,6 +11,14 @@ test.describe('device list', () => {
     await expect(rows.nth(1)).toContainText('Temperatursensor Keller')
   })
 
+  test('shows the energy scan with both network channels', async ({ page }) => {
+    await page.goto('/')
+    const card = page.getByRole('region', { name: 'Störpegel 2,4 GHz' })
+    await expect(card).toContainText('Zigbee · Kanal 15')
+    await expect(card).toContainText('Thread · Kanal 25')
+    await expect(card.getByRole('img')).toHaveAttribute('aria-label', /15: −?-?\d+ dBm/)
+  })
+
   test('filters by protocol through the URL', async ({ page }) => {
     await page.goto('/')
     await page.getByRole('button', { name: 'Thread (5)' }).click()

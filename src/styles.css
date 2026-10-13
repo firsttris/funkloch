@@ -32,6 +32,8 @@
   --chart-axis: #a1a1aa;
   --chart-gap: #e4e4e7;
   --chart-bar: #52525b;
+  --channel-busy: #a1a1aa;
+  --channel-quiet: #d4d4d8;
 
   --heat-good: #bbf7d0;
   --heat-mid: #facc15;
@@ -70,6 +72,8 @@
     --chart-axis: #71717a;
     --chart-gap: #27272a;
     --chart-bar: #a1a1aa;
+    --channel-busy: #71717a;
+    --channel-quiet: #3f3f46;
 
     --heat-good: #166534;
     --heat-mid: #ca8a04;

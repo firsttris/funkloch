@@ -1,4 +1,5 @@
 import type { Measurement, Observation } from '~/core/types'
+import { storeChannelScan, storeNetworkChannel } from '~/db/channels'
 import type { Db } from '~/db/client'
 import { checkReachability } from '~/db/reachability'
 import {
@@ -6,8 +7,6 @@ import {
   type SeenInput,
   storeBatch,
   storeBridgeState,
-  storeChannelScan,
-  storeNetworkChannel,
   storeReportedAvailability,
   storeTopology,
 } from '~/db/store'
