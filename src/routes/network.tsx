@@ -85,6 +85,7 @@ function NetworkPage() {
               <p className="px-3 py-16 text-center text-foreground-subtle">{m.network_empty()}</p>
             ) : (
               <NetworkGraph
+                size={data.size}
                 nodes={data.nodes}
                 edges={data.edges}
                 selectedId={data.selected?.id ?? null}

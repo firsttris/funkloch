@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { hopsToRoot, layout, type MapNode, mapEdges, radialTree } from './topology'
+import { hopsToRoot, type MapNode, mapEdges, radialTree } from './topology'
 
 const score = ({ lqi }: { lqi: number | null }) =>
   lqi === null ? null : Math.round((lqi / 255) * 100)
@@ -62,7 +62,7 @@ describe('hopsToRoot', () => {
   })
 })
 
-describe('layout', () => {
+describe('radialTree', () => {
   const nodes: MapNode[] = [
     { id: 1, name: 'Koordinator', role: 'coordinator', status: 'unknown' },
     { id: 2, name: 'Router', role: 'router', status: 'good' },
@@ -78,21 +78,6 @@ describe('layout', () => {
     new Set(),
   )
 
-  test('keeps every node inside the box, the root in the middle', () => {
-    const positions = layout(nodes, edges, 900, 580, 70)
-    expect(positions).toHaveLength(4)
-    for (const p of positions) {
-      expect(p.x).toBeGreaterThanOrEqual(70)
-      expect(p.x).toBeLessThanOrEqual(830)
-      expect(p.y).toBeGreaterThanOrEqual(70)
-      expect(p.y).toBeLessThanOrEqual(510)
-    }
-  })
-
-  test('the root sits exactly in the middle', () => {
-    expect(layout(nodes, edges).find((p) => p.id === 1)).toEqual({ id: 1, x: 450, y: 290 })
-  })
-
   test('the radial start puts a child further out than its parent, on its side', () => {
     const start = radialTree(nodes, edges)
     const router = start.get(2)
@@ -101,14 +86,5 @@ describe('layout', () => {
       Math.hypot(router?.x ?? 0, router?.y ?? 0),
     )
     expect(Math.sign(sensor?.x ?? 0)).toBe(Math.sign(router?.x ?? 0))
-  })
-
-  test('is deterministic', () => {
-    expect(layout(nodes, edges)).toEqual(layout([...nodes].reverse(), edges))
-  })
-
-  test('handles no nodes and a single node', () => {
-    expect(layout([], [])).toEqual([])
-    expect(layout([nodes[0] as MapNode], [])).toEqual([{ id: 1, x: 450, y: 290 }])
   })
 })

@@ -1,6 +1,8 @@
 import '@tanstack/react-start/server-only'
 import { PROTOCOLS } from '~/adapters/registry'
-import { hopsToRoot, isRoot, layout, type MapNode, mapEdges } from '~/core/topology'
+import { placeEdgeLabels } from '~/core/edge-labels'
+import { layout } from '~/core/map-layout'
+import { hopsToRoot, isRoot, type MapNode, mapEdges } from '~/core/topology'
 import { DAY, type Role, type Status } from '~/core/types'
 import { devicesOfProtocol, displayName, linksOfSnapshot, snapshotsOf } from '~/db/queries'
 import type { ViewContext } from './context'
@@ -45,7 +47,15 @@ export const networkView = (
       }))
     : []
   const edges = mapEdges(links, meta?.linkScore ?? (() => null), offline)
-  const positions = new Map(layout(nodes, edges).map((p) => [p.id, p]))
+  const map = layout(nodes, edges)
+  const positions = new Map(map.positions.map((p) => [p.id, p]))
+  const labelOf = (edge: (typeof edges)[number]) => meta?.formatLink(edge) ?? ''
+  // Only parent lines carry their value on the map
+  const labelSpots = placeEdgeLabels(
+    nodes,
+    map.positions,
+    edges.filter((e) => e.parent).map((e) => ({ a: e.a, b: e.b, text: labelOf(e) })),
+  )
   const roots = new Set(nodes.filter((n) => isRoot(n.role)).map((n) => n.id))
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
@@ -62,13 +72,19 @@ export const networkView = (
     snapshot: snapshot ? { id: snapshot.id, ts: snapshot.ts } : null,
     canRequest: adapters.some((a) => a.meta.id === protocol && a.requestTopology !== undefined),
     networkmapHours: settings.networkmapHours,
+    /** Size of the drawing in pixels; it grows with the network */
+    size: { width: map.width, height: map.height },
     nodes: nodes.map((n) => ({
       ...n,
       x: positions.get(n.id)?.x ?? 0,
       y: positions.get(n.id)?.y ?? 0,
       root: roots.has(n.id),
     })),
-    edges: edges.map((e) => ({ ...e, label: meta?.formatLink(e) ?? '' })),
+    edges: edges.map((e) => ({
+      ...e,
+      label: labelOf(e),
+      labelAt: labelSpots.get(`${e.a}-${e.b}`) ?? null,
+    })),
     selected: selected
       ? {
           ...selected,

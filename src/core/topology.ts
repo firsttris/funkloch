@@ -1,6 +1,5 @@
-// The network map as data: nodes, deduplicated edges, hops to the root and a force layout.
-// d3-force only computes positions; drawing is the UI's job.
-import { forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY } from 'd3-force'
+// The network map as data: nodes, deduplicated edges, hops to the root and the radial start of
+// the layout (map-layout.ts).
 import { band } from './score'
 import type { Band, Role, Status } from './types'
 
@@ -88,17 +87,6 @@ export const hopsToRoot = (id: number, edges: readonly MapEdge[], roots: Readonl
   return hops
 }
 
-export type Positioned = { id: number; x: number; y: number }
-
-type SimNode = {
-  id: number
-  x?: number
-  y?: number
-  fx?: number | null
-  fy?: number | null
-  root: boolean
-}
-
 /**
  * Start positions as a radial tree: every root in the middle, each subtree gets a slice of the
  * circle as wide as its number of leaves, one ring per hop. Devices without a parent hang off the
@@ -149,59 +137,4 @@ export const radialTree = (nodes: readonly MapNode[], edges: readonly MapEdge[],
   }
   place(null, -Math.PI / 2, (3 * Math.PI) / 2, 0, new Set())
   return positions
-}
-
-type SimLink = { source: number; target: number; parent: boolean }
-
-/**
- * Positions in a width × height box with the root in the middle: the radial tree as a start,
- * then d3-force untangles it (parents pull their children close, neighbor links a little).
- * Deterministic: same input, same picture (d3-force uses a seeded random source).
- */
-export const layout = (
-  nodes: readonly MapNode[],
-  edges: readonly MapEdge[],
-  width = 900,
-  height = 580,
-  padding = 70,
-): Positioned[] => {
-  if (nodes.length === 0) return []
-  const start = radialTree(nodes, edges)
-  const sim: SimNode[] = [...nodes]
-    .sort((a, b) => a.id - b.id)
-    .map((node) => {
-      const root = isRoot(node.role)
-      const p = start.get(node.id) ?? { x: 0, y: 0 }
-      return { id: node.id, root, x: p.x, y: p.y, ...(root ? { fx: 0, fy: 0 } : {}) }
-    })
-  const ids = new Set(sim.map((n) => n.id))
-  const simLinks: SimLink[] = edges
-    .filter((e) => ids.has(e.a) && ids.has(e.b))
-    .map((e) => ({ source: e.a, target: e.b, parent: e.parent }))
-
-  forceSimulation(sim)
-    .force(
-      'link',
-      forceLink<SimNode, SimLink>(simLinks)
-        .id((n) => n.id)
-        .distance((l) => (l.parent ? 170 : 280))
-        .strength((l) => (l.parent ? 0.9 : 0.02)),
-    )
-    .force('charge', forceManyBody().strength(-1400))
-    .force('collide', forceCollide(80))
-    .force('x', forceX(0).strength(0.04))
-    .force('y', forceY(0).strength(0.06))
-    .stop()
-    .tick(400)
-
-  // Scale around the middle, so the root stays centred; labels need more room sideways
-  const padX = padding + 40
-  const maxX = Math.max(1, ...sim.map((n) => Math.abs(n.x ?? 0)))
-  const maxY = Math.max(1, ...sim.map((n) => Math.abs(n.y ?? 0)))
-  const scale = Math.min((width / 2 - padX) / maxX, (height / 2 - padding) / maxY, 2)
-  return sim.map((n) => ({
-    id: n.id,
-    x: Math.round(width / 2 + (n.x ?? 0) * scale),
-    y: Math.round(height / 2 + (n.y ?? 0) * scale),
-  }))
 }
