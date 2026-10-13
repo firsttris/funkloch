@@ -19,4 +19,8 @@ export const threadMeta: ProtocolMeta = {
   label: 'Thread',
   raw: { label: 'RSSI', min: -110, max: -30, unit: 'dBm' },
   rawAtScore: null,
+  formatRaw: ({ lqi, rssi }) =>
+    [lqi === null ? null : `LQI ${lqi}`, rssi === null ? null : `${rssi} dBm`.replace('-', '−')]
+      .filter(Boolean)
+      .join(' · '),
 }

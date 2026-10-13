@@ -4,7 +4,7 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { diffDevices } from '~/core/devices'
 import type { DeviceInfo, Measurement, PowerSource, Role, Topology } from '~/core/types'
 import type { Db } from './client'
-import { devices, events, links, samples, settings, snapshots } from './schema'
+import { devices, type EventDetails, events, links, samples, settings, snapshots } from './schema'
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
 type Conn = Db | Tx
@@ -15,7 +15,7 @@ export type EventInput = {
   type: string
   protocol: string | null
   deviceId: number | null
-  details?: Record<string, unknown>
+  details?: EventDetails
 }
 
 export const addEvent = (db: Conn, event: EventInput) =>

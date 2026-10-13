@@ -8,6 +8,8 @@ export type ProtocolMeta = {
   raw: { label: string; min: number; max: number; unit: string }
   /** Raw value at a score, to draw a score threshold on a raw chart; null when not invertible */
   rawAtScore: ((score: number) => number) | null
+  /** The raw values as shown in the device list, e.g. "LQI 38" */
+  formatRaw: (sample: { raw: number; lqi: number | null; rssi: number | null }) => string
 }
 
 export type AdapterStatus = { connected: boolean; error: string | null; since: number | null }

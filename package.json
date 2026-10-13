@@ -24,7 +24,8 @@
     "release:major": "npm version major",
     "postversion": "git push --follow-tags",
     "paraglide": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy cookie preferredLanguage baseLocale --emit-ts-declarations",
-    "postinstall": "bun run paraglide"
+    "postinstall": "bun run paraglide",
+    "test:integration": "bun --bun vitest run --project integration"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.2",
@@ -60,5 +61,9 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.4"
+  },
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "bun": ">=1.4.2"
   }
 }

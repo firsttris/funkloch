@@ -11,4 +11,5 @@ export const zigbeeMeta: ProtocolMeta = {
   label: 'Zigbee',
   raw: { label: 'LQI', min: 0, max: ZIGBEE_LQI_MAX, unit: '' },
   rawAtScore: (score) => Math.round(scoreToRaw(score, 0, ZIGBEE_LQI_MAX)),
+  formatRaw: ({ raw }) => `LQI ${Math.round(raw)}`,
 }

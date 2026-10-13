@@ -11,6 +11,8 @@ import {
 
 // All timestamps are milliseconds since the epoch.
 
+export type EventDetails = Record<string, string | number | boolean | null>
+
 export const devices = sqliteTable(
   'devices',
   {
@@ -125,7 +127,7 @@ export const events = sqliteTable(
     protocol: text('protocol'),
     deviceId: integer('device_id').references(() => devices.id, { onDelete: 'cascade' }),
     /** Values for the localized text, as JSON */
-    details: text('details', { mode: 'json' }).$type<Record<string, unknown>>(),
+    details: text('details', { mode: 'json' }).$type<EventDetails>(),
     notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [index('events_ts').on(t.ts), index('events_device_ts').on(t.deviceId, t.ts)],
