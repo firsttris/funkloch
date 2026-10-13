@@ -116,25 +116,52 @@ export const ensureDevice = (db: Conn, protocol: string, address: string, ts: nu
 
 export type SeenInput = { protocol: string; address: string; ts: number; battery: number | null }
 
+const SAMPLE_CHUNK = 500
+
+/** Per device in a batch: the newest message time and the newest battery level reported */
+const latestPerDevice = (rows: readonly SeenInput[]) => {
+  const latest = new Map<string, SeenInput & { batteryTs: number }>()
+  for (const row of rows) {
+    const key = `${row.protocol}|${row.address}`
+    const before = latest.get(key)
+    const newerBattery = row.battery !== null && row.ts >= (before?.batteryTs ?? -Infinity)
+    latest.set(key, {
+      protocol: row.protocol,
+      address: row.address,
+      ts: Math.max(row.ts, before?.ts ?? -Infinity),
+      battery: newerBattery ? row.battery : (before?.battery ?? null),
+      batteryTs: newerBattery ? row.ts : (before?.batteryTs ?? -Infinity),
+    })
+  }
+  return [...latest.values()]
+}
+
 /** Stores a batch of measurements and signs of life in one transaction. */
 export const storeBatch = (db: Db, measurements: Measurement[], seen: SeenInput[]) =>
   db.transaction((tx) => {
-    for (const m of measurements) {
-      const deviceId = ensureDevice(tx, m.protocol, m.address, m.ts)
+    const ids = new Map<string, number>()
+    const idOf = (protocol: string, address: string, ts: number) => {
+      const key = `${protocol}|${address}`
+      const id = ids.get(key) ?? ensureDevice(tx, protocol, address, ts)
+      ids.set(key, id)
+      return id
+    }
+    const rows = measurements.map((m) => ({
+      deviceId: idOf(m.protocol, m.address, m.ts),
+      ts: m.ts,
+      score: m.score,
+      raw: m.raw,
+      lqi: m.lqi,
+      rssi: m.rssi,
+      source: m.source,
+    }))
+    for (let i = 0; i < rows.length; i += SAMPLE_CHUNK) {
       tx.insert(samples)
-        .values({
-          deviceId,
-          ts: m.ts,
-          score: m.score,
-          raw: m.raw,
-          lqi: m.lqi,
-          rssi: m.rssi,
-          source: m.source,
-        })
+        .values(rows.slice(i, i + SAMPLE_CHUNK))
         .onConflictDoNothing()
         .run()
     }
-    for (const s of [...measurements, ...seen]) {
+    for (const s of latestPerDevice([...measurements, ...seen])) {
       tx.update(devices)
         .set({
           lastSeen: sql`max(coalesce(${devices.lastSeen}, 0), ${s.ts})`,
