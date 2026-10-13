@@ -19,7 +19,9 @@ export const createOtbrClient = (baseUrl: string, fetcher: typeof fetch = fetch)
       const response = await fetcher(new URL(path, baseUrl), {
         method,
         headers: {
-          accept: path.startsWith('/api/') ? `${JSON_API}, application/json` : 'application/json',
+          // The OTBR compares the whole Accept header with one media type and answers 406 to a
+          // list or a q parameter (measured on otbr-agent 0.3.0), so each path gets exactly one.
+          accept: path.startsWith('/api/') ? JSON_API : 'application/json',
           ...(body ? { 'content-type': JSON_API } : {}),
         },
         body: body ? JSON.stringify(body) : undefined,
