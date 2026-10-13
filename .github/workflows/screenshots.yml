@@ -1,0 +1,16 @@
+name: Update screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  screenshots:
+    uses: firsttris/workflows/.github/workflows/screenshots.yml@v1
+    with:
+      bun: true
+      install: bun install --frozen-lockfile
+      lockfile: bun.lock
+      command: bun run build && bun run screenshots
+      paths: docs/screenshots
+    permissions:
+      contents: write

@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  # Ebene 7: the built image starts and /healthz turns green, before anything is pushed
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and start each platform
+        run: |
+          set -euo pipefail
+          for platform in linux/amd64 linux/arm64; do
+            docker buildx build --platform "$platform" --load -t funkloch:test -f docker/Dockerfile .
+            docker run -d --name funkloch --platform "$platform" -e FUNKLOCH_DEMO=1 -p 8090:8090 funkloch:test
+            for _ in $(seq 1 60); do
+              if curl -fsS http://localhost:8090/healthz; then break; fi
+              sleep 2
+            done
+            curl -fsS http://localhost:8090/healthz
+            docker rm -f funkloch
+          done
+
+  docker:
+    needs: [checks, container]
+    uses: firsttris/workflows/.github/workflows/docker-release.yml@v1
+    with:
+      image: tristanteu/funkloch
+      description: Signal history, trends and alerts for every Zigbee2MQTT and Thread (OTBR) device
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
+
+  # docker-release.yml already creates the release on a tag; this one then only adds files, and
+  # stays here so the release follows the same scheme as the other projects
+  release:
+    needs: docker
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: firsttris/workflows/.github/workflows/github-release.yml@v1
+    permissions:
+      contents: write

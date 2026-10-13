@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]            # not every branch, pull requests build through pull_request
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+  workflow_call:                # release.yml runs the same checks before publishing
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its outdated run; runs on main and tags finish
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    # Draft pull requests do not build; "Ready for review" starts the run
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint and format
+        run: bunx biome ci .
+      - name: Unit, contract and database tests
+        run: bun run test
+      - name: Build
+        run: bun run build
+
+  # Ebene 4: the Zigbee adapter against a real broker; on main and before a release only
+  integration:
+    if: ${{ !github.event.pull_request.draft && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - name: Mosquitto
+        run: docker run -d --name mosquitto -p 1883:1883 eclipse-mosquitto:2 mosquitto -c /mosquitto-no-auth.conf
+      - name: Integration tests
+        run: bun run test:integration
+        env:
+          MQTT_TEST_URL: mqtt://localhost:1883
+
+  playwright-image:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.playwright.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: playwright
+        uses: firsttris/workflows/actions/playwright-image@v1
+        with:
+          lockfile: bun.lock
+
+  # Ebene 6: every page in demo mode; Chromium on pull requests, all browsers on main and releases
+  e2e:
+    needs: playwright-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: ${{ needs.playwright-image.outputs.image }}
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+      # The npm package brings the binary without curl or unzip, which the image lacks
+      - run: npm install --global "bun@$(jq -r .packageManager package.json | cut -d@ -f2)"
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Playwright
+        run: bunx playwright test ${{ github.event_name == 'pull_request' && '--project=chromium' || '--project=chromium --project=firefox --project=webkit' }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

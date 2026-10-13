@@ -1,0 +1,10 @@
+node_modules
+dist
+.output
+.git
+data
+recordings
+test-results
+playwright-report
+src/paraglide
+docs/screenshots
