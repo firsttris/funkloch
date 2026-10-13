@@ -28,6 +28,8 @@ export const getSettingsPage = createServerFn({ method: 'GET' }).handler(() => {
     runtime.config.FUNKLOCH_DEMO ? 'demo.db' : 'funkloch.db',
   )
   return {
+    /** The server's time, so the page renders "connected 5 s ago" the same on both sides */
+    now: Date.now(),
     settings,
     adapters: adapterStates(runtime.adapters),
     databaseBytes: fileSize(file) + fileSize(`${file}-wal`),

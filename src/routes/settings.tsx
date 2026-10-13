@@ -93,7 +93,6 @@ function SettingsPage() {
   const { data } = useSuspenseQuery(settingsPageQuery)
   const [draft, setDraft] = useState<Settings>(data.settings)
   useEffect(() => setDraft(data.settings), [data.settings])
-  const now = Date.now()
 
   const save = useMutation({
     mutationFn: () => updateSettings({ data: { settings: draft } }),
@@ -140,7 +139,7 @@ function SettingsPage() {
                   </span>
                   <span className="text-foreground-muted">
                     {adapter.connected
-                      ? m.settings_adapter_connected({ ago: ago(adapter.since, now) })
+                      ? m.settings_adapter_connected({ ago: ago(adapter.since, data.now) })
                       : (adapter.error ?? m.settings_adapter_disconnected())}
                   </span>
                 </li>
