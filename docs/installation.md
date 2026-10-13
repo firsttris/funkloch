@@ -107,6 +107,10 @@ Funkloch works on a sub-domain (not under a sub-path). The proxy needs to pass t
 `Secure`. Form posts from another origin are refused, so the browser must reach Funkloch under the
 address the proxy forwards.
 
+After five wrong passwords within 15 minutes an address waits until the window has passed. The
+address is the last entry of `X-Forwarded-For`, the one the proxy appends; a client that reaches
+the port directly can set that header itself, so do not open the port itself to the internet.
+
 The live updates are a server-sent event stream at `/api/live`; Funkloch already sends
 `X-Accel-Buffering: no` for nginx.
 

@@ -160,6 +160,21 @@ describe('login', () => {
     expect(await plain?.json()).toEqual({ error: 'not signed in' })
   })
 
+  test('a made-up X-Forwarded-For in front of the proxy does not reset the count', async () => {
+    const { options } = setup()
+    await signUp(options)
+    const timed = { ...options, now: () => 2_000_000 }
+    const attempt = (password: string, i: number) =>
+      handleAuth(
+        post('/auth/login', { password }, { 'x-forwarded-for': `203.0.113.${i}, 10.0.0.7` }),
+        timed,
+      )
+    for (let i = 0; i < 5; i++) await attempt('wrong password!', i)
+    expect((await attempt('correct horse battery', 9))?.headers.get('location')).toBe(
+      '/login?error=throttled',
+    )
+  })
+
   test('logout ends the session', async () => {
     const { options } = setup()
     const cookie = await signUp(options)

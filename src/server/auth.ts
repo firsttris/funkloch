@@ -3,10 +3,12 @@ import { createHash, randomBytes } from 'node:crypto'
 import { eq, lt, ne } from 'drizzle-orm'
 import {
   clearedSessionCookie,
+  forwardedClient,
   isHttps,
   isSameOrigin,
   parseCookies,
   passwordProblem,
+  pruneFailures,
   recordFailure,
   SESSION_COOKIE,
   SESSION_DAYS,
@@ -115,10 +117,9 @@ const wantsPage = (request: Request) =>
     (request.headers.get('accept') ?? '').includes('text/html'))
 
 /** Failed logins per client address, in memory; a restart forgets them */
-const failures = new Map<string, number[]>()
+let failures = new Map<string, readonly number[]>()
 
-const clientKey = (request: Request) =>
-  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local'
+const clientKey = (request: Request) => forwardedClient(request.headers.get('x-forwarded-for'))
 
 export type AuthOptions = { db: Db; enabled: boolean; dev: boolean; now?: () => number }
 
@@ -162,7 +163,7 @@ export const handleAuth = async (
     const key = clientKey(request)
     if (throttled(failures.get(key) ?? [], now)) return redirect('/login?error=throttled')
     if (!(await verifyAdminPassword(db, String(form.get('password') ?? '')))) {
-      failures.set(key, recordFailure(failures.get(key) ?? [], now))
+      failures = pruneFailures(failures, now).set(key, recordFailure(failures.get(key) ?? [], now))
       return redirect(`/login?error=wrong&next=${encodeURIComponent(next)}`)
     }
     failures.delete(key)
@@ -176,9 +177,7 @@ export const handleAuth = async (
 
   if (!admin) {
     if (path === '/setup' || PUBLIC.some((p) => p.test(path) && path !== '/login')) return null
-    return wantsPage(request)
-      ? redirect('/setup')
-      : refuse(request, 'setup required', '/setup')
+    return wantsPage(request) ? redirect('/setup') : refuse(request, 'setup required', '/setup')
   }
   if (path === '/setup') return redirect('/login')
 
