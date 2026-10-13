@@ -169,6 +169,7 @@
   "events_range": "Zeitraum",
   "events_empty": "Keine Ereignisse in diesem Zeitraum.",
   "events_footer": "Ereignisse bleiben so lange wie die Stundenwerte gespeichert.",
+  "events_truncated": "Gezeigt werden die neuesten {shown} von {total} Ereignissen; der CSV-Export enthält alle.",
   "event_signal_weak": "Unter Schwelle",
   "event_signal_weak_detail": "{value} (Schwelle {threshold}), Median der letzten {minutes} min",
   "event_signal_recovered": "Signal wieder ausreichend",
