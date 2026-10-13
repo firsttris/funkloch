@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
+import { Route as NetworkRouteImport } from './routes/network'
 import { Route as DevicesIdRouteImport } from './routes/devices.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const HealthzRoute = HealthzRouteImport.update({
   path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NetworkRoute = NetworkRouteImport.update({
+  id: '/network',
+  path: '/network',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevicesIdRoute = DevicesIdRouteImport.update({
   id: '/devices/$id',
   path: '/devices/$id',
@@ -32,30 +38,34 @@ const DevicesIdRoute = DevicesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
+  '/network': typeof NetworkRoute
   '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
+  '/network': typeof NetworkRoute
   '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
+  '/network': typeof NetworkRoute
   '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/healthz' | '/devices/$id'
+  fullPaths: '/' | '/healthz' | '/network' | '/devices/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz' | '/devices/$id'
-  id: '__root__' | '/' | '/healthz' | '/devices/$id'
+  to: '/' | '/healthz' | '/network' | '/devices/$id'
+  id: '__root__' | '/' | '/healthz' | '/network' | '/devices/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthzRoute: typeof HealthzRoute
+  NetworkRoute: typeof NetworkRoute
   DevicesIdRoute: typeof DevicesIdRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/network': {
+      id: '/network'
+      path: '/network'
+      fullPath: '/network'
+      preLoaderRoute: typeof NetworkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devices/$id': {
       id: '/devices/$id'
       path: '/devices/$id'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthzRoute: HealthzRoute,
+  NetworkRoute: NetworkRoute,
   DevicesIdRoute: DevicesIdRoute,
 }
 export const routeTree = rootRouteImport

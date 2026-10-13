@@ -206,3 +206,23 @@ export const messagesPerHour = (db: Db, deviceId: number, from: number, now: num
     { hour: running, value: samplesSince(db, deviceId, running) },
   ]
 }
+
+/** Snapshots of a protocol since `from`, oldest first */
+export const snapshotsOf = (db: Db, protocol: string, from: number) =>
+  db
+    .select()
+    .from(snapshots)
+    .where(and(eq(snapshots.protocol, protocol), gte(snapshots.ts, from)))
+    .orderBy(asc(snapshots.ts))
+    .all()
+
+export const linksOfSnapshot = (db: Db, snapshotId: number) =>
+  db.select().from(links).where(eq(links.snapshotId, snapshotId)).all()
+
+/** Every device of a protocol that is not removed, coordinators included */
+export const devicesOfProtocol = (db: Db, protocol: string) =>
+  db
+    .select()
+    .from(devices)
+    .where(and(eq(devices.protocol, protocol), isNull(devices.removedAt)))
+    .all()

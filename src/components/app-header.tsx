@@ -32,7 +32,14 @@ const navLink =
 export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
   const other = getLocale() === 'de' ? 'en' : 'de'
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const devicesActive = pathname === '/' || pathname.startsWith('/devices')
+  const nav = [
+    {
+      to: '/',
+      label: m.nav_devices(),
+      active: pathname === '/' || pathname.startsWith('/devices'),
+    },
+    { to: '/network', label: m.nav_network(), active: pathname.startsWith('/network') },
+  ] as const
   return (
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-x-7 gap-y-3 px-4 py-3 sm:px-8">
@@ -41,13 +48,16 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
           <span className="text-base font-bold tracking-tight">{m.app_name()}</span>
         </Link>
         <nav aria-label={m.nav_label()} className="flex flex-wrap gap-1">
-          <Link
-            to="/"
-            aria-current={devicesActive ? 'page' : undefined}
-            className={cn(navLink, devicesActive && 'bg-track font-semibold text-foreground')}
-          >
-            {m.nav_devices()}
-          </Link>
+          {nav.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-current={item.active ? 'page' : undefined}
+              className={cn(navLink, item.active && 'bg-track font-semibold text-foreground')}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {adapters.length === 0 ? (

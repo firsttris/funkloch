@@ -14,6 +14,8 @@ import { seedDemo } from '~/demo/seed'
 import { startScheduler } from '~/jobs/scheduler'
 import { createIngest } from './ingest'
 import { createLog, type Log } from './log'
+import { defaultsFrom, loadSettings } from './settings'
+import type { ViewContext } from './views/context'
 
 export type Runtime = {
   config: Config
@@ -21,6 +23,8 @@ export type Runtime = {
   log: Log
   adapters: Adapter[]
   startedAt: number
+  /** Database, time, settings and adapters for one request */
+  viewContext: () => ViewContext
   stop: () => Promise<void>
 }
 
@@ -57,13 +61,21 @@ export const startRuntime = (config: Config): Runtime => {
     'funkloch started',
   )
 
+  const settingsDefaults = defaultsFrom(config)
+  const viewContext = (): ViewContext => ({
+    db,
+    now: Date.now(),
+    settings: loadSettings(db, settingsDefaults),
+    adapters,
+  })
+
   const stop = async () => {
     stopScheduler()
     await Promise.all(stopAdapters.map((stopAdapter) => stopAdapter()))
     ingest.stop()
     db.$client.close()
   }
-  return { config, db, log, adapters, startedAt, stop }
+  return { config, db, log, adapters, startedAt, viewContext, stop }
 }
 
 // Kept on globalThis so a hot reload in dev does not start a second set of adapters

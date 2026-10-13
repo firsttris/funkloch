@@ -31,7 +31,8 @@ import { Segmented } from '~/components/ui/segmented'
 import { cn } from '~/lib/cn'
 import { ago, dateTime, modelText, number, percent } from '~/lib/format'
 import { m } from '~/paraglide/messages.js'
-import { type DeviceDetail, getDeviceDetail, getOverview } from '~/server/api'
+import { getDeviceDetail, getOverview } from '~/server/fn/pages'
+import type { DeviceDetail } from '~/server/views/device'
 
 const searchSchema = z.object({
   range: z.enum(['24h', '7d', '30d']).catch('7d').default('7d'),
