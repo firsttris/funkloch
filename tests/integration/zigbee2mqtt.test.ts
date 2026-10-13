@@ -1,4 +1,4 @@
-// Ebene 4: the Zigbee2MQTT adapter against a real broker, from MQTT message to database row.
+// Layer 4: the Zigbee2MQTT adapter against a real broker, from MQTT message to database row.
 import mqtt from 'mqtt'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { createZigbee2mqttAdapter } from '~/adapters/zigbee2mqtt/adapter'

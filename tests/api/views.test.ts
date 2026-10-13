@@ -1,4 +1,4 @@
-// Ebene 5: the views behind the server functions, on a seeded database
+// Layer 5: the views behind the server functions, on a seeded database
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { deviceView } from '~/server/views/device'
 import { eventsCsv, eventsView } from '~/server/views/events'

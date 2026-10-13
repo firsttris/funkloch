@@ -9,7 +9,7 @@ jobs:
   checks:
     uses: ./.github/workflows/ci.yml
 
-  # Ebene 7: the built image starts and /healthz turns green, before anything is pushed
+  # Layer 7: the built image starts and /healthz turns green, before anything is pushed
   container:
     runs-on: ubuntu-latest
     timeout-minutes: 20
