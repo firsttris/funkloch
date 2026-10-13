@@ -30,7 +30,9 @@ changed under **Settings**.
 
 A linear regression over the hourly medians of the last 72 hours, read as the change it predicts
 over those 72 hours: more than 15 points down is **falling**, more than 15 up **rising**. It needs
-at least 24 hourly values; a single bad reading does not move it.
+at least 24 hourly values; a single bad reading does not move it. Each hour of the day first loses
+its own mean over the window, so a daily rhythm (a socket that is weak every evening) is no trend
+and the verdict does not change with the time of day; a change from day to day still counts.
 
 ## Reachability
 

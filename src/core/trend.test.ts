@@ -53,4 +53,27 @@ describe('trend', () => {
     const old = series((i) => 60 - i, 72).map((h) => ({ ...h, hour: h.hour - 10 * 24 * HOUR }))
     expect(trend(old, now)).toBe('none')
   })
+
+  /** 73 hourly medians ending at `at`: a decline by `drop`, weak by `dip` from 19 to 23 h */
+  const evenings = (at: number, drop: number, dip: number) =>
+    Array.from({ length: 73 }, (_, i) => {
+      const hour = at - (72 - i) * HOUR
+      const h = Math.floor(hour / HOUR) % 24
+      return { hour, median: 52 - (i / 72) * drop - (h >= 19 && h < 23 ? dip : 0) }
+    })
+
+  test('an evening dip does not tilt a small decline into falling, at any hour', () => {
+    // Without taking the daily rhythm out, this read as falling in the late evening and at night
+    for (let end = 0; end < 24; end++) {
+      const at = now + end * HOUR
+      expect(trend(evenings(at, 10, 30), at)).toBe('flat')
+    }
+  })
+
+  test('a real decline under an evening dip is falling, at any hour', () => {
+    for (let end = 0; end < 24; end++) {
+      const at = now + end * HOUR
+      expect(trend(evenings(at, 25, 30), at)).toBe('down')
+    }
+  })
 })
