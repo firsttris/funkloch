@@ -8,7 +8,7 @@ import type { MqttRecord } from '../../scripts/recorder/zigbee2mqtt'
 
 const ROOT = join(import.meta.dirname, '../fixtures/recordings')
 
-const recordings = readdirSync(ROOT, { withFileTypes: true })
+const recordings = (existsSync(ROOT) ? readdirSync(ROOT, { withFileTypes: true }) : [])
   .filter((entry) => entry.isDirectory() && existsSync(join(ROOT, entry.name, 'zigbee2mqtt.jsonl')))
   .map((entry) => entry.name)
 

@@ -11,5 +11,5 @@ src/paraglide/
 test-results/
 playwright-report/
 coverage/
-recordings/
+/recordings/
 .env
