@@ -7,7 +7,7 @@
       "!src/routeTree.gen.ts",
       "!src/paraglide",
       "!src/db/migrations/meta",
-      "!tests/fixtures"
+      "!tests/fixtures/recordings"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },

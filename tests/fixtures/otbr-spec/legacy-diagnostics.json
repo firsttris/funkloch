@@ -1,0 +1,30 @@
+[
+  {
+    "ExtAddress": "96518e5497d5b9f3",
+    "Rloc16": 61440,
+    "Mode": { "RxOnWhenIdle": 1, "DeviceType": 1, "NetworkData": 1 },
+    "Route": {
+      "IdSequence": 23,
+      "RouteData": [
+        { "RouteId": 20, "LinkQualityOut": 3, "LinkQualityIn": 3, "RouteCost": 1 },
+        { "RouteId": 60, "LinkQualityOut": 0, "LinkQualityIn": 0, "RouteCost": 0 }
+      ]
+    },
+    "ChildTable": []
+  },
+  {
+    "ExtAddress": "2a55d952bc7b4008",
+    "Rloc16": 20480,
+    "Mode": { "RxOnWhenIdle": 1, "DeviceType": 1, "NetworkData": 1 },
+    "Route": {
+      "IdSequence": 23,
+      "RouteData": [{ "RouteId": 60, "LinkQualityOut": 2, "LinkQualityIn": 3, "RouteCost": 1 }]
+    },
+    "ChildTable": [{ "ChildId": 1, "Timeout": 240, "Mode": { "RxOnWhenIdle": 0 } }]
+  },
+  {
+    "ExtAddress": "f2f307043724e8d0",
+    "Rloc16": 20481,
+    "Mode": { "RxOnWhenIdle": 0, "DeviceType": 0, "NetworkData": 0 }
+  }
+]

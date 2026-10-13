@@ -6,6 +6,8 @@ import {
   type SeenInput,
   storeBatch,
   storeBridgeState,
+  storeChannelScan,
+  storeNetworkChannel,
   storeReportedAvailability,
   storeTopology,
 } from '~/db/store'
@@ -42,7 +44,13 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
     switch (observation.kind) {
       case 'devices':
         return guarded('devices', () =>
-          applyDevices(db, observation.protocol, observation.devices, observation.ts),
+          applyDevices(
+            db,
+            observation.protocol,
+            observation.devices,
+            observation.ts,
+            observation.complete,
+          ),
         )
       case 'availability': {
         const { protocol, address, online, ts } = observation.report
@@ -56,6 +64,14 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
       case 'bridge':
         return guarded('bridge state', () =>
           storeBridgeState(db, observation.protocol, observation.online, observation.ts),
+        )
+      case 'channels':
+        return guarded('channel scan', () =>
+          storeChannelScan(db, observation.ts, observation.channels),
+        )
+      case 'channel':
+        return guarded('channel', () =>
+          storeNetworkChannel(db, observation.protocol, observation.channel),
         )
       case 'measurement':
       case 'seen':

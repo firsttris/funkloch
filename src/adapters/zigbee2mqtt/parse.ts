@@ -6,6 +6,7 @@ import {
   availabilitySchema,
   type BridgeDevice,
   bridgeDevicesSchema,
+  bridgeInfoSchema,
   bridgeStateSchema,
   deviceStateSchema,
   type NetworkmapResponse,
@@ -108,6 +109,7 @@ const parseBridge = (ctx: ParseContext, subtopic: string, payload: unknown): Par
           protocol: PROTOCOL,
           ts: ctx.now,
           devices: result.data.map(toDeviceInfo),
+          complete: true,
         },
       ],
     }
@@ -118,6 +120,12 @@ const parseBridge = (ctx: ParseContext, subtopic: string, payload: unknown): Par
     return {
       observations: [{ kind: 'bridge', protocol: PROTOCOL, ts: ctx.now, online: result.data }],
     }
+  }
+  if (subtopic === 'info') {
+    const result = bridgeInfoSchema.safeParse(payload)
+    if (!result.success) return invalid(topic, result.error)
+    const channel = result.data.network?.channel
+    return { observations: channel ? [{ kind: 'channel', protocol: PROTOCOL, channel }] : [] }
   }
   if (subtopic === 'response/networkmap') {
     const result = networkmapResponseSchema.safeParse(payload)

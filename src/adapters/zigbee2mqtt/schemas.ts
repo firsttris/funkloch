@@ -71,3 +71,8 @@ export const networkmapResponseSchema = z.looseObject({
 })
 
 export type NetworkmapResponse = z.infer<typeof networkmapResponseSchema>
+
+/** bridge/info: only the channel is read (lib/types/api.ts "bridge/info".network) */
+export const bridgeInfoSchema = z.looseObject({
+  network: z.looseObject({ channel: z.number().int().min(11).max(26) }).optional(),
+})

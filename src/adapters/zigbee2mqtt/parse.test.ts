@@ -61,7 +61,13 @@ describe('parseMessage', () => {
     const result = parseMessage(ctx, 'zigbee2mqtt/bridge/devices', JSON.stringify([lamp]), true)
     expect(result.devices).toHaveLength(1)
     expect(result.observations).toEqual([
-      { kind: 'devices', protocol: 'zigbee', ts: 1000, devices: [toDeviceInfo(lamp)] },
+      {
+        kind: 'devices',
+        protocol: 'zigbee',
+        ts: 1000,
+        devices: [toDeviceInfo(lamp)],
+        complete: true,
+      },
     ])
   })
 
@@ -127,6 +133,13 @@ describe('parseMessage', () => {
     expect(
       parseMessage(ctx, 'zigbee2mqtt/Küche/Lampe/availability', '', true).observations,
     ).toEqual([])
+  })
+
+  test('bridge/info gives the channel', () => {
+    const info = JSON.stringify({ version: '2.14.2', network: { channel: 15, pan_id: 6754 } })
+    expect(parseMessage(ctx, 'zigbee2mqtt/bridge/info', info, true).observations).toEqual([
+      { kind: 'channel', protocol: 'zigbee', channel: 15 },
+    ])
   })
 
   test('bridge state', () => {

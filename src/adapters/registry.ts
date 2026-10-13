@@ -1,6 +1,7 @@
 import type { Config } from '~/config'
 import type { SignalFormat } from '~/db/detect'
 import type { Log } from '~/server/log'
+import { createOtbrAdapter } from './otbr/adapter'
 import { threadMeta } from './otbr/meta'
 import type { Adapter, ProtocolMeta } from './types'
 import { createZigbee2mqttAdapter } from './zigbee2mqtt/adapter'
@@ -32,8 +33,13 @@ export const adaptersFromConfig = (
     )
   }
   if (config.OTBR_URL) {
-    // The Thread adapter follows once the recorded OTBR answers settle its schemas (phase 2)
-    log.warn('OTBR_URL is set, but the Thread adapter is not available yet')
+    adapters.push(
+      createOtbrAdapter({
+        url: config.OTBR_URL,
+        onProblem: (message) => log.warn({ message }, 'otbr'),
+        onMode: (mode) => log.info({ mode }, 'otbr REST API found'),
+      }),
+    )
   }
   return adapters
 }

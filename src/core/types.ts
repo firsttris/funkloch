@@ -64,13 +64,27 @@ export type Topology = {
 
 /** What an adapter hands to the core. */
 export type Observation =
-  | { kind: 'devices'; protocol: ProtocolId; ts: number; devices: DeviceInfo[] }
+  /**
+   * The devices of a protocol. A complete list (Zigbee2MQTT's bridge/devices) also removes the
+   * devices missing from it; a partial one (Thread: only the devices that answered) only adds and
+   * updates, so a device that drops out turns offline through its silence instead.
+   */
+  | { kind: 'devices'; protocol: ProtocolId; ts: number; devices: DeviceInfo[]; complete: boolean }
   | { kind: 'measurement'; measurement: Measurement }
   /** A message without a signal value: the device is alive */
   | { kind: 'seen'; protocol: ProtocolId; address: string; ts: number; battery: number | null }
   | { kind: 'availability'; report: AvailabilityReport }
   | { kind: 'topology'; topology: Topology }
   | { kind: 'bridge'; protocol: ProtocolId; ts: number; online: boolean }
+  /** Energy per 2.4 GHz channel (11–26) in dBm, from an energy scan */
+  | {
+      kind: 'channels'
+      protocol: ProtocolId
+      ts: number
+      channels: { channel: number; energy: number }[]
+    }
+  /** The channel the network runs on */
+  | { kind: 'channel'; protocol: ProtocolId; channel: number }
 
 export type Band = 'good' | 'mid' | 'weak'
 

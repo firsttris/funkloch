@@ -16,7 +16,13 @@ export const createDemoAdapter = (meta: ProtocolMeta, clock: () => number = Date
   const start = (emit: (observation: Observation) => void) => {
     send = emit
     const now = clock()
-    emit({ kind: 'devices', protocol: meta.id, ts: now, devices: demoDeviceInfos(meta.id) })
+    emit({
+      kind: 'devices',
+      protocol: meta.id,
+      ts: now,
+      devices: demoDeviceInfos(meta.id),
+      complete: true,
+    })
     emit({ kind: 'bridge', protocol: meta.id, ts: now, online: true })
     const rnd = random(now)
     const timer = setInterval(() => {

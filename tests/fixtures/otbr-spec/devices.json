@@ -1,0 +1,50 @@
+{
+  "meta": { "collection": { "offset": 0, "limit": 4, "total": 4 } },
+  "data": [
+    {
+      "id": "96518e5497d5b9f3",
+      "type": "threadBorderRouter",
+      "attributes": {
+        "rloc16": "0xf000",
+        "extAddress": "96518e5497d5b9f3",
+        "hostname": "otbr.local",
+        "role": "leader",
+        "mode": { "fullThreadDevice": true, "rxOnWhenIdle": true, "fullNetworkData": true },
+        "networkName": "OpenThread-1234"
+      }
+    },
+    {
+      "id": "2a55d952bc7b4008",
+      "type": "threadDevice",
+      "attributes": {
+        "rloc16": "0x5000",
+        "extAddress": "2a55d952bc7b4008",
+        "hostname": "eve-thermo.local.",
+        "role": "router",
+        "mode": { "fullThreadDevice": true, "rxOnWhenIdle": true, "fullNetworkData": true }
+      }
+    },
+    {
+      "id": "f2f307043724e8d0",
+      "type": "threadDevice",
+      "attributes": {
+        "rloc16": "0x5001",
+        "extAddress": "f2f307043724e8d0",
+        "role": "child",
+        "mode": { "fullThreadDevice": false, "rxOnWhenIdle": false, "fullNetworkData": false },
+        "vendorName": "Eve",
+        "vendorModel": "Door & Window"
+      }
+    },
+    {
+      "id": "0011223344556677",
+      "type": "threadDevice",
+      "attributes": {
+        "rloc16": "0x5002",
+        "extAddress": "0011223344556677",
+        "role": "child",
+        "mode": { "fullThreadDevice": false, "rxOnWhenIdle": true, "fullNetworkData": false }
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "meta": { "collection": { "offset": 0, "limit": 3, "total": 3 } },
+  "data": [
+    {
+      "id": "fd428d18-8528-45cf-8a2d-f191bef39b5d",
+      "type": "threadNetworkDiagnostic",
+      "attributes": {
+        "created": "2023-11-23T18:30:42Z",
+        "extAddress": "96518e5497d5b9f3",
+        "rloc16": "0xf000",
+        "routerNeighbors": [
+          {
+            "rloc16": "0x5000",
+            "extAddress": "2a55d952bc7b4008",
+            "threadVersion": 4,
+            "linkAge": 43742,
+            "linkMargin": 30,
+            "averageRssi": -62,
+            "lastRssi": -60
+          }
+        ],
+        "children": []
+      }
+    },
+    {
+      "id": "beed10ee-f73f-4a61-992c-5738d5ab9e42",
+      "type": "threadNetworkDiagnostic",
+      "attributes": {
+        "created": "2023-11-23T18:30:23Z",
+        "extAddress": "2a55d952bc7b4008",
+        "rloc16": "0x5000",
+        "routerNeighbors": [
+          {
+            "rloc16": "0xf000",
+            "extAddress": "96518e5497d5b9f3",
+            "linkMargin": 28,
+            "averageRssi": -66,
+            "lastRssi": -64
+          }
+        ],
+        "children": [
+          {
+            "rloc16": "0x5001",
+            "extAddress": "f2f307043724e8d0",
+            "rxOnWhenIdle": false,
+            "linkMargin": 8,
+            "averageRssi": -88,
+            "lastRssi": -90
+          },
+          {
+            "rloc16": "0x5002",
+            "extAddress": "0011223344556677",
+            "rxOnWhenIdle": true,
+            "linkMargin": 15,
+            "averageRssi": -80,
+            "lastRssi": -79
+          }
+        ]
+      }
+    },
+    {
+      "id": "688f881a-b3d5-4261-949c-9c18dfdd7fca",
+      "type": "energyScanReport",
+      "attributes": {
+        "origin": "96518e5497d5b9f3",
+        "report": [
+          { "channel": 11, "maxRssi": [-45, -55, -50] },
+          { "channel": 25, "maxRssi": [-91, -93, -92] }
+        ],
+        "created": "2023-10-31T15:32:29Z"
+      }
+    }
+  ]
+}

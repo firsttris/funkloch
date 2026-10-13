@@ -60,6 +60,21 @@ describe('applyDevices', () => {
     applyDevices(db, 'zigbee', [device('a'), device('b')], 3)
     expect(db.select().from(devices).where(eq(devices.address, 'b')).get()?.removedAt).toBeNull()
   })
+
+  test('a partial list adds and updates, but removes nothing', () => {
+    const db = setup()
+    applyDevices(db, 'thread', [device('a'), device('b')], 1)
+    applyDevices(db, 'thread', [device('a', 'Thermostat')], 2, false)
+    expect(db.select().from(devices).where(eq(devices.address, 'b')).get()?.removedAt).toBeNull()
+    expect(db.select().from(devices).where(eq(devices.address, 'a')).get()?.name).toBe('Thermostat')
+    expect(
+      db
+        .select()
+        .from(events)
+        .all()
+        .filter((e) => e.type === 'device_removed'),
+    ).toEqual([])
+  })
 })
 
 describe('storeBatch', () => {

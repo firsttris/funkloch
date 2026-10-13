@@ -5,7 +5,16 @@ import { diffDevices } from '~/core/devices'
 import { parentChangesBetween } from '~/core/events'
 import type { DeviceInfo, Measurement, PowerSource, Role, Topology } from '~/core/types'
 import type { Db } from './client'
-import { devices, type EventDetails, events, links, samples, settings, snapshots } from './schema'
+import {
+  channelScans,
+  devices,
+  type EventDetails,
+  events,
+  links,
+  samples,
+  settings,
+  snapshots,
+} from './schema'
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
 type Conn = Db | Tx
@@ -50,7 +59,14 @@ const infoColumns = (d: DeviceInfo) => ({
  * removed), changed ones updated, missing ones marked removed. The very first list of a protocol
  * makes no "new device" events, otherwise the first start would report every device as new.
  */
-export const applyDevices = (db: Db, protocol: string, incoming: DeviceInfo[], ts: number) =>
+export const applyDevices = (
+  db: Db,
+  protocol: string,
+  incoming: DeviceInfo[],
+  ts: number,
+  /** false: the list may miss devices, so nothing is removed */
+  complete = true,
+) =>
   db.transaction((tx) => {
     const known = tx
       .select()
@@ -101,7 +117,7 @@ export const applyDevices = (db: Db, protocol: string, incoming: DeviceInfo[], t
         })
       }
     }
-    if (removed.length > 0) {
+    if (complete && removed.length > 0) {
       const gone = tx
         .update(devices)
         .set({ removedAt: ts })
@@ -311,3 +327,21 @@ export const setCustomName = (db: Db, deviceId: number, name: string) => {
       .get() !== undefined
   )
 }
+
+/** One energy scan: energy per channel in dBm */
+export const storeChannelScan = (
+  db: Db,
+  ts: number,
+  channels: readonly { channel: number; energy: number }[],
+) =>
+  db.transaction((tx) => {
+    for (const c of channels) {
+      tx.insert(channelScans)
+        .values({ ts, channel: c.channel, energy: c.energy })
+        .onConflictDoNothing()
+        .run()
+    }
+  })
+
+export const storeNetworkChannel = (db: Db, protocol: string, channel: number) =>
+  setSetting(db, `channel:${protocol}`, channel)
