@@ -22,7 +22,12 @@ export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
   let status: AdapterStatus = { connected: false, error: null, since: null }
   let requestTopology = () => {}
 
-  const start = (emit: (observation: Observation) => void) => {
+  const start = (emitObservation: (observation: Observation) => void) => {
+    let stopped = false
+    /** A cycle still running at stop says nothing more: the database may be closed by then */
+    const emit = (observation: Observation) => {
+      if (!stopped) emitObservation(observation)
+    }
     const poll = createOtbrPoll({
       client: createOtbrClient(options.url, options.fetcher),
       emit,
@@ -33,7 +38,6 @@ export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
     let running: Promise<void> | null = null
     /** A request during a cycle runs once that cycle is done */
     let again = false
-    let stopped = false
     let mode: 'api' | 'legacy' | null = null
     let failures = 0
     /** What the bridge events last said; null before the first answer or verdict */
@@ -88,10 +92,10 @@ export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
       if (!running) run()
     }, options.cycleMs ?? 60_000)
 
+    // A cycle can wait minutes for an energy scan; stopping does not wait for it
     return async () => {
       stopped = true
       clearInterval(timer)
-      await running
       requestTopology = () => {}
     }
   }

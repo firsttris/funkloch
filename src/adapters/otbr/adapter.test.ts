@@ -89,4 +89,24 @@ describe('OTBR adapter', () => {
     expect(bridge).toEqual([true, false, true])
     await stop()
   })
+
+  test('stopping does not wait for a running cycle, which then reports nothing', async () => {
+    const otbr = createFakeOtbr()
+    let answer = () => {}
+    const held = new Promise<void>((resolve) => {
+      answer = resolve
+    })
+    // The border router takes its time with the first answer
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      await held
+      return otbr.fetch(input, init)
+    }) as typeof fetch
+    const adapter = createOtbrAdapter({ url: 'http://otbr.test:8081', fetcher, taskPollMs: 0 })
+    const observations: Observation[] = []
+    const stop = adapter.start((o) => observations.push(o))
+    await stop()
+    answer()
+    await new Promise((r) => setTimeout(r, 50))
+    expect(observations).toEqual([])
+  })
 })

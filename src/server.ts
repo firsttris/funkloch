@@ -9,6 +9,8 @@ const runtime = getRuntime()
 const startHandler = createStartHandler(defaultStreamHandler)
 
 export default {
+  /** Stops adapters and jobs and closes the database; serve.ts calls it on SIGTERM and SIGINT */
+  stop: () => runtime.stop(),
   async fetch(request: Request) {
     // Every request passes the login check first; the demo needs no login
     const answer = await handleAuth(request, {

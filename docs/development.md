@@ -15,7 +15,11 @@ With your own network: `ZIGBEE2MQTT_MQTT_URL=… OTBR_URL=… bun run dev`.
 Bun, TanStack Start (React) with Router, Query and Table, Zod, SQLite (`bun:sqlite`) with Drizzle,
 mqtt.js, Tailwind 4 with Radix and lucide, uPlot, d3-force for the map layout, Paraglide (German
 and English), Biome, Vitest, Playwright. `bun run build` bundles everything into `dist/`; `serve.ts`
-serves it with `Bun.serve`, so the image needs no `node_modules`.
+serves it with `Bun.serve`, so the image needs no `node_modules`. On SIGTERM or SIGINT it logs
+`shutting down`, closes the HTTP server, stops the adapters and jobs, writes what is still buffered
+and closes the database, then exits with 0; as PID 1 in a container it would otherwise ignore SIGTERM
+and be killed after the grace period. A cycle against the border router that is still waiting is not
+waited for.
 
 ## Architecture
 
