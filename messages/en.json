@@ -168,7 +168,6 @@
   "events_range": "Time range",
   "events_empty": "No events in this time range.",
   "events_footer": "Events are kept as long as the hourly values.",
-  "events_network": "Network",
   "event_signal_weak": "Below threshold",
   "event_signal_weak_detail": "{value} (threshold {threshold}), median of the last {minutes} min",
   "event_signal_recovered": "Signal recovered",
@@ -181,7 +180,6 @@
   "event_pattern": "Recurring pattern",
   "event_pattern_detail": "weak on {days} of 7 days between {from}:00 and {to}:00",
   "event_channel_busy_detail": "Channel {channel}: {energy} dBm in the energy scan",
-  "event_bridge_detail_offline": "{label} not reachable",
   "events_today": "Today · {date}",
   "range_90d": "90 days",
   "nav_heatmap": "Heatmap",
@@ -255,10 +253,8 @@
   "settings_good": "Good from (score)",
   "settings_weak": "Weak below (score)",
   "settings_signal_hint": "Score 0–100 for both protocols: Zigbee from LQI 0–255, Thread from RSSI and LQI.",
-  "settings_intervals": "Network map",
   "settings_networkmap": "Zigbee network map every … hours",
   "settings_networkmap_hint": "At least 1 h: each request loads the network.",
-  "settings_retention": "Retention",
   "settings_samples_days": "Raw readings (days)",
   "settings_hourly_days": "Hourly values and events (days)",
   "settings_database": "Database: {size} in {dir}",
@@ -277,5 +273,8 @@
   "energy_label": "Interference per channel 11 to 26 in dBm: {values}",
   "energy_network": "{protocol} · channel {channel}",
   "energy_busy": "Wi-Fi overlap",
-  "energy_title": "2.4 GHz interference"
+  "energy_title": "2.4 GHz interference",
+  "page_not_found_title": "Page not found",
+  "page_not_found_text": "This address does not exist in Funkloch.",
+  "error_text": "The page could not be loaded. Reload it or try again in a moment."
 }

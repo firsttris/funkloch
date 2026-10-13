@@ -72,6 +72,13 @@ test.describe('device detail', () => {
     await page.goto('/devices/9999')
     await expect(page.getByRole('heading', { name: 'Gerät nicht gefunden' })).toBeVisible()
   })
+
+  test('an unknown address is a page-not-found page', async ({ page }) => {
+    await page.goto('/nowhere')
+    await expect(page.getByRole('heading', { name: 'Seite nicht gefunden' })).toBeVisible()
+    await page.getByRole('link', { name: 'Alle Geräte' }).click()
+    await expect(page.getByTestId('device-row')).toHaveCount(13)
+  })
 })
 
 test('healthz reports the demo adapters', async ({ request }) => {

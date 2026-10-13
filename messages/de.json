@@ -168,7 +168,6 @@
   "events_range": "Zeitraum",
   "events_empty": "Keine Ereignisse in diesem Zeitraum.",
   "events_footer": "Ereignisse bleiben so lange wie die Stundenwerte gespeichert.",
-  "events_network": "Netz",
   "event_signal_weak": "Unter Schwelle",
   "event_signal_weak_detail": "{value} (Schwelle {threshold}), Median der letzten {minutes} min",
   "event_signal_recovered": "Signal wieder ausreichend",
@@ -181,7 +180,6 @@
   "event_pattern": "Wiederkehrendes Muster",
   "event_pattern_detail": "an {days} von 7 Tagen zwischen {from} und {to} Uhr schwach",
   "event_channel_busy_detail": "Kanal {channel}: {energy} dBm im Energy-Scan",
-  "event_bridge_detail_offline": "{label} nicht erreichbar",
   "events_today": "Heute · {date}",
   "range_90d": "90 Tage",
   "nav_heatmap": "Heatmap",
@@ -255,10 +253,8 @@
   "settings_good": "Gut ab (Score)",
   "settings_weak": "Schwach unter (Score)",
   "settings_signal_hint": "Score 0–100 für beide Protokolle: Zigbee aus LQI 0–255, Thread aus RSSI und LQI.",
-  "settings_intervals": "Netzwerkkarte",
   "settings_networkmap": "Zigbee-Netzwerkkarte alle … Stunden",
   "settings_networkmap_hint": "Mindestens 1 h: jede Abfrage erzeugt Funklast.",
-  "settings_retention": "Aufbewahrung",
   "settings_samples_days": "Rohwerte (Tage)",
   "settings_hourly_days": "Stundenwerte und Ereignisse (Tage)",
   "settings_database": "Datenbank: {size} in {dir}",
@@ -277,5 +273,8 @@
   "energy_label": "Störpegel je Kanal 11 bis 26 in dBm: {values}",
   "energy_network": "{protocol} · Kanal {channel}",
   "energy_busy": "WLAN-Überlagerung",
-  "energy_title": "Störpegel 2,4 GHz"
+  "energy_title": "Störpegel 2,4 GHz",
+  "page_not_found_title": "Seite nicht gefunden",
+  "page_not_found_text": "Diese Adresse gibt es in Funkloch nicht.",
+  "error_text": "Die Seite ließ sich nicht laden. Lade sie neu oder versuche es gleich noch einmal."
 }
