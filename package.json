@@ -9,7 +9,7 @@
     "build": "bun --bun vite build",
     "start": "bun serve.ts",
     "demo": "FUNKLOCH_DEMO=1 bun --bun vite dev",
-    "record": "bun run scripts/record.ts",
+    "record": "bun scripts/record.ts",
     "typecheck": "bun run paraglide && tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
