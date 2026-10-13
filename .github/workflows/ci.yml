@@ -139,8 +139,9 @@ jobs:
           echo "docker=$docker" | tee -a "$GITHUB_OUTPUT"
 
   # Layer 7: the image starts on amd64 and arm64 and /healthz turns green. Each platform on its own
-  # native runner, its build cache shared with the release's (scope linux-amd64, linux-arm64 in
-  # firsttris/workflows docker-release.yml), so the release finds the layers already built.
+  # native runner, its build cache shared with the release's (ghcr.io/firsttris/funkloch-buildcache,
+  # :linux-amd64 and :linux-arm64, as in firsttris/workflows docker-release.yml), so the release
+  # finds the layers already built.
   docker:
     needs: changes
     if: ${{ needs.changes.outputs.docker == 'true' }}
@@ -151,25 +152,20 @@ jobs:
         include:
           - platform: linux/amd64
             runner: ubuntu-latest
-            scope: linux-amd64
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
-            scope: linux-arm64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write   # keeps the build cache
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: firsttris/workflows/actions/docker-build@ccr-161f105b-9ns022
         with:
-          context: .
-          file: docker/Dockerfile
-          platforms: ${{ matrix.platform }}
-          push: false
-          load: true
+          dockerfile: docker/Dockerfile
+          platform: ${{ matrix.platform }}
           tags: funkloch:ci
-          cache-from: type=gha,scope=${{ matrix.scope }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.scope }}
       - name: Start the image
         run: |
           docker run -d --name funkloch -e FUNKLOCH_DEMO=1 -p 127.0.0.1:8090:8090 funkloch:ci
