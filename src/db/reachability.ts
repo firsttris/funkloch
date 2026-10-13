@@ -1,11 +1,9 @@
 import { and, eq, isNull, notInArray } from 'drizzle-orm'
 import { reachability } from '~/core/reachability'
+import { ROOT_ROLES } from '~/core/topology'
 import type { Db } from './client'
 import { devices } from './schema'
 import { addEvent } from './store'
-
-/** Coordinators and border routers have no signal of their own and are never judged */
-export const INFRASTRUCTURE_ROLES = ['coordinator', 'border_router']
 
 /**
  * Applies the reachability rule to every device and records a change as an offline or online
@@ -15,7 +13,7 @@ export const checkReachability = (db: Db, now: number) => {
   const rows = db
     .select()
     .from(devices)
-    .where(and(isNull(devices.removedAt), notInArray(devices.role, INFRASTRUCTURE_ROLES)))
+    .where(and(isNull(devices.removedAt), notInArray(devices.role, ROOT_ROLES)))
     .all()
   let changed = 0
   db.transaction((tx) => {

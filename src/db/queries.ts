@@ -4,8 +4,8 @@ import { and, asc, desc, eq, gte, inArray, isNull, lt, notInArray, or, sql } fro
 import { alias } from 'drizzle-orm/sqlite-core'
 import { hourStart } from '~/core/rollup'
 import { median } from '~/core/stats'
+import { ROOT_ROLES } from '~/core/topology'
 import type { Db } from './client'
-import { INFRASTRUCTURE_ROLES } from './reachability'
 import { devices, events, hourly, links, samples, snapshots } from './schema'
 
 export const displayName = (d: { name: string; customName: string | null }) =>
@@ -16,7 +16,7 @@ export const listedDevices = (db: Db) =>
   db
     .select()
     .from(devices)
-    .where(and(isNull(devices.removedAt), notInArray(devices.role, INFRASTRUCTURE_ROLES)))
+    .where(and(isNull(devices.removedAt), notInArray(devices.role, ROOT_ROLES)))
     .all()
 
 export const recentScores = (db: Db, since: number) => {

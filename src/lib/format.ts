@@ -1,9 +1,6 @@
+import { DAY, HOUR, MINUTE } from '~/core/types'
 import { m } from '~/paraglide/messages.js'
 import { getLocale } from '~/paraglide/runtime.js'
-
-const MINUTE = 60_000
-const HOUR = 60 * MINUTE
-const DAY = 24 * HOUR
 
 /** "vor 5 min", relative to the `now` the server sent, so server and client render the same */
 export const ago = (ts: number | null, now: number) => {
