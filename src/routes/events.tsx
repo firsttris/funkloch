@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
 import { eventDetail, eventTitle, KIND_TONE, kindLabel } from '~/components/labels'
+import { NotificationSettings, settingsQuery } from '~/components/notification-settings'
 import { Card, CardHeader, CardTitle } from '~/components/ui/card'
 import { ChipFilter } from '~/components/ui/chip-filter'
 import { Segmented } from '~/components/ui/segmented'
@@ -37,7 +38,12 @@ export const Route = createFileRoute('/events')({
   validateSearch: searchSchema,
   search: { middlewares: [stripSearchParams({ kind: 'all', days: 30 })] },
   loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) => context.queryClient.ensureQueryData(eventsQuery(deps)),
+  loader: async ({ context, deps }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(eventsQuery(deps)),
+      context.queryClient.ensureQueryData(settingsQuery),
+    ])
+  },
   head: () => ({ meta: [{ title: `${m.events_page_title()} · Funkloch` }] }),
   component: EventsPage,
 })
@@ -172,6 +178,9 @@ function EventsPage() {
             )}
             <div className="px-[18px] py-3 text-xs text-foreground-subtle">{m.events_footer()}</div>
           </Card>
+          <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
+            <NotificationSettings />
+          </aside>
         </div>
       </main>
     </div>
