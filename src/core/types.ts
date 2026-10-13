@@ -66,6 +66,8 @@ export type Topology = {
 export type Observation =
   | { kind: 'devices'; protocol: ProtocolId; ts: number; devices: DeviceInfo[] }
   | { kind: 'measurement'; measurement: Measurement }
+  /** A message without a signal value: the device is alive */
+  | { kind: 'seen'; protocol: ProtocolId; address: string; ts: number; battery: number | null }
   | { kind: 'availability'; report: AvailabilityReport }
   | { kind: 'topology'; topology: Topology }
   | { kind: 'bridge'; protocol: ProtocolId; ts: number; online: boolean }
