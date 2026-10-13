@@ -8,7 +8,12 @@ test.describe('device list', () => {
     await expect(rows).toHaveCount(13)
     await expect(rows.first()).toContainText('Türsensor Garage')
     await expect(rows.first()).toContainText('Offline')
-    await expect(rows.nth(1)).toContainText('Temperatursensor Keller')
+    await expect(rows.nth(1)).toContainText('Schwach')
+    // In the evening the terrace socket joins the weak devices (src/demo/devices.ts) and may come
+    // before the cellar sensor; at any other time the cellar sensor is second
+    const names = await rows.locator('td:nth-child(2)').allInnerTexts()
+    const cellar = names.findIndex((n) => n.includes('Temperatursensor Keller'))
+    expect([1, 2]).toContain(cellar)
   })
 
   test('shows the energy scan with both network channels', async ({ page }) => {
