@@ -13,6 +13,7 @@ import { createDemoAdapter } from '~/demo/adapter'
 import { seedDemo } from '~/demo/seed'
 import { startScheduler } from '~/jobs/scheduler'
 import { createIngest } from './ingest'
+import { createLiveFeed, type LiveFeed } from './live'
 import { createLog, type Log } from './log'
 import { defaultsFrom, loadSettings } from './settings'
 import type { ViewContext } from './views/context'
@@ -25,6 +26,8 @@ export type Runtime = {
   startedAt: number
   /** Database, time, settings and adapters for one request */
   viewContext: () => ViewContext
+  /** Tells the open pages what changed */
+  live: LiveFeed
   stop: () => Promise<void>
 }
 
@@ -54,6 +57,7 @@ export const startRuntime = (config: Config): Runtime => {
   const ingest = createIngest(db, log)
   const stopAdapters = adapters.map((adapter) => adapter.start(ingest.emit))
   const stopScheduler = startScheduler(db, log, settings)
+  const live = createLiveFeed(db)
   log.info(
     {
       adapters: adapters.map((a) => a.meta.id),
@@ -66,12 +70,13 @@ export const startRuntime = (config: Config): Runtime => {
   const viewContext = (): ViewContext => ({ db, now: Date.now(), settings: settings(), adapters })
 
   const stop = async () => {
+    live.stop()
     stopScheduler()
     await Promise.all(stopAdapters.map((stopAdapter) => stopAdapter()))
     ingest.stop()
     db.$client.close()
   }
-  return { config, db, log, adapters, startedAt, viewContext, stop }
+  return { config, db, log, adapters, startedAt, viewContext, live, stop }
 }
 
 // Kept on globalThis so a hot reload in dev does not start a second set of adapters
