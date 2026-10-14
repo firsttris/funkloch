@@ -69,6 +69,8 @@ The rate therefore says how often the router cannot get on air: Wi-Fi or another
 to it, or a radio that hears the channel as busy. Its RSSI does not show this: a router can be
 heard well and still fail to send.
 
+![A Thread router that fails about one frame in ten: transmit errors per hour over 7 days against the 5 % threshold](screenshots/thread-router.png)
+
 The router's page shows the rate of the last 24 hours and one bar per hour over 7 days (an hour
 with fewer than 20 frames has none). From **5 %** over 24 hours the rate is marked and becomes the
 event *many transmit errors*; below 3 % it is *back to normal*. Fewer than 200 frames in 24 hours

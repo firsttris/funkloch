@@ -25,6 +25,8 @@ whether devices actually use it and whether their signal got better.
 Every router's page reads the newest network map and answers four questions, using the neighbor
 tables only (no routing tables, see [Zigbee2MQTT](zigbee2mqtt.md)):
 
+![Router check of an ESP32-C6 Zigbee router in the cellar: no device uses it, its neighbors cover the area, its way to the coordinator is weak](screenshots/router.png)
+
 | | What Funkloch counts |
 |---|---|
 | **Connected directly** | devices whose parent it is |

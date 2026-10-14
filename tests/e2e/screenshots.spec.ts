@@ -30,6 +30,30 @@ for (const scheme of ['light', 'dark'] as const) {
       })
     })
 
+    test('router check', async ({ page }) => {
+      await page.goto('/')
+      await page.getByRole('link', { name: 'ESP32-C6 Zigbee Router' }).click()
+      await expect(page.getByTestId('router-finding')).toBeVisible()
+      await expect(page.locator('canvas').first()).toBeVisible()
+      await page.screenshot({
+        path: `${DIR}/router${suffix}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      })
+    })
+
+    test('thread router with transmit errors', async ({ page }) => {
+      await page.goto('/')
+      await page.getByRole('link', { name: 'ESP32-C6 Thread Router · 52bb…4b82' }).click()
+      await expect(page.getByRole('img', { name: /Sendefehler pro Stunde/ })).toBeVisible()
+      await expect(page.locator('canvas').first()).toBeVisible()
+      await page.screenshot({
+        path: `${DIR}/thread-router${suffix}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      })
+    })
+
     test('network map', async ({ page }) => {
       await page.goto('/network')
       await page.getByRole('link', { name: 'Temperatursensor Keller, End Device' }).click()

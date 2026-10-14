@@ -164,6 +164,10 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
     <td><img src="docs/screenshots/heatmap-dark.png" alt="Funkloch heatmap in dark mode: signal quality of every Zigbee and Thread device by hour over 7 days, with a recurring evening dropout"></td>
     <td><img src="docs/screenshots/events.png" alt="Funkloch events: offline, weak signal, falling trend and parent changes by day, with notification rules for ntfy, webhook and MQTT"></td>
   </tr>
+  <tr>
+    <td><img src="docs/screenshots/router.png" alt="Funkloch router check of an ESP32-C6 Zigbee router in the cellar: no device uses it, its neighbors cover the area, its way to the coordinator is weak"></td>
+    <td><img src="docs/screenshots/thread-router-dark.png" alt="Funkloch Thread router in dark mode: transmit errors per hour over 7 days from the MAC counters, about 10 % against a threshold of 5 %"></td>
+  </tr>
 </table>
 
 ## 🔀 Funkloch and the alternatives
