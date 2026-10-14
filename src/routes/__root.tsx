@@ -2,6 +2,7 @@ import { type QueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { appInfoQuery } from '~/lib/app-info'
+import { themeScript } from '~/lib/theme'
 import { setTimeZone } from '~/lib/time-zone'
 import { useLiveUpdates } from '~/lib/use-live-updates'
 import { getLocale } from '~/paraglide/runtime.js'
@@ -36,8 +37,11 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang={getLocale()}>
+    // The theme script sets data-theme before React hydrates
+    <html lang={getLocale()} suppressHydrationWarning>
       <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a constant of our own, no input */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
       </head>
       <body>

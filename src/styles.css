@@ -42,45 +42,44 @@
   --heat-none: #f4f4f5;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --surface: #18181b;
-    --surface-muted: #1f1f23;
-    --border: #2e2e33;
-    --border-subtle: #232327;
-    --foreground: #fafafa;
-    --foreground-muted: #d4d4d8;
-    --foreground-subtle: #a1a1aa;
-    --primary: #fafafa;
-    --primary-foreground: #18181b;
-    --track: #27272a;
+/* Dark: chosen in the header, or the system's when the choice is "system" (lib/theme.ts) */
+:root[data-theme="dark"] {
+  --background: #09090b;
+  --surface: #18181b;
+  --surface-muted: #1f1f23;
+  --border: #2e2e33;
+  --border-subtle: #232327;
+  --foreground: #fafafa;
+  --foreground-muted: #d4d4d8;
+  --foreground-subtle: #a1a1aa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --track: #27272a;
 
-    --status-good: #4ade80;
-    --status-mid: #facc15;
-    --status-weak: #f87171;
-    --status-offline: #a1a1aa;
-    --status-unknown: #71717a;
-    --weak-bg: #3b1416;
+  --status-good: #4ade80;
+  --status-mid: #facc15;
+  --status-weak: #f87171;
+  --status-offline: #a1a1aa;
+  --status-unknown: #71717a;
+  --weak-bg: #3b1416;
 
-    --zigbee: #fb923c;
-    --zigbee-bg: #3a1d0e;
-    --thread: #93b4ff;
-    --thread-bg: #172345;
+  --zigbee: #fb923c;
+  --zigbee-bg: #3a1d0e;
+  --thread: #93b4ff;
+  --thread-bg: #172345;
 
-    --chart-grid: #2e2e33;
-    --chart-axis: #71717a;
-    --chart-gap: #27272a;
-    --chart-bar: #a1a1aa;
-    --channel-busy: #71717a;
-    --channel-quiet: #3f3f46;
+  --chart-grid: #2e2e33;
+  --chart-axis: #71717a;
+  --chart-gap: #27272a;
+  --chart-bar: #a1a1aa;
+  --channel-busy: #71717a;
+  --channel-quiet: #3f3f46;
 
-    --heat-good: #166534;
-    --heat-mid: #ca8a04;
-    --heat-weak: #ef4444;
-    --heat-offline: #d4d4d8;
-    --heat-none: #27272a;
-  }
+  --heat-good: #166534;
+  --heat-mid: #ca8a04;
+  --heat-weak: #ef4444;
+  --heat-offline: #d4d4d8;
+  --heat-none: #27272a;
 }
 
 @theme inline {
@@ -111,7 +110,10 @@
 
 @layer base {
   html {
-    color-scheme: light dark;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
   }
   body {
     @apply bg-background text-foreground font-sans text-sm leading-[1.45] antialiased;

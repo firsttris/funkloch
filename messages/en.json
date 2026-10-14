@@ -341,5 +341,10 @@
   "bottleneck_advice": "A router between these two would strengthen the way.",
   "bottleneck_show": "Show on the map",
   "network_bottleneck": "Bottleneck · {count} devices",
-  "legend_line_bottleneck": "Thick and red: a bottleneck, a weak link many devices go through"
+  "legend_line_bottleneck": "Thick and red: a bottleneck, a weak link many devices go through",
+  "app_version": "v{version}",
+  "theme_label": "Theme: {theme}",
+  "theme_system": "as the system",
+  "theme_light": "light",
+  "theme_dark": "dark"
 }

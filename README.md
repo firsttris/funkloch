@@ -153,7 +153,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 - **Login** with one admin password (argon2), sessions in the database.
 - **One SQLite file**: raw readings for 14 days, hourly values for a year, both adjustable.
-- **German and English** interface, light and dark.
+- **German and English** interface, light and dark: as the system is set or chosen in the header,
+  which also shows the version that runs.
 
 ## 📸 Screenshots
 

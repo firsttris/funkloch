@@ -1,7 +1,9 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { Monitor, Moon, Sun } from 'lucide-react'
 import { appInfoQuery } from '~/lib/app-info'
 import { cn } from '~/lib/cn'
+import { nextTheme, type Theme, useTheme } from '~/lib/theme'
 import { m } from '~/paraglide/messages.js'
 import { getLocale, setLocale } from '~/paraglide/runtime.js'
 
@@ -28,6 +30,27 @@ const Logo = () => (
   </svg>
 )
 
+const THEME_ICON = { system: Monitor, light: Sun, dark: Moon }
+const themeLabel = (theme: Theme) =>
+  ({ system: m.theme_system, light: m.theme_light, dark: m.theme_dark })[theme]()
+
+/** Light, dark or the system's: one button that goes through the three */
+const ThemeButton = () => {
+  const [theme, setTheme] = useTheme()
+  const Icon = THEME_ICON[theme]
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(nextTheme(theme))}
+      aria-label={m.theme_label({ theme: themeLabel(theme) })}
+      title={m.theme_label({ theme: themeLabel(theme) })}
+      className="inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-md border border-border bg-surface px-2.5 text-foreground-muted hover:bg-track"
+    >
+      <Icon aria-hidden="true" className="size-4" />
+    </button>
+  )
+}
+
 const navLink =
   'inline-flex min-h-10 items-center rounded-md px-3 text-foreground-subtle no-underline hover:bg-track hover:text-foreground'
 
@@ -52,6 +75,9 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
         <Link to="/" className="flex items-center gap-2.5 no-underline">
           <Logo />
           <span className="text-base font-bold tracking-tight">{m.app_name()}</span>
+          <span className="font-mono text-[11px] text-foreground-subtle">
+            {m.app_version({ version: info.version })}
+          </span>
         </Link>
         <nav aria-label={m.nav_label()} className="flex flex-wrap gap-1">
           {nav.map((item) => (
@@ -91,6 +117,7 @@ export const AppHeader = ({ adapters }: { adapters: AdapterPill[] }) => {
               </span>
             ))
           )}
+          <ThemeButton />
           <button
             type="button"
             lang={other}
