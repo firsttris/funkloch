@@ -97,7 +97,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
       [720, 47],
       [100, 46],
       [96, 40],
-      [0, 14],
+      [0, 10],
     ],
     noise: 5,
     offline: [[55, 49]],
