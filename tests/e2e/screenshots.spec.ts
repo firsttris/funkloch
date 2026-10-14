@@ -1,8 +1,13 @@
 // bun run screenshots: the pictures for the README and the docs, light and dark
 import { expect, test } from '@playwright/test'
-import { DEVICES } from './demo'
+import { DEVICES, SCREENSHOT_NOW } from './demo'
 
 const DIR = 'docs/screenshots'
+
+// The browser's clock at the demo's moment too, so nothing on a page depends on the day it runs
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(SCREENSHOT_NOW)
+})
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(scheme, () => {

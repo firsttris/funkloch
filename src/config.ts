@@ -21,6 +21,16 @@ export const configSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8090),
   DATA_DIR: z.string().min(1).default('./data'),
   FUNKLOCH_DEMO: flag,
+  /**
+   * The demo at a fixed moment (ISO time) that does not move on, and without live readings, so the
+   * screenshots come out the same until the look changes
+   */
+  FUNKLOCH_DEMO_NOW: z
+    .string()
+    .optional()
+    .transform((value) => (value ? value : undefined))
+    .pipe(z.iso.datetime({ offset: true }).optional())
+    .transform((value) => (value === undefined ? undefined : Date.parse(value))),
   /** Forget the admin password at start, for a forgotten one; remove it again afterwards */
   FUNKLOCH_RESET_PASSWORD: flag,
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
