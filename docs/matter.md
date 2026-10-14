@@ -28,6 +28,11 @@ time device (ICD) are never read: a read would wait for them or cost battery. A 
 intervals, such as the table a sleeping device sent at its last start, counts for nothing. Change
 the interval with `MATTER_POLL_MINUTES` (5 to 1440).
 
+The battery level the server holds for a node is passed on at connect and with every poll, for
+Thread and Wi-Fi alike and with the OTBR on too, so a device whose level does not change (and so
+sends no report of it) still shows it. A level from the server's cache is no sign of life: it moves
+neither the last message nor the reachability.
+
 Funkloch never writes an attribute, invokes a command, commissions or sets credentials.
 
 | Attribute | Path | Used as |
@@ -40,7 +45,7 @@ Funkloch never writes an attribute, invokes a command, commissions or sets crede
 | ThreadNetworkDiagnostics TxUnicastCount, TxBroadcastCount, TxErrCcaCount | `0/53/23`, `0/53/24`, `0/53/36` | [transmit errors](thread.md#transmit-errors), where the device has the counters |
 | WiFiNetworkDiagnostics Bssid, Rssi | `0/54/0`, `0/54/4` | the access point and the signal |
 | NetworkCommissioning Networks | `0/49/1` | the SSID, to name the access point |
-| PowerSource FeatureMap, BatPercentRemaining | `*/47/65532`, `*/47/12` | mains or battery, battery level |
+| PowerSource FeatureMap, BatPercentRemaining | `*/47/65532`, `*/47/12` | mains or battery, battery level (in half percent: 200 is 100 %) |
 | ICD Management OperatingMode | `0/70/8` | long idle time devices, which are not read |
 
 ## Thread

@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Observation } from '~/core/types'
+import { devices } from '~/db/schema'
+import { tempDb } from '~/db/test-db'
+import { createIngest } from '~/server/ingest'
+import { createLog } from '~/server/log'
 import { createMatterAdapter } from './adapter'
 import type { Socket } from './client'
 import { createFakeMatterServer } from './fake'
@@ -80,6 +84,45 @@ describe('Matter adapter', () => {
     })
     expect(of(observations, 'availability').map((o) => o.report.protocol)).toContain('thread')
     await stop()
+  })
+
+  test('next to the OTBR the battery level reaches the store without any report of it', async () => {
+    const t = tempDb()
+    const ingest = createIngest(t.db, createLog('silent'))
+    const server = createFakeMatterServer()
+    const adapter = createMatterAdapter({
+      url: 'ws://matter.test:5580',
+      pollMinutes: 15,
+      threadSignal: false,
+      openSocket: server.open,
+    })
+    const observations: Observation[] = []
+    const stop = adapter.start((o) => {
+      observations.push(o)
+      ingest.emit(o)
+    })
+    const door = () =>
+      t.db
+        .select()
+        .from(devices)
+        .all()
+        .find((d) => d.address === '3333333333333333')
+    // The Eve Door (0/47/12 = 170) sleeps and is never read: its level comes with start_listening
+    await until(() => of(observations, 'topology').length === 1)
+    ingest.flush()
+    const kinds = observations.map((o) => o.kind)
+    expect(kinds.indexOf('battery')).toBeLessThan(kinds.indexOf('topology'))
+    expect(door()).toMatchObject({ battery: 85, lastSeen: null })
+    // and with every poll cycle, still without a report and without counting as a sign of life
+    t.db.update(devices).set({ battery: null }).run()
+    adapter.requestTopology?.('wifi')
+    await until(() => of(observations, 'topology').length === 2)
+    ingest.flush()
+    expect(door()).toMatchObject({ battery: 85, lastSeen: null })
+    expect(server.commands.map((c) => c.command)).not.toContain('attribute_updated')
+    await stop()
+    ingest.stop()
+    t.cleanup()
   })
 
   test('a report is a sign of life; a node going offline is reported', async () => {

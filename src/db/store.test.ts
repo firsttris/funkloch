@@ -90,6 +90,27 @@ describe('storeBatch', () => {
     expect(db.select().from(devices).get()).toMatchObject({ lastSeen: 200, battery: 64 })
   })
 
+  test('a battery level alone is no sign of life; the newest level wins', () => {
+    const db = setup()
+    applyDevices(db, 'zigbee', [device('a'), device('b')], 1)
+    storeBatch(db, [measurement('a', 100, 50)], [], [])
+    storeBatch(
+      db,
+      [],
+      [{ protocol: 'zigbee', address: 'a', ts: 300, battery: 70 }],
+      [
+        { protocol: 'zigbee', address: 'a', ts: 400, battery: 85 },
+        { protocol: 'zigbee', address: 'b', ts: 400, battery: 40 },
+      ],
+    )
+    const rows = db.select().from(devices).all()
+    expect(rows.find((d) => d.address === 'a')).toMatchObject({ lastSeen: 300, battery: 85 })
+    expect(rows.find((d) => d.address === 'b')).toMatchObject({ lastSeen: null, battery: 40 })
+    // A level for a device not known yet creates nothing
+    storeBatch(db, [], [], [{ protocol: 'zigbee', address: 'c', ts: 500, battery: 10 }])
+    expect(db.select().from(devices).all()).toHaveLength(2)
+  })
+
   test('a measurement of an unknown device creates it, a duplicate is ignored', () => {
     const db = setup()
     storeBatch(db, [measurement('x', 5, 10), measurement('x', 5, 10)], [])
