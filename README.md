@@ -132,6 +132,9 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
   snapshots to compare.
 - **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and
   whether their signal got better; repeaters without sensors get a history from the network map.
+- **Router check**: each router's page says whether it does its job: how many devices go through
+  it, how strong its way to the coordinator is, whether other routers already cover its area, and
+  where it would do more.
 - **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
   that drops every evening) and **slow declines** pointed out.
 

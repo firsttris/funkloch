@@ -74,6 +74,21 @@ test.describe('device detail', () => {
     await expect(page.getByText('Viele Sendefehler')).toBeVisible()
   })
 
+  test('a router says whether it does its job', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('link', { name: 'ESP32-C6 Zigbee Router' }).click()
+    const finding = page.getByTestId('router-finding')
+    await expect(finding.getByRole('heading', { name: 'Arbeitet dieser Router?' })).toBeVisible()
+    await expect(finding).toContainText('Kein Gerät nutzt diesen Router.')
+    await expect(finding).toContainText(
+      'Seine Nachbarn Steckdose Keller Flur und Steckdose Waschküche decken den Bereich schon ab.',
+    )
+    await expect(finding).toContainText('Sein Weg zum Koordinator ist schwach (LQI 64/15).')
+    await expect(finding).toContainText(
+      'An einer Stelle zwischen diesem Bereich und dem Koordinator',
+    )
+  })
+
   test('changes the range', async ({ page }) => {
     await page.goto('/')
     await page.getByRole('link', { name: 'Steckdose Terrasse' }).click()

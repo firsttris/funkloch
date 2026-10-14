@@ -179,6 +179,24 @@ export const demoDeviceInfos = (protocol: string) => [
   ...DEMO_DEVICES.filter((d) => d.protocol === protocol).map(toDeviceInfo),
 ]
 
+/** A link's values from a score, in the protocol's own units */
+const linkValues = (device: DemoDevice, score: number) => {
+  const { lqi, rssi } = measurementAt(device, 0, score)
+  return { lqi, rssi }
+}
+
+/** Both directions of a link given as scores: how `to` hears the device, and how it hears `to` */
+const linkBothWays = (
+  device: DemoDevice,
+  to: string,
+  there: number,
+  back: number,
+  parent: boolean,
+) => [
+  { from: device.address, to, ...linkValues(device, there), parent },
+  { from: to, to: device.address, ...linkValues(device, back), parent: false },
+]
+
 /** The parent of each device at `hoursAgo`, plus a few neighbor links, as a topology */
 export const linksAt = (protocol: string, hoursAgo: number, now: number): Link[] => {
   const devices = DEMO_DEVICES.filter((d) => d.protocol === protocol)
@@ -200,10 +218,13 @@ export const linksAt = (protocol: string, hoursAgo: number, now: number): Link[]
         rssi: own.rssi === null ? null : own.rssi - 8,
         parent: false,
       }))
-    return [
-      { from: device.address, to: parent, lqi: own.lqi, rssi: own.rssi, parent: true },
-      ...neighbors,
-    ]
+    const uplink = device.uplink
+      ? linkBothWays(device, parent, device.uplink[0], device.uplink[1], true)
+      : [{ from: device.address, to: parent, lqi: own.lqi, rssi: own.rssi, parent: true }]
+    const links = (device.links ?? []).flatMap((l) =>
+      linkBothWays(device, l.to, l.there, l.back, false),
+    )
+    return [...uplink, ...neighbors, ...links]
   })
 }
 

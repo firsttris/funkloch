@@ -8,9 +8,10 @@ whether devices actually use it and whether their signal got better.
 
 ## Where to look
 
-- **The repeater's page**: under **Connections**, *Connected through this device* counts the
-  devices that use it as their parent. Each one has its traffic light and the date since when it is
-  connected through the repeater.
+- **The repeater's page**: *Is this router doing its job?* sums it up in a few sentences (below).
+  Under **Connections**, *Connected through this device* counts the devices that use it as their
+  parent. Each one has its traffic light and the date since when it is connected through the
+  repeater.
 - **The page of a device behind it**: the parent change is marked in the signal chart, so the
   history before and after the repeater sits side by side. *Connected through* names the repeater.
 - **Network map**: the repeater's way to the coordinator or border router, with the link quality
@@ -18,6 +19,37 @@ whether devices actually use it and whether their signal got better.
 - **Heatmap**: the hours turning from red to green from the day the repeater went in.
 - **Events**: *parent changed* for each device that moves to the repeater (switch on the topology
   rule to be notified).
+
+## Is this router doing its job?
+
+Every router's page reads the newest network map and answers four questions, using the neighbor
+tables only (no routing tables, see [Zigbee2MQTT](zigbee2mqtt.md)):
+
+| | What Funkloch counts |
+|---|---|
+| **Connected directly** | devices whose parent it is |
+| **Go through it** | every device whose way to the coordinator or border router leads through it, also behind another router |
+| **Uplink** | its link to the next device towards the root, both directions: first how it hears that device, then how it is heard. The weaker one counts; below the *weak* threshold (score 25, e.g. LQI 64) the way is weak |
+| **Covered** | every one of its neighbors (not the root, not the uplink) is heard at least as well by another router |
+
+From these it writes what to do:
+
+- **No device uses it, its way is weak**: *“Placed somewhere between this area and the
+  coordinator, it would do more.”* The area around it is served already; what is missing is a
+  strong step upwards. Move it half way to the coordinator (one floor up, near the stairs), where
+  it still hears the routers of the area well and the coordinator better than they do.
+- **Devices use it, its way is weak**: *“A router between it and the coordinator would strengthen
+  the way for these devices.”* Leave it where it is and add one in between.
+- **No device uses it, its neighbors are covered, its way is fine**: it stands by. That is not
+  wasted: if one of its neighbors goes, devices can move to it.
+- **Devices use it and its way is fine**: it does its job.
+
+A Thread router whose transmit errors are marked says so as well: it often finds the channel busy
+(see [Signal](signal.md#transmit-errors-thread-routers)). Move it away from Wi-Fi access points
+and other transmitters, or put the Thread network on a channel away from the Wi-Fi.
+
+A new router needs time: end devices change their parent only when the old link gets bad or
+they rejoin. Look again after a day, or restart a device (re-insert the battery) to make it choose.
 
 ## Zigbee: a router that sends nothing itself
 

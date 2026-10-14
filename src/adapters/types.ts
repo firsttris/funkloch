@@ -14,6 +14,11 @@ export type ProtocolMeta = {
   linkScore: (link: { lqi: number | null; rssi: number | null }) => number | null
   /** The short label on a link in the network map, e.g. "38" or "1 · −88" */
   formatLink: (link: { lqi: number | null; rssi: number | null }) => string
+  /** Both directions of a link in a text, e.g. "LQI 64/15" or "−75/−86 dBm" */
+  formatLinkPair: (
+    there: { lqi: number | null; rssi: number | null } | null,
+    back: { lqi: number | null; rssi: number | null } | null,
+  ) => string
 }
 
 export type AdapterStatus = { connected: boolean; error: string | null; since: number | null }

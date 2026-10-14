@@ -1,5 +1,6 @@
 // Texts for roles and events, shared by the pages and the notifications. The pages use the
 // request's language; the notifications pass the one from the settings.
+import type { RouterFinding } from '~/core/router-finding'
 import type { Role } from '~/core/types'
 import { m } from '~/paraglide/messages.js'
 import { getLocale, type Locale } from '~/paraglide/runtime.js'
@@ -118,3 +119,63 @@ const KINDS: Record<string, (inputs: object, options?: Options) => string> = {
 }
 
 export const kindLabel = (kind: string, locale?: Locale) => KINDS[kind]?.({}, { locale }) ?? kind
+
+type Finding = Omit<RouterFinding, 'uplink'> & {
+  uplink: (NonNullable<RouterFinding['uplink']> & { text: string }) | null
+}
+
+const names = (list: readonly string[], locale?: Locale) =>
+  new Intl.ListFormat(locale ?? getLocale(), { type: 'conjunction' }).format(list)
+
+/** The finding on a router as sentences: who uses it, who covers its area, its way, the advice */
+export const findingSentences = (finding: Finding, locale?: Locale) => {
+  const o = { locale }
+  const border = finding.root?.role === 'border_router'
+  const way = (border ? m.finding_way_border_router : m.finding_way_coordinator)({}, o)
+  const root = (border ? m.finding_root_border_router : m.finding_root_coordinator)({}, o)
+  const { uplink, coveredBy } = finding
+  const usage =
+    finding.carried === 0
+      ? m.finding_unused({}, o)
+      : finding.carried === 1
+        ? m.finding_carries_one({ way }, o)
+        : m.finding_carries({ count: finding.carried, direct: finding.children, way }, o)
+  const one = coveredBy.length === 1
+  const coverText = coveredBy.every((r) => r.neighbor)
+    ? one
+      ? m.finding_covered_neighbor
+      : m.finding_covered_neighbors
+    : one
+      ? m.finding_covered_other
+      : m.finding_covered_others
+  const covered =
+    coveredBy.length === 0
+      ? null
+      : coverText(
+          {
+            names: names(
+              coveredBy.map((r) => r.name),
+              locale,
+            ),
+          },
+          o,
+        )
+  const link = uplink
+    ? uplink.root
+      ? uplink.text
+      : m.finding_link_via({ value: uplink.text, name: uplink.name }, o)
+    : null
+  const path =
+    uplink && link
+      ? (uplink.weak ? m.finding_uplink_weak : m.finding_uplink_fine)({ way, link }, o)
+      : m.finding_no_uplink({ way }, o)
+  const advice =
+    finding.advice === 'move_towards_root'
+      ? m.finding_move({ root }, o)
+      : finding.advice === 'strengthen_uplink'
+        ? m.finding_strengthen({ root }, o)
+        : finding.advice === 'reserve'
+          ? m.finding_reserve({}, o)
+          : null
+  return [usage, covered, path, advice].flatMap((sentence) => (sentence === null ? [] : [sentence]))
+}

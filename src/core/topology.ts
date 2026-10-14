@@ -102,3 +102,55 @@ export const wayToRoot = (
     way.push(up)
   return way
 }
+
+/** Each device's parent from the parent links; the first one counts */
+export const parentsOf = (links: readonly { from: number; to: number; parent: boolean }[]) => {
+  const parents = new Map<number, number>()
+  for (const link of links)
+    if (link.parent && !parents.has(link.from)) parents.set(link.from, link.to)
+  return parents
+}
+
+/** How many devices go through each device on their way to the root, itself not counted */
+export const carriedCounts = (parents: ReadonlyMap<number, number>) => {
+  const counts = new Map<number, number>()
+  for (const id of parents.keys()) {
+    const seen = new Set([id])
+    for (let up = parents.get(id); up !== undefined && !seen.has(up); up = parents.get(up)) {
+      seen.add(up)
+      counts.set(up, (counts.get(up) ?? 0) + 1)
+    }
+  }
+  return counts
+}
+
+export type LinkValue = { lqi: number | null; rssi: number | null }
+
+export type LinkPair = {
+  /** How `b` hears `a`: the entry in b's table */
+  there: LinkValue | null
+  /** How `a` hears `b` */
+  back: LinkValue | null
+  /** The weaker of both directions, since a link is only as good as its worse one */
+  score: number | null
+}
+
+/** Both directions of every pair in a snapshot, to look up by two devices */
+export const linkPairs = (
+  links: readonly MapLink[],
+  linkScore: (link: LinkValue) => number | null,
+) => {
+  const byDirection = new Map(links.map((l) => [`${l.from}>${l.to}`, l]))
+  const value = (link: MapLink | undefined): LinkValue | null =>
+    link ? { lqi: link.lqi, rssi: link.rssi } : null
+  return (a: number, b: number): LinkPair | null => {
+    const there = value(byDirection.get(`${a}>${b}`))
+    const back = value(byDirection.get(`${b}>${a}`))
+    if (!there && !back) return null
+    const scores = [there, back].flatMap((l) => {
+      const score = l ? linkScore(l) : null
+      return score === null ? [] : [score]
+    })
+    return { there, back, score: scores.length > 0 ? Math.min(...scores) : null }
+  }
+}

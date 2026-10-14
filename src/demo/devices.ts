@@ -1,7 +1,8 @@
 // The devices of the mockup, with the stories it tells: a sensor in the cellar that slowly gets
 // worse and changes its parent, a socket on the terrace that drops every evening, a door sensor
 // in the garage that went silent six hours ago, a Thread router built from an ESP32-C6 that fails
-// to send one frame in ten.
+// to send one frame in ten. The cellar: a socket that carries three sensors over a weak link to the
+// coordinator, and an ESP32-C6 Zigbee router next to it that no device uses.
 import type { PowerSource, Role } from '~/core/types'
 
 export type DemoDevice = {
@@ -25,12 +26,45 @@ export type DemoDevice = {
   parents: [number, string][]
   /** Share of frames that fail to go out (Thread routers' MAC counters) */
   txErrors?: number
+  /** The link to the parent as scores instead of the device's own level: [parent hears it, it hears the parent] */
+  uplink?: [number, number]
+  /** Neighbor links as scores: how `to` hears this device (`there`) and how it hears `to` (`back`) */
+  links?: { to: string; there: number; back: number }[]
 }
 
 export const ZIGBEE_COORDINATOR = '0x00124b0024c1a2f0'
 export const THREAD_BORDER_ROUTER = '9e3a6f1c2b7d4e05'
 
 const zigbee = (address: string) => `0x${address}`
+
+const CELLAR_SOCKET = zigbee('00158d0005a1b20a')
+const LAUNDRY_SOCKET = zigbee('00158d0005a1b209')
+const OFFICE_THERMOSTAT = '6c0d2e9f41a7b852'
+const TV_LIGHTSTRIP = 'a5f2d81c07e3b649'
+
+/** A sensor in the cellar that hangs on the cellar socket */
+const cellarSensor = (
+  address: string,
+  name: string,
+  model: string,
+  interval: number,
+  score: number,
+): DemoDevice => ({
+  protocol: 'zigbee',
+  address: zigbee(address),
+  name,
+  role: 'end_device',
+  power: 'battery',
+  model,
+  vendor: 'Aqara',
+  interval,
+  level: [
+    [720, score],
+    [0, score],
+  ],
+  noise: 4,
+  parents: [[720, CELLAR_SOCKET]],
+})
 
 export const DEMO_DEVICES: DemoDevice[] = [
   {
@@ -171,6 +205,50 @@ export const DEMO_DEVICES: DemoDevice[] = [
     parents: [[720, ZIGBEE_COORDINATOR]],
   },
   {
+    protocol: 'zigbee',
+    address: CELLAR_SOCKET,
+    name: 'Steckdose Keller Flur',
+    role: 'router',
+    power: 'mains',
+    model: 'E1603',
+    vendor: 'IKEA',
+    interval: 4,
+    level: [
+      [720, 32],
+      [0, 31],
+    ],
+    noise: 3,
+    parents: [[720, ZIGBEE_COORDINATOR]],
+    // LQI 56 and 36: the only way out of the cellar for the sensors behind it
+    uplink: [14, 22],
+    links: [{ to: LAUNDRY_SOCKET, there: 60, back: 58 }],
+  },
+  cellarSensor('00158d0005a1b20c', 'Wassermelder Keller', 'SJCGQ11LM', 30, 38),
+  cellarSensor('00158d0005a1b20d', 'Bewegungsmelder Keller', 'RTCGQ11LM', 20, 42),
+  cellarSensor('00158d0005a1b20e', 'Temperatursensor Vorratsraum', 'WSDCGQ11LM', 20, 36),
+  {
+    protocol: 'zigbee',
+    address: zigbee('00158d0005a1b20b'),
+    name: 'ESP32-C6 Zigbee Router',
+    role: 'router',
+    power: 'mains',
+    model: 'ESP32-C6 Zigbee Router',
+    vendor: 'Espressif',
+    interval: 10,
+    level: [
+      [720, 28],
+      [0, 28],
+    ],
+    noise: 2,
+    parents: [[720, ZIGBEE_COORDINATOR]],
+    // LQI 64 and 15 to the coordinator upstairs, strong to the sockets that cover the cellar
+    uplink: [6, 25],
+    links: [
+      { to: CELLAR_SOCKET, there: 59, back: 55 },
+      { to: LAUNDRY_SOCKET, there: 47, back: 45 },
+    ],
+  },
+  {
     protocol: 'thread',
     address: '2f81c4d09a7be311',
     name: 'Steckdose Terrasse',
@@ -186,7 +264,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
     ],
     noise: 5,
     eveningDip: 33,
-    parents: [[720, '6c0d2e9f41a7b852']],
+    parents: [[720, OFFICE_THERMOSTAT]],
     txErrors: 0.006,
   },
   {
@@ -203,7 +281,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
       [0, 48],
     ],
     noise: 6,
-    parents: [[720, 'a5f2d81c07e3b649']],
+    parents: [[720, TV_LIGHTSTRIP]],
   },
   {
     protocol: 'thread',
@@ -220,11 +298,11 @@ export const DEMO_DEVICES: DemoDevice[] = [
       [0, 58],
     ],
     noise: 4,
-    parents: [[720, '6c0d2e9f41a7b852']],
+    parents: [[720, OFFICE_THERMOSTAT]],
   },
   {
     protocol: 'thread',
-    address: '6c0d2e9f41a7b852',
+    address: OFFICE_THERMOSTAT,
     name: 'Thermostat Büro',
     role: 'router',
     power: 'mains',
@@ -241,7 +319,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
   },
   {
     protocol: 'thread',
-    address: 'a5f2d81c07e3b649',
+    address: TV_LIGHTSTRIP,
     name: 'Lichtleiste TV',
     role: 'router',
     power: 'mains',
@@ -273,5 +351,11 @@ export const DEMO_DEVICES: DemoDevice[] = [
     noise: 4,
     parents: [[720, THREAD_BORDER_ROUTER]],
     txErrors: 0.097,
+    uplink: [50, 48],
+    // its neighbors hear it at −93 and −98 dBm
+    links: [
+      { to: OFFICE_THERMOSTAT, there: 14, back: 20 },
+      { to: TV_LIGHTSTRIP, there: 4, back: 10 },
+    ],
   },
 ]

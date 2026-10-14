@@ -25,6 +25,7 @@ import {
 import { MessagesChart } from '~/components/messages-chart'
 import { NotFound } from '~/components/not-found'
 import { ProtocolBadge } from '~/components/protocol-badge'
+import { RouterFindingCard } from '~/components/router-finding-card'
 import { SignalChart } from '~/components/signal-chart'
 import { StatusDot } from '~/components/status'
 import { TxErrorsCard } from '~/components/tx-errors-card'
@@ -169,6 +170,17 @@ function DevicePage() {
             ) : null}
           </dl>
         </Card>
+
+        {data.finding ? (
+          <RouterFindingCard
+            finding={data.finding}
+            topologyTs={data.topologyTs}
+            txErrorRate={
+              data.txErrors?.high && data.txErrors.day ? data.txErrors.day.rate * 100 : null
+            }
+            now={data.now}
+          />
+        ) : null}
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
           <KpiCard

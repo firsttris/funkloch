@@ -13,3 +13,12 @@ describe('zigbeeScore', () => {
     expect(zigbeeMeta.rawAtScore?.(25)).toBe(64)
   })
 })
+
+describe('formatLinkPair', () => {
+  test('the LQI of both directions', () => {
+    const { formatLinkPair } = zigbeeMeta
+    expect(formatLinkPair({ lqi: 64, rssi: null }, { lqi: 15, rssi: null })).toBe('LQI 64/15')
+    expect(formatLinkPair(null, { lqi: 55, rssi: null })).toBe('LQI 55')
+    expect(formatLinkPair(null, null)).toBe('LQI –')
+  })
+})

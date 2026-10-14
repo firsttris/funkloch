@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { threadScore } from './meta'
+import { threadMeta, threadScore } from './meta'
 
 describe('threadScore', () => {
   test('is linear in the RSSI with link quality 3', () => {
@@ -28,5 +28,15 @@ describe('threadScore', () => {
         },
       ),
     )
+  })
+})
+
+describe('formatLinkPair', () => {
+  test('both RSSI values, else the link quality', () => {
+    const { formatLinkPair } = threadMeta
+    expect(formatLinkPair({ lqi: 2, rssi: -75 }, { lqi: 1, rssi: -86 })).toBe('−75/−86 dBm')
+    expect(formatLinkPair({ lqi: 2, rssi: -75 }, null)).toBe('−75 dBm')
+    expect(formatLinkPair({ lqi: 2, rssi: null }, { lqi: 3, rssi: null })).toBe('LQI 2/3')
+    expect(formatLinkPair(null, null)).toBe('–')
   })
 })
