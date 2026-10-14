@@ -10,6 +10,7 @@ on:
       - "public/**"
       - "messages/**"
       - "tests/e2e/screenshots.spec.ts"
+      - "playwright.config.ts"
       - "package.json"
       - "bun.lock"
   workflow_dispatch:

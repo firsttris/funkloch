@@ -1,4 +1,4 @@
-// bun run screenshots: the pictures for the README and the docs, light and dark
+// bun run screenshots: the pictures for the README and the docs, light and dark, in English
 import { expect, test } from '@playwright/test'
 import { DEVICES, SCREENSHOT_NOW } from './demo'
 
@@ -62,7 +62,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test('thread router with transmit errors', async ({ page }) => {
       await page.goto('/')
       await page.getByRole('link', { name: 'ESP32-C6 Thread Router · 52bb…4b82' }).click()
-      await expect(page.getByRole('img', { name: /Sendefehler pro Stunde/ })).toBeVisible()
+      await expect(page.getByRole('img', { name: /Transmit errors per hour/ })).toBeVisible()
       await expect(page.locator('canvas').first()).toBeVisible()
       await page.screenshot({
         path: `${DIR}/thread-router${suffix}.png`,
@@ -73,8 +73,8 @@ for (const scheme of ['light', 'dark'] as const) {
 
     test('network map', async ({ page }) => {
       await page.goto('/network')
-      await page.getByRole('link', { name: 'Temperatursensor Keller, End Device' }).click()
-      await expect(page.getByText('Hops zum Koordinator')).toBeVisible()
+      await page.getByRole('link', { name: 'Temperatursensor Keller, End device' }).click()
+      await expect(page.getByText('Hops to the coordinator')).toBeVisible()
       await page.screenshot({
         path: `${DIR}/network${suffix}.png`,
         fullPage: true,

@@ -75,4 +75,5 @@ cache is the release's, so the release builds on layers that are already there. 
 to main that touches the app (`src/`, `public/`, the texts, the screenshot test or the packages),
 and by hand under **Actions**; the commit it makes starts no other workflow. `bun run screenshots`
 runs the demo standing still at one moment (`FUNKLOCH_DEMO_NOW`, and the browser's clock with it),
-so a picture changes only when the look does and the workflow commits nothing otherwise.
+so a picture changes only when the look does and the workflow commits nothing otherwise. The pictures
+show the English interface (the browser's locale in the `screenshots` project).
