@@ -12,7 +12,7 @@ Images with the `/api` resources (ot-br-posix from 2024 on) give the most:
 |---|---|---|
 | 15 min | `updateDeviceCollectionTask`, then `GET /api/devices` | the devices: extended address, role and host name from SRP (the list carries no vendor or model) |
 | 15 min | `GET /node/dataset/active` | the channel (only the channel is read, never the keys) |
-| 5 min | `getNetworkDiagnosticTask` to each router (`routerNeighbors`, `children`, `macCounters`, `vendorName`, `vendorModel`) | one reading per device: RSSI and link margin as its parent or best neighbor hears it; each router's transmit counters and maker |
+| 5 min | `getNetworkDiagnosticTask` to each router (`routerNeighbors`, `children`, `macCounters`, `vendorName`, `vendorModel`, `threadStackVersion`) | one reading per device: RSSI and link margin as its parent or best neighbor hears it; each router's transmit counters and maker |
 | 1 h | the same diagnostics | the mesh for the network map |
 | 6 h | `getEnergyScanTask` to the border router | energy per channel 11–26 for the 2.4 GHz card |
 
@@ -55,9 +55,17 @@ The border router knows extended addresses and, with SRP, host names. A router's
 diagnostic can also name its maker and model (`vendorName`, `vendorModel`), if its firmware sets
 them; OpenThread leaves both empty by default (`src/core/config/net_diag.h`), and a firmware such as
 an ESP32-C6 router can set them with `otThreadSetVendorName` and `otThreadSetVendorModel`
-(`OPENTHREAD_CONFIG_NET_DIAG_VENDOR_INFO_SET_API_ENABLE`). Funkloch shows them as model
-and maker and names a router without a host name after them: *ESP32-C6 Thread Router ·
-52bb…4b82* instead of *52bbac72ec804b82*. End devices are never asked, so they keep their address.
+(`OPENTHREAD_CONFIG_NET_DIAG_VENDOR_INFO_SET_API_ENABLE`).
+
+Funkloch cleans both first: punctuation and spaces at the end go, and what is left under 3
+characters counts as not set. OpenThread built as a reference device sends the vendor name `RD:`
+(an ESP32-C6 with ESPHome's OpenThread does), which is therefore neither a maker nor a name. When
+neither is set, the stack version may name the chip: `openthread-esp32/-; esp32c6; …` gives the
+model *ESP32-C6 (OpenThread)*.
+
+A router without a host name is named after its model (or maker) and its short address:
+*ESP32-C6 (OpenThread) · 52bb…4b82* instead of *52bbac72ec804b82*; with neither, the address
+stays. End devices are never asked, so they keep their address.
 
 Give a device a name of its own with the pencil next to its name on its page, or for all devices
 under **Settings → Device names**; Funkloch keeps it across restarts and re-joins.

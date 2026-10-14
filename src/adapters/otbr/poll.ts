@@ -201,6 +201,7 @@ export const createOtbrPoll = (deps: PollDeps) => {
             'macCounters',
             'vendorName',
             'vendorModel',
+            'threadStackVersion',
           ],
           timeout: DIAGNOSTIC_TIMEOUT,
         },

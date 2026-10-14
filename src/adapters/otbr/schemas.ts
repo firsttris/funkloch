@@ -75,6 +75,8 @@ export const networkDiagnosticSchema = z.looseObject({
     /** Set by the device's firmware; OpenThread's default is empty (src/core/config/net_diag.h) */
     vendorName: z.string().optional(),
     vendorModel: z.string().optional(),
+    /** e.g. "openthread-esp32/-; esp32c6;  2026-10-13 13:51:58 UTC" */
+    threadStackVersion: z.string().optional(),
     batteryLevel: z.number().nullish(),
   }),
 })

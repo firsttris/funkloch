@@ -10,11 +10,13 @@ import {
   networkDiagnosticSchema,
 } from './schemas'
 import {
+  cleanVendor,
   countersFromDiagnostics,
   fromDiagnostics,
   fromEnergyScan,
   fromLegacyDiagnostics,
   linkQualityFromMargin,
+  modelFromStack,
   threadName,
   toDeviceInfo,
   vendorsFromDiagnostics,
@@ -82,6 +84,58 @@ describe('names and makers', () => {
     const vendor = { vendor: 'Eve Systems', model: 'Eve Thermo' }
     expect(threadName('2a55d952bc7b4008', 'eve-thermo.local.', vendor)).toBe('eve-thermo')
     expect(toDeviceInfo(esp).name).toBe('52bbac72ec804b82')
+  })
+
+  const diagnostic = (extAddress: string, attributes: Record<string, string>) =>
+    networkDiagnosticSchema.parse({
+      id: extAddress,
+      type: 'networkDiagnostics',
+      attributes: { extAddress, ...attributes },
+    })
+
+  test('an ESP32-C6 with ESPHome OpenThread: "RD:" is no maker, the stack names the chip', () => {
+    // The answer of the ESP32-C6 router in the cellar, 2026-10-14
+    const answer = diagnostic('52bbac72ec804b82', {
+      vendorName: 'RD:',
+      vendorModel: '',
+      vendorSwVersion: '',
+      threadStackVersion: 'openthread-esp32/-; esp32c6;  2026-10-13 13:51:58 UTC',
+    })
+    const vendor = vendorsFromDiagnostics([answer]).get('52bbac72ec804b82')
+    expect(vendor).toEqual({ vendor: null, model: 'ESP32-C6 (OpenThread)' })
+    expect(toDeviceInfo(esp, vendor)).toMatchObject({
+      name: 'ESP32-C6 (OpenThread) · 52bb…4b82',
+      vendor: null,
+      model: 'ESP32-C6 (OpenThread)',
+    })
+  })
+
+  test('a Google TV Streamer keeps its name', () => {
+    const streamer = diagnostic('abcdef0123456789', {
+      vendorName: 'Google',
+      vendorModel: 'Google TV Streamer',
+      threadStackVersion: 'OPENTHREAD/thread-reference-20230706; Google',
+    })
+    const vendor = vendorsFromDiagnostics([streamer]).get('abcdef0123456789')
+    expect(vendor).toEqual({ vendor: 'Google', model: 'Google TV Streamer' })
+    expect(threadName('abcdef0123456789', undefined, vendor ?? { vendor: null, model: null })).toBe(
+      'Google TV Streamer · abcd…6789',
+    )
+  })
+
+  test('cleaning: punctuation and spaces at the end go, under 3 characters is nothing', () => {
+    expect(cleanVendor('RD:')).toBeNull()
+    expect(cleanVendor('  ')).toBeNull()
+    expect(cleanVendor(undefined)).toBeNull()
+    expect(cleanVendor('Espressif.  ')).toBe('Espressif')
+    expect(cleanVendor('Eve Systems')).toBe('Eve Systems')
+    expect(modelFromStack('openthread-esp32/-; esp32h2; x')).toBe('ESP32-H2 (OpenThread)')
+    expect(modelFromStack('openthread-efr32; efr32mg24')).toBe('EFR32MG24 (OpenThread)')
+    expect(modelFromStack('OPENTHREAD/1.4')).toBeNull()
+    expect(modelFromStack('zephyr; nrf52840')).toBeNull()
+    // a word that is no chip names nothing
+    expect(modelFromStack('OPENTHREAD/thread-reference-20230706; Google')).toBeNull()
+    expect(modelFromStack(undefined)).toBeNull()
   })
 
   test('makers from the diagnostics; the empty default of OpenThread counts as none', () => {
