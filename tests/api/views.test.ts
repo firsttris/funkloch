@@ -126,7 +126,7 @@ describe('device detail', () => {
   })
 
   test('a Thread router shows its transmit error rate; the ESP32-C6 fails one frame in ten', () => {
-    const esp = deviceView(env.context, idOf('52bbac72ec804b82'), '7d')
+    const esp = deviceView(env.context, idOf('ESP32-C6 Thread Router · 52bb…4b82'), '7d')
     expect(esp?.txErrors?.high).toBe(true)
     expect(esp?.txErrors?.threshold).toBe(5)
     expect(esp?.txErrors?.day?.rate).toBeGreaterThan(0.08)

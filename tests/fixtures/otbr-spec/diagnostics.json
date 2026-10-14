@@ -30,7 +30,9 @@
           "ifOutUcastPkts": 6,
           "ifOutBroadcastPkts": 926,
           "ifOutDiscards": 0
-        }
+        },
+        "vendorName": "",
+        "vendorModel": ""
       }
     },
     {
@@ -77,7 +79,9 @@
           "ifOutUcastPkts": 9702,
           "ifOutBroadcastPkts": 3998,
           "ifOutDiscards": 0
-        }
+        },
+        "vendorName": "Eve Systems",
+        "vendorModel": "Eve Thermo"
       }
     },
     {

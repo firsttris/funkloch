@@ -23,6 +23,8 @@ import {
   fromEnergyScan,
   fromLegacyDiagnostics,
   toDeviceInfo,
+  type VendorInfo,
+  vendorsFromDiagnostics,
 } from './translate'
 
 const PROTOCOL = threadMeta.id
@@ -71,6 +73,9 @@ export const createOtbrPoll = (deps: PollDeps) => {
   const { client, emit, now } = deps
   let mode: Mode | null = null
   let known: DeviceInfo[] = []
+  /** The newest device collection, named again when a diagnostic names a device's maker */
+  let collection: DeviceItem[] = []
+  const vendors = new Map<string, VendorInfo>()
   let selfAddress: string | null = null
   const last: Record<Part, number | null> = {
     devices: null,
@@ -99,6 +104,26 @@ export const createOtbrPoll = (deps: PollDeps) => {
   const emitDevices = (devices: DeviceInfo[], ts: number) => {
     known = devices
     emit({ kind: 'devices', protocol: PROTOCOL, ts, devices, complete: false })
+  }
+
+  const emitCollection = (ts: number) =>
+    emitDevices(
+      collection.map((item) =>
+        toDeviceInfo(item, vendors.get((item.attributes.extAddress ?? item.id).toLowerCase())),
+      ),
+      ts,
+    )
+
+  /** Keeps what the diagnostics say about the makers; true when it changed */
+  const learnVendors = (diagnostics: readonly NetworkDiagnostic[]) => {
+    let changed = false
+    for (const [address, info] of vendorsFromDiagnostics(diagnostics)) {
+      const before = vendors.get(address)
+      if (before?.vendor === info.vendor && before?.model === info.model) continue
+      vendors.set(address, info)
+      changed = true
+    }
+    return changed
   }
 
   const topologyDue = (ts: number) => topologyWanted || due(last.topology, INTERVALS.topology, ts)
@@ -130,7 +155,8 @@ export const createOtbrPoll = (deps: PollDeps) => {
     if (!update.ok) deps.onProblem?.(`device collection update: ${update.error}`)
     const result = await client.get('/api/devices', devicesSchema)
     if (!result.ok) return result
-    emitDevices(result.value.data.filter(hasAddress).map(toDeviceInfo), ts)
+    collection = result.value.data.filter(hasAddress)
+    emitCollection(ts)
     await emitChannel()
     last.devices = ts
     return ok
@@ -155,8 +181,8 @@ export const createOtbrPoll = (deps: PollDeps) => {
   }
 
   /**
-   * Neighbor and child tables and MAC counters of all routers: the measurements, the counters,
-   * and the topology when due
+   * Neighbor and child tables, MAC counters and makers of all routers: the measurements, the
+   * counters, the names, and the topology when due
    */
   const readDiagnostics = async (ts: number): Promise<Result<void>> => {
     const routers = known.filter(isRouter)
@@ -167,7 +193,15 @@ export const createOtbrPoll = (deps: PollDeps) => {
         type: 'getNetworkDiagnosticTask',
         attributes: {
           destination: router.address,
-          types: ['extAddress', 'rloc16', 'routerNeighbors', 'children', 'macCounters'],
+          types: [
+            'extAddress',
+            'rloc16',
+            'routerNeighbors',
+            'children',
+            'macCounters',
+            'vendorName',
+            'vendorModel',
+          ],
           timeout: DIAGNOSTIC_TIMEOUT,
         },
       })),
@@ -178,6 +212,7 @@ export const createOtbrPoll = (deps: PollDeps) => {
       (item): item is NetworkDiagnostic => item.type !== 'energyScanReport',
     )
     if (diagnostics.length === 0) return ok
+    if (learnVendors(diagnostics)) emitCollection(ts)
     const roots = new Set(known.filter((d) => d.role === 'border_router').map((d) => d.address))
     const { measurements, links } = fromDiagnostics(diagnostics, now(), roots)
     for (const measurement of measurements) emit({ kind: 'measurement', measurement })

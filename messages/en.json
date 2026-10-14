@@ -309,5 +309,8 @@
   "tx_errors_title": "Transmit errors per hour",
   "tx_errors_hint": "Last 7 days · share of frames that found the channel busy (MAC counters)",
   "tx_errors_aria": "Transmit errors per hour over the last 7 days, at most {max} %",
-  "tx_errors_threshold": "threshold {threshold} %"
+  "tx_errors_threshold": "threshold {threshold} %",
+  "device_rename": "Rename",
+  "device_rename_cancel": "Cancel",
+  "device_rename_hint": "Leave empty for the name from the network. All names under Settings → Device names."
 }

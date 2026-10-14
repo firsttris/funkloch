@@ -15,7 +15,9 @@ import {
   fromEnergyScan,
   fromLegacyDiagnostics,
   linkQualityFromMargin,
+  threadName,
   toDeviceInfo,
+  vendorsFromDiagnostics,
 } from './translate'
 
 const fixture = (name: string) =>
@@ -40,7 +42,7 @@ describe('linkQualityFromMargin', () => {
 
 describe('toDeviceInfo', () => {
   test('roles, names and power from the device collection', () => {
-    expect(devices.map(toDeviceInfo)).toMatchObject([
+    expect(devices.map((item) => toDeviceInfo(item))).toMatchObject([
       { address: '96518e5497d5b9f3', name: 'otbr', role: 'border_router', power: 'mains' },
       { address: '2a55d952bc7b4008', name: 'eve-thermo', role: 'router', networkAddress: '0x5000' },
       {
@@ -53,6 +55,39 @@ describe('toDeviceInfo', () => {
       },
       { address: '0011223344556677', role: 'end_device' },
     ])
+  })
+})
+
+describe('names and makers', () => {
+  // The ESP32-C6 router in the cellar registers no SRP host name
+  const esp = deviceItemSchema.parse({
+    id: '52bbac72ec804b82',
+    type: 'threadDevice',
+    attributes: { extAddress: '52bbac72ec804b82', role: 'router' },
+  })
+
+  test('without a host name the model and the short address name the device', () => {
+    const vendor = { vendor: 'Espressif', model: 'ESP32-C6 Thread Router' }
+    expect(toDeviceInfo(esp, vendor)).toMatchObject({
+      name: 'ESP32-C6 Thread Router · 52bb…4b82',
+      vendor: 'Espressif',
+      model: 'ESP32-C6 Thread Router',
+    })
+    expect(threadName('52bbac72ec804b82', undefined, { vendor: 'Espressif', model: null })).toBe(
+      'Espressif · 52bb…4b82',
+    )
+  })
+
+  test('the host name wins, and without anything the address stays', () => {
+    const vendor = { vendor: 'Eve Systems', model: 'Eve Thermo' }
+    expect(threadName('2a55d952bc7b4008', 'eve-thermo.local.', vendor)).toBe('eve-thermo')
+    expect(toDeviceInfo(esp).name).toBe('52bbac72ec804b82')
+  })
+
+  test('makers from the diagnostics; the empty default of OpenThread counts as none', () => {
+    expect(vendorsFromDiagnostics(diagnostics)).toEqual(
+      new Map([['2a55d952bc7b4008', { vendor: 'Eve Systems', model: 'Eve Thermo' }]]),
+    )
   })
 })
 

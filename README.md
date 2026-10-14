@@ -119,6 +119,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 - **Raw value chart** (LQI or RSSI): every message for 24 hours, hourly median with min–max band
   for 7 and 30 days, offline stretches and the weak threshold drawn in.
 - **Messages per hour**, **parent changes**, **connections** and the device's **events**.
+- **Names**: Thread routers named after the model their diagnostics report, and a name of your own
+  set right on the device's page.
 - **Transmit errors** of Thread routers from their MAC counters: how often the channel was busy,
   per hour over 7 days, with a warning from 5 % a day.
 

@@ -67,7 +67,7 @@ test.describe('device detail', () => {
 
   test('a Thread router shows its transmit errors against the threshold', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('link', { name: '52bbac72ec804b82' }).click()
+    await page.getByRole('link', { name: 'ESP32-C6 Thread Router · 52bb…4b82' }).click()
     await expect(page.getByText('Sendefehler 24 h')).toBeVisible()
     await expect(page.getByText(/von [\d.]+ Frames · Schwelle 5 %/)).toBeVisible()
     await expect(page.getByRole('img', { name: /Sendefehler pro Stunde/ })).toBeVisible()

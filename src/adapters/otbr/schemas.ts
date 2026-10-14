@@ -72,6 +72,9 @@ export const networkDiagnosticSchema = z.looseObject({
     routerNeighbors: z.array(linkEntrySchema).optional(),
     children: z.array(linkEntrySchema).optional(),
     macCounters: macCountersSchema.optional(),
+    /** Set by the device's firmware; OpenThread's default is empty (src/core/config/net_diag.h) */
+    vendorName: z.string().optional(),
+    vendorModel: z.string().optional(),
     batteryLevel: z.number().nullish(),
   }),
 })

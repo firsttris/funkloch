@@ -120,6 +120,8 @@ export const deviceView = ({ db, now, settings }: ViewContext, id: number, range
       id: device.id,
       protocol: device.protocol,
       name: displayName(device),
+      customName: device.customName,
+      networkName: device.name,
       address: device.address,
       networkAddress: device.networkAddress,
       model: device.model,

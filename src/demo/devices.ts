@@ -259,7 +259,8 @@ export const DEMO_DEVICES: DemoDevice[] = [
   {
     protocol: 'thread',
     address: '52bbac72ec804b82',
-    name: '52bbac72ec804b82',
+    // No SRP host name: named from its diagnostic as the Thread adapter does (threadName)
+    name: 'ESP32-C6 Thread Router · 52bb…4b82',
     role: 'router',
     power: 'mains',
     model: 'ESP32-C6 Thread Router',

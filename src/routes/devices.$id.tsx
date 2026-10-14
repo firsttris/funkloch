@@ -11,6 +11,7 @@ import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
 import { DeviceLinks } from '~/components/device-links'
+import { DeviceTitle } from '~/components/device-title'
 import { KpiCard } from '~/components/kpi-card'
 import {
   eventColor,
@@ -126,7 +127,13 @@ function DevicePage() {
         </Link>
 
         <div className="flex flex-col gap-2">
-          <h1 className="m-0 text-[28px] font-bold tracking-tight">{device.name}</h1>
+          <DeviceTitle
+            key={device.id}
+            id={device.id}
+            name={device.name}
+            customName={device.customName}
+            networkName={device.networkName}
+          />
           <div className="flex flex-wrap items-center gap-2">
             {protocol ? <ProtocolBadge protocol={device.protocol} label={protocol.label} /> : null}
             <Badge>
