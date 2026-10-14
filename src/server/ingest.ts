@@ -5,6 +5,7 @@ import type { Db } from '~/db/client'
 import { checkReachability } from '~/db/reachability'
 import {
   applyDevices,
+  type BatteryInput,
   type SeenInput,
   storeBatch,
   storeBridgeState,
@@ -17,13 +18,14 @@ import type { Log } from './log'
 export const FLUSH_INTERVAL = 1000
 
 /**
- * Takes the observations of all adapters. Measurements and signs of life are collected and
+ * Takes the observations of all adapters. Measurements, signs of life and battery levels are collected and
  * written once a second in one transaction; everything else is written at once, after the
  * pending batch, so the order stays intact.
  */
 export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) => {
   let measurements: Measurement[] = []
   let seen: SeenInput[] = []
+  let batteries: BatteryInput[] = []
 
   const guarded = (what: string, write: () => void) => {
     try {
@@ -34,11 +36,12 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
   }
 
   const flush = () => {
-    if (measurements.length === 0 && seen.length === 0) return
-    const batch = { measurements, seen }
+    if (measurements.length === 0 && seen.length === 0 && batteries.length === 0) return
+    const batch = { measurements, seen, batteries }
     measurements = []
     seen = []
-    guarded('measurements', () => storeBatch(db, batch.measurements, batch.seen))
+    batteries = []
+    guarded('measurements', () => storeBatch(db, batch.measurements, batch.seen, batch.batteries))
   }
 
   // What each adapter said last about a device, where several describe the same ones
@@ -92,6 +95,7 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
         )
       case 'measurement':
       case 'seen':
+      case 'battery':
         return
     }
   }
@@ -108,6 +112,10 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
   const emit = (observation: Observation) => {
     if (observation.kind === 'measurement') {
       measurements.push(uniqueTs(observation.measurement))
+      return
+    }
+    if (observation.kind === 'battery') {
+      batteries.push(observation)
       return
     }
     if (observation.kind === 'seen') {

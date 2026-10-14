@@ -285,8 +285,28 @@ export const deviceObservations = (
 }
 
 /**
- * Everything one poll gathered: per network the devices, readings and map. With `threadSignal`
- * off (the OTBR measures Thread) only the Thread devices themselves.
+ * The battery level each node's PowerSource holds, Thread and Wi-Fi alike. It reaches the device
+ * even while no reading of Matter's carries it (the OTBR measures Thread) and while the level does
+ * not change, so the server sends no report of it.
+ */
+export const batteryObservations = (nodes: readonly MatterNode[], ts: number): Observation[] =>
+  nodes.flatMap((node) => {
+    const info = deviceInfoOf(node)
+    const battery = batteryOf(node)
+    return info && battery !== null
+      ? [{ kind: 'battery' as const, protocol: info.protocol, address: info.address, ts, battery }]
+      : []
+  })
+
+/** What a node tells about itself: its device and its battery level */
+export const nodeObservations = (nodes: readonly MatterNode[], ts: number): Observation[] => [
+  ...deviceObservations(nodes, ts),
+  ...batteryObservations(nodes, ts),
+]
+
+/**
+ * Everything one poll gathered: per network the devices, readings and map, and every battery
+ * level. With `threadSignal` off (the OTBR measures Thread) only the Thread devices themselves.
  */
 export const cycleObservations = (
   nodes: readonly MatterNode[],
@@ -302,10 +322,13 @@ export const cycleObservations = (
     ...measurements.map((measurement) => ({ kind: 'measurement' as const, measurement })),
     ...(links.length > 0 ? [{ kind: 'topology' as const, topology: { protocol, ts, links } }] : []),
   ])
-  if (!threadSignal) return [...deviceObservations(nodes, ts, [threadMeta.id]), ...signal]
+  const batteries = batteryObservations(nodes, ts)
+  if (!threadSignal)
+    return [...deviceObservations(nodes, ts, [threadMeta.id]), ...signal, ...batteries]
   const channel = threadChannel(nodes)
   return [
     ...signal,
+    ...batteries,
     ...threadCounters(nodes, ts).map((counters) => ({ kind: 'counters' as const, counters })),
     ...(channel === null ? [] : [{ kind: 'channel' as const, protocol: threadMeta.id, channel }]),
   ]

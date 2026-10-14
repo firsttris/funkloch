@@ -147,19 +147,32 @@ export const ensureDevice = (db: Conn, protocol: string, address: string, ts: nu
 
 export type SeenInput = { protocol: string; address: string; ts: number; battery: number | null }
 
+/** A battery level that is no sign of life (a controller's cached value) */
+export type BatteryInput = { protocol: string; address: string; ts: number; battery: number }
+
 const SAMPLE_CHUNK = 500
 
+type Latest = {
+  protocol: string
+  address: string
+  /** The newest message, null when the batch holds only battery levels */
+  ts: number | null
+  battery: number | null
+  batteryTs: number
+}
+
 /** Per device in a batch: the newest message time and the newest battery level reported */
-const latestPerDevice = (rows: readonly SeenInput[]) => {
-  const latest = new Map<string, SeenInput & { batteryTs: number }>()
+const latestPerDevice = (rows: readonly (SeenInput & { alive: boolean })[]) => {
+  const latest = new Map<string, Latest>()
   for (const row of rows) {
     const key = `${row.protocol}|${row.address}`
     const before = latest.get(key)
     const newerBattery = row.battery !== null && row.ts >= (before?.batteryTs ?? -Infinity)
+    const ts = row.alive ? Math.max(row.ts, before?.ts ?? -Infinity) : (before?.ts ?? null)
     latest.set(key, {
       protocol: row.protocol,
       address: row.address,
-      ts: Math.max(row.ts, before?.ts ?? -Infinity),
+      ts,
       battery: newerBattery ? row.battery : (before?.battery ?? null),
       batteryTs: newerBattery ? row.ts : (before?.batteryTs ?? -Infinity),
     })
@@ -167,8 +180,16 @@ const latestPerDevice = (rows: readonly SeenInput[]) => {
   return [...latest.values()]
 }
 
-/** Stores a batch of measurements and signs of life in one transaction. */
-export const storeBatch = (db: Db, measurements: Measurement[], seen: SeenInput[]) =>
+/**
+ * Stores a batch of measurements, signs of life and battery levels in one transaction; of a
+ * device's battery levels the newest wins, whichever of the three it came with.
+ */
+export const storeBatch = (
+  db: Db,
+  measurements: Measurement[],
+  seen: SeenInput[],
+  batteries: BatteryInput[] = [],
+) =>
   db.transaction((tx) => {
     const ids = new Map<string, number>()
     const idOf = (protocol: string, address: string, ts: number) => {
@@ -192,10 +213,14 @@ export const storeBatch = (db: Db, measurements: Measurement[], seen: SeenInput[
         .onConflictDoNothing()
         .run()
     }
-    for (const s of latestPerDevice([...measurements, ...seen])) {
+    const alive = [...measurements, ...seen].map((row) => ({ ...row, alive: true }))
+    const levels = batteries.map((row) => ({ ...row, alive: false }))
+    for (const s of latestPerDevice([...alive, ...levels])) {
       tx.update(devices)
         .set({
-          lastSeen: sql`max(coalesce(${devices.lastSeen}, 0), ${s.ts})`,
+          ...(s.ts === null
+            ? {}
+            : { lastSeen: sql`max(coalesce(${devices.lastSeen}, 0), ${s.ts})` }),
           ...(s.battery === null ? {} : { battery: s.battery }),
         })
         .where(and(eq(devices.protocol, s.protocol), eq(devices.address, s.address)))

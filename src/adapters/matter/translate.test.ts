@@ -109,14 +109,17 @@ describe('cycleObservations', () => {
   test('with the Thread signal: devices, readings, map, counters and channel', () => {
     const all = cycleObservations(nodes, routers, TS, true)
     expect(new Set(kinds(all, 'thread'))).toEqual(
-      new Set(['devices', 'measurement', 'topology', 'counters', 'channel']),
+      new Set(['devices', 'measurement', 'topology', 'battery', 'counters', 'channel']),
     )
     expect(new Set(kinds(all, 'wifi'))).toEqual(new Set(['devices', 'measurement', 'topology']))
   })
 
   test('while the OTBR measures Thread: only the Thread devices, with what Matter knows best', () => {
     const all = cycleObservations(nodes, routers, TS, false)
-    expect(kinds(all, 'thread')).toEqual(['devices'])
+    expect(kinds(all, 'thread')).toEqual(['devices', 'battery'])
+    expect(all.filter((o) => o.kind === 'battery')).toEqual([
+      { kind: 'battery', protocol: 'thread', address: N3, ts: TS, battery: 85 },
+    ])
     const list = all.find((o) => o.kind === 'devices' && o.protocol === 'thread')
     expect(list).toMatchObject({ source: { id: 'matter' }, complete: false })
   })

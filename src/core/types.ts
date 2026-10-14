@@ -107,6 +107,11 @@ export type Observation =
   | { kind: 'measurement'; measurement: Measurement }
   /** A message without a signal value: the device is alive */
   | { kind: 'seen'; protocol: ProtocolId; address: string; ts: number; battery: number | null }
+  /**
+   * A battery level the protocol holds for the device, e.g. from a controller's cache: no sign of
+   * life, so it moves neither the last message nor the reachability
+   */
+  | { kind: 'battery'; protocol: ProtocolId; address: string; ts: number; battery: number }
   | { kind: 'availability'; report: AvailabilityReport }
   | { kind: 'topology'; topology: Topology }
   | { kind: 'counters'; counters: TxCounters }

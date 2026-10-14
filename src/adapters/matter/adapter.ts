@@ -12,7 +12,7 @@ import { wifiMeta } from './meta'
 import { deviceInfoOf, type MatterNode, toNode } from './nodes'
 import { attributeUpdateSchema, nodeSchema, serverInfoSchema } from './schemas'
 import { createBackoff, createPoller, createReporter } from './session'
-import { deviceObservations } from './translate'
+import { deviceObservations, nodeObservations } from './translate'
 
 /** The oldest schema whose answers Funkloch reads (matterjs-server supports 11 and up) */
 export const MIN_SCHEMA = 11
@@ -52,7 +52,7 @@ export const applyEvent = (
     if (!parsed.success) return []
     const node = toNode(parsed.data)
     cache.put(node)
-    return deviceObservations([node], ts)
+    return nodeObservations([node], ts)
   }
   if (event === 'node_removed') {
     cache.remove(String(data))
@@ -140,7 +140,7 @@ export const createMatterAdapter = (options: MatterOptions): Adapter => {
       const ts = now()
       cache.reset(listed.nodes)
       report.bridge(true)
-      emit(deviceObservations(cache.all(), ts))
+      emit(nodeObservations(cache.all(), ts))
       report.reachability(cache, ts)
       return true
     }
