@@ -67,7 +67,9 @@ container name in the same Compose network.
 
 !!! note "Bind mount instead of a volume"
     The container runs as user `bun` (uid 1000). A host directory needs to belong to it:
-    `chown 1000:1000 ./data`, or with Podman `Volume=./data:/data:U`.
+    `chown 1000:1000 ./data`, or with Podman `Volume=./data:/data:U` (add `Z` under SELinux:
+    `:U,Z`). If it cannot write there, Funkloch stops at start with
+    `Funkloch (uid 1000) cannot write to /data (owned by …)` and names the fix.
 
 ## First start
 

@@ -1,7 +1,7 @@
 // The one long-running part of the process: database, adapters, ingest and jobs. Started once,
 // on the first import of the server entry (src/server.ts), in dev and in production alike.
 import '@tanstack/react-start/server-only'
-import { mkdirSync, rmSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { threadMeta } from '~/adapters/otbr/meta'
 import { adaptersFromConfig } from '~/adapters/registry'
@@ -13,6 +13,7 @@ import { createDemoAdapter } from '~/demo/adapter'
 import { seedDemo } from '~/demo/seed'
 import { startScheduler } from '~/jobs/scheduler'
 import { resetAdmin } from './auth'
+import { dataDirProblem, nodeDataDirFs } from './data-dir'
 import { createIngest } from './ingest'
 import { createLiveFeed, type LiveFeed } from './live'
 import { createLog, type Log } from './log'
@@ -38,10 +39,12 @@ export type Runtime = {
 }
 
 const openDatabase = (config: Config, now: number) => {
-  mkdirSync(config.DATA_DIR, { recursive: true })
-  if (!config.FUNKLOCH_DEMO) return openDb(join(config.DATA_DIR, 'funkloch.db'))
+  const name = config.FUNKLOCH_DEMO ? 'demo.db' : 'funkloch.db'
+  const problem = dataDirProblem(config.DATA_DIR, name, nodeDataDirFs)
+  if (problem) throw new Error(problem)
+  const file = join(config.DATA_DIR, name)
+  if (!config.FUNKLOCH_DEMO) return openDb(file)
   // The demo starts fresh each time, so every start shows the same network
-  const file = join(config.DATA_DIR, 'demo.db')
   for (const suffix of ['', '-wal', '-shm']) rmSync(file + suffix, { force: true })
   const db = openDb(file)
   seedDemo(db, now)
