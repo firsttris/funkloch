@@ -129,6 +129,7 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 - **Network map** of the Zigbee mesh and the Thread network as a tree: the coordinator on top,
   each router with the devices that talk through it, signal bars on every link, problems in red.
+  The routers wrap into rows to fit the screen, so the map shows at full size on a phone too.
   Drag and zoom, search, "problems only", a device's way to the coordinator lit up on hover, older
   snapshots to compare.
 - **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and

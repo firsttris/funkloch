@@ -130,6 +130,47 @@ describe('mapTree', () => {
     }
   })
 
+  test('routers that do not fit side by side wrap into rows inside the width', () => {
+    // A coordinator with six routers, each with an end device: about 1,900 px side by side
+    const nodes = [
+      node(1, 'coordinator'),
+      ...[2, 3, 4, 5, 6, 7].map((id) => node(id, 'router')),
+      ...[12, 13, 14, 15, 16, 17].map((id) => node(id, 'end_device')),
+    ]
+    const edges = [
+      ...[2, 3, 4, 5, 6, 7].map((id) => link(id, 1)),
+      ...[12, 13, 14, 15, 16, 17].map((id) => link(id, id - 10)),
+    ]
+    const wide = mapTree(nodes, edges)
+    expect(wide.width).toBeGreaterThan(1200)
+    for (const room of [1100, 760, 360]) {
+      const tree = mapTree(nodes, edges, new Set(), room)
+      expect(tree.width).toBeLessThanOrEqual(room)
+      const routerRows = new Set(tree.placed.filter((p) => p.kind === 'router').map((p) => p.y))
+      expect(routerRows.size).toBeGreaterThan(1)
+      const boxes = tree.placed.map(boxOf)
+      for (const [i, a] of boxes.entries())
+        for (const b of boxes.slice(i + 1))
+          expect(a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).toBe(
+            false,
+          )
+      for (const b of boxes) expect(b.right).toBeLessThanOrEqual(tree.width)
+      // every device still has its line to its parent, the rows below the first one too
+      expect(tree.lines.map((l) => l.id).sort((a, b) => a - b)).toEqual([
+        2, 3, 4, 5, 6, 7, 12, 13, 14, 15, 16, 17,
+      ])
+    }
+    // at phone width one router per row
+    const phone = mapTree(nodes, edges, new Set(), 360)
+    expect(new Set(phone.placed.filter((p) => p.kind === 'router').map((p) => p.y)).size).toBe(6)
+  })
+
+  test('a map that fits stays as it is, whatever width it is given', () => {
+    const { nodes, edges } = network(30)
+    const tree = mapTree(nodes, edges)
+    expect(mapTree(nodes, edges, new Set(), tree.width)).toEqual(tree)
+  })
+
   test('is deterministic', () => {
     const { nodes, edges } = network(40)
     expect(mapTree(nodes, edges)).toEqual(mapTree([...nodes].reverse(), [...edges].reverse()))

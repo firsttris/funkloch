@@ -2,7 +2,7 @@
 // border router on top, routers below, each router's end devices as a list under it. Pointing at
 // a device lights up its way to the root; search and "problems only" let the rest step back.
 import { Maximize, Minus, Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { mapTree } from '~/core/map-tree'
 import { wayToRoot } from '~/core/topology'
 import { cn } from '~/lib/cn'
@@ -16,7 +16,7 @@ import {
   type MapLink,
   SignalBars,
 } from './network-tree-parts'
-import { usePanZoom } from './use-pan-zoom'
+import { frameHeight, mapRoom, usePanZoom } from './use-pan-zoom'
 
 /** Days the snapshot slider reaches back; the server keeps the same number (views/network.ts) */
 export const SNAPSHOT_DAYS_CLIENT = 7
@@ -56,9 +56,30 @@ export const NetworkTree = ({
     const hits = nodes.filter((n) => n.name.toLowerCase().includes(needle))
     return new Set([...opened, ...hits.flatMap((n) => uplink.get(n.id)?.b ?? [])])
   }, [opened, needle, nodes, uplink])
-  const tree = useMemo(() => mapTree(nodes, edges, unfolded), [nodes, edges, unfolded])
+  // The routers wrap into rows to fit the frame's width, and the frame grows with the map, so it
+  // shows at full size
+  const [frameWidth, setFrameWidth] = useState<number | null>(null)
+  const tree = useMemo(
+    () =>
+      mapTree(
+        nodes,
+        edges,
+        unfolded,
+        frameWidth === null ? Number.POSITIVE_INFINITY : mapRoom(frameWidth),
+      ),
+    [nodes, edges, unfolded, frameWidth],
+  )
   const placedAt = useMemo(() => new Map(tree.placed.map((p) => [p.id, p])), [tree])
   const zoom = usePanZoom(tree)
+  useEffect(() => {
+    const el = zoom.frame.current
+    if (!el) return
+    const measure = () => setFrameWidth(el.clientWidth)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [zoom.frame])
 
   const focus = hovered ?? selectedId
   const way = focus === null ? null : new Set(wayToRoot(focus, edges))
@@ -97,9 +118,11 @@ export const NetworkTree = ({
       ref={zoom.frame}
       {...zoom.handlers}
       className={cn(
-        'topo-frame relative h-[min(76vh,780px)] min-h-[440px] overflow-hidden rounded-lg',
+        'topo-frame relative min-h-[440px] overflow-hidden rounded-lg',
+        frameWidth === null && 'h-[min(76vh,780px)]',
         zoom.dragging && 'dragging',
       )}
+      style={frameWidth === null ? undefined : { height: frameHeight(tree, frameWidth) }}
       aria-label={label}
     >
       <div

@@ -8,6 +8,15 @@ const MIN = 0.3
 const MAX = 2
 /** Room the controls take at the top of the frame */
 const TOP = 56
+/** The frame is never lower than this */
+const MIN_FRAME = 440
+
+/** The width the map has in a frame of `frameWidth`, and the frame height that shows it whole */
+export const mapRoom = (frameWidth: number) => frameWidth - 32
+export const frameHeight = (size: { width: number; height: number }, frameWidth: number) => {
+  const k = Math.min(1, mapRoom(frameWidth) / size.width)
+  return Math.max(MIN_FRAME, Math.ceil(size.height * k) + TOP + 16)
+}
 
 export const usePanZoom = (size: { width: number; height: number }) => {
   const frame = useRef<HTMLElement>(null)
@@ -24,7 +33,7 @@ export const usePanZoom = (size: { width: number; height: number }) => {
     if (!el) return null
     const w = el.clientWidth
     const h = el.clientHeight
-    const k = Math.min(1, (w - 32) / size.width, (h - TOP - 16) / size.height)
+    const k = Math.min(1, mapRoom(w) / size.width, (h - TOP - 16) / size.height)
     return { k, x: (w - size.width * k) / 2, y: TOP + (h - TOP - size.height * k) / 2 }
   }, [size.width, size.height])
 
