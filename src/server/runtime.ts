@@ -3,6 +3,7 @@
 import '@tanstack/react-start/server-only'
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
+import { wifiMeta } from '~/adapters/matter/meta'
 import { threadMeta } from '~/adapters/otbr/meta'
 import { adaptersFromConfig } from '~/adapters/registry'
 import type { Adapter } from '~/adapters/types'
@@ -65,10 +66,14 @@ export const startRuntime = (config: Config): Runtime => {
   const settingsDefaults = defaultsFrom(config)
   const settings = () => loadSettings(db, settingsDefaults)
   const adapters = config.FUNKLOCH_DEMO
-    ? [zigbeeMeta, threadMeta].map((meta) => createDemoAdapter(meta, clock, frozen === undefined))
+    ? [zigbeeMeta, threadMeta, wifiMeta].map((meta) =>
+        createDemoAdapter(meta, clock, frozen === undefined),
+      )
     : adaptersFromConfig(config, log, () => settings().networkmapHours)
   if (adapters.length === 0) {
-    log.warn('No adapter is on: set ZIGBEE2MQTT_MQTT_URL or OTBR_URL, or FUNKLOCH_DEMO=1')
+    log.warn(
+      'No adapter is on: set ZIGBEE2MQTT_MQTT_URL, OTBR_URL or MATTER_SERVER_URL, or FUNKLOCH_DEMO=1',
+    )
   }
   const ingest = createIngest(db, log, clock)
   const stopAdapters = adapters.map((adapter) => adapter.start(ingest.emit))
@@ -93,7 +98,7 @@ export const startRuntime = (config: Config): Runtime => {
   const live = createLiveFeed(db)
   log.info(
     {
-      adapters: adapters.map((a) => a.meta.id),
+      adapters: adapters.map((a) => a.id),
       demo: config.FUNKLOCH_DEMO,
       ...(frozen === undefined ? {} : { demoNow: new Date(frozen).toISOString() }),
       dataDir: config.DATA_DIR,

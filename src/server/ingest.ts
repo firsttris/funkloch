@@ -1,4 +1,5 @@
-import type { Measurement, Observation } from '~/core/types'
+import { type Described, mergeDescribed } from '~/core/devices'
+import type { DeviceInfo, Measurement, Observation } from '~/core/types'
 import { storeChannelScan, storeNetworkChannel } from '~/db/channels'
 import type { Db } from '~/db/client'
 import { checkReachability } from '~/db/reachability'
@@ -40,6 +41,20 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
     guarded('measurements', () => storeBatch(db, batch.measurements, batch.seen))
   }
 
+  // What each adapter said last about a device, where several describe the same ones
+  const described = new Map<string, Map<string, Described>>()
+  const merged = (observation: Extract<Observation, { kind: 'devices' }>): DeviceInfo[] => {
+    const { source } = observation
+    if (!source) return observation.devices
+    return observation.devices.map((info) => {
+      const key = `${observation.protocol}|${info.address}`
+      const bySource = described.get(key) ?? new Map<string, Described>()
+      bySource.set(source.id, { source: source.id, info, prefer: source.prefer })
+      described.set(key, bySource)
+      return mergeDescribed([...bySource.values()])
+    })
+  }
+
   const apply = (observation: Observation) => {
     switch (observation.kind) {
       case 'devices':
@@ -47,7 +62,7 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
           applyDevices(
             db,
             observation.protocol,
-            observation.devices,
+            merged(observation),
             observation.ts,
             observation.complete,
           ),

@@ -5,8 +5,8 @@
 The documentation is in `docs/` (<https://firsttris.github.io/funkloch/>, MkDocs Material, built
 and published by `.github/workflows/docs.yml`). Read the pages that touch the change before
 starting: [installation](docs/installation.md) (variables, proxy, password reset),
-[zigbee2mqtt](docs/zigbee2mqtt.md) and [thread](docs/thread.md) (what each adapter reads and
-sends), [signal](docs/signal.md) (score, traffic light, trend, reachability, patterns),
+[zigbee2mqtt](docs/zigbee2mqtt.md), [thread](docs/thread.md) and [matter](docs/matter.md) (what each
+adapter reads and sends), [signal](docs/signal.md) (score, traffic light, trend, reachability, patterns),
 [notifications](docs/notifications.md) (events, rules, payload),
 [development](docs/development.md) (architecture, test layers, releases) and
 [recording](docs/recording.md) (fixture recorder). The implementation plan (architecture, data model, score
@@ -29,6 +29,12 @@ scratchpad and name the source file in comments and commit messages where it set
   `getNetworkDiagnosticTask` via `/api/actions`. Older images (Home Assistant add-on) only have
   `/node/*` and `/diagnostics`. The OTBR schemas follow the recorded answers in
   `tests/fixtures/recordings/`, not the spec alone.
+- **matterjs-server** (`matter-js/matterjs-server`): `docs/websockets_api.md` for commands, events
+  and the BigInt wire format; `packages/ws-client/src/models/model.ts` and `node.ts` for the shapes;
+  `packages/ws-client/src/topology/topology-utils.ts` for how neighbor tables and interfaces are
+  read; `packages/ws-controller/src/controller/ThreadDetailsPoller.ts` for why neighbor tables need
+  reading. Attribute and field ids come from the matter.js model (`matter-js/matter.js`,
+  `packages/model/src/standard/elements/*.element.ts`). The Python Matter Server is archived.
 
 ## With every change
 
@@ -71,9 +77,9 @@ Outside the Playwright image, point Playwright at a local Chromium with
 - The user's running processes are not stopped; use other ports for tests (the app defaults to
   8090, Playwright uses 8099).
 - Language: code, comments, docs, commits in English; the app's interface in German and English.
-- Funkloch only reads: it never switches devices, pairs or changes Zigbee2MQTT or OTBR
-  configuration. The only requests it sends are the network map (at most hourly, default 6 h) and
-  OTBR diagnostics.
+- Funkloch only reads: it never switches devices, pairs or changes Zigbee2MQTT, OTBR or Matter
+  configuration. The only requests it sends are the network map (at most hourly, default 6 h), OTBR
+  diagnostics and Matter attribute reads (neighbor tables and Wi-Fi signal, default every 15 min).
 
 ## Code style
 
@@ -94,13 +100,17 @@ Architecture rules:
 - Logic lives in pure functions in `src/core`, without a framework, with unit tests. Server
   functions (`src/server/fn/*`) are thin adapters: views in `src/server/views` fetch with
   `src/db/queries.ts` and shape with `src/core`; `tests/api` checks the views against the demo.
-- The core knows no protocols. Each adapter (`src/adapters/zigbee2mqtt`, `src/adapters/otbr`)
-  delivers devices, measurements, links and channel scans as `Observation`s (a device list says
+- The core knows no protocols. Each adapter (`src/adapters/zigbee2mqtt`, `src/adapters/otbr`,
+  `src/adapters/matter`) delivers devices, measurements, links and channel scans as `Observation`s (a device list says
   whether it is complete; Thread's never is), and owns its score formula
   (`meta.ts`, built from `linearScore` in the core) and its raw-value display.
-- An adapter is on when its environment variable is set (`ZIGBEE2MQTT_MQTT_URL`, `OTBR_URL`).
-- Zod at every boundary: environment (`src/config.ts`), MQTT payloads, OTBR answers, server
-  function input, search params.
+- An adapter is on when its environment variable is set (`ZIGBEE2MQTT_MQTT_URL`, `OTBR_URL`,
+  `MATTER_SERVER_URL`). An adapter may deliver several protocols (Matter: Thread and Wi-Fi); where
+  two describe the same devices (OTBR and Matter for Thread), their device lists carry a `source`
+  and are merged field by field in the ingest, and with the OTBR on Matter only describes Thread
+  devices, so the map keeps one view of the mesh.
+- Zod at every boundary: environment (`src/config.ts`), MQTT payloads, OTBR answers, Matter
+  WebSocket messages, server function input, search params.
 - Server-only modules start with `import '@tanstack/react-start/server-only'`; a server function
   file must not export plain functions that pull database code into the client bundle.
 
@@ -120,7 +130,7 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
   the screenshots run against it with `TZ=Europe/Berlin`.
 - Timestamps are milliseconds everywhere; uPlot gets seconds.
 - Score 0–100 for the traffic light and the heatmap; charts show the protocol's raw value (LQI for
-  Zigbee, RSSI for Thread), which is why `hourly` keeps raw median, min and max as well.
+  Zigbee, RSSI for Thread and Wi-Fi), which is why `hourly` keeps raw median, min and max as well.
 - Traffic light and trend run on hourly medians (the last 60 minutes for the current status),
   never on single readings.
 - Login: one admin password (argon2id), set at `/setup` on the first visit; `handleAuth` in
@@ -133,6 +143,8 @@ split it past ~400 lines, a function past ~80. A refactor changes no behaviour.
   events.
 - The OTBR schemas and `tests/fixtures/otbr-spec` follow the spec until recordings from a real
   border router arrive; then the recordings decide.
+  The same holds for the Matter schemas and `tests/fixtures/matter-spec`, written after
+  matterjs-server's sources.
 - Routers have no parent in either protocol; `withUplinks` (`src/core/uplinks.ts`) marks each one's
   best neighbor one hop closer to the root as its parent, so the map, "connected through" and hops
   work for routers too. Zigbee routers that send nothing themselves get their uplink LQI as a

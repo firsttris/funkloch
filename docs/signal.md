@@ -2,12 +2,13 @@
 
 ## Score
 
-Every reading becomes a score from 0 to 100, so Zigbee and Thread fit on one scale:
+Every reading becomes a score from 0 to 100, so Zigbee, Thread and Wi-Fi fit on one scale:
 
 | Network | Score | Chart shows |
 |---|---|---|
 | Zigbee | LQI / 255 × 100 | LQI 0–255 |
 | Thread | RSSI from −100 dBm (0) to −50 dBm (100), capped by the link quality: LQI 3 → 100, 2 → 59, 1 → 24, 0 → 0 | RSSI in dBm |
+| Wi-Fi (Matter) | RSSI from −90 dBm (0) to −50 dBm (100) | RSSI in dBm |
 
 The score drives the traffic light, the heatmap and the events; the charts keep the network's own
 value. LQI values of different Zigbee chips are not strictly comparable; the history of one device
@@ -38,14 +39,15 @@ and the verdict does not change with the time of day; a change from day to day s
 
 A device is **offline** when
 
-- Zigbee2MQTT reports it offline (availability), or
+- Zigbee2MQTT or matterjs-server reports it offline (availability, or a Matter node the server
+  cannot reach), or
 - it has been silent for three times its usual interval between messages, at least 30 minutes.
   The usual interval is the gap a moment of the last 7 days typically falls into (the median of
   the gaps, weighted by their length), so a remote that sends bursts of presses seconds apart
   keeps the long pauses between them as its interval.
 
-A device without a known interval is judged by the report only. Coordinators and border routers
-are never marked offline from silence; their state comes from the bridge.
+A device without a known interval is judged by the report only. Coordinators, border routers and
+access points are never marked offline from silence; their state comes from the bridge.
 
 ## Recurring patterns
 

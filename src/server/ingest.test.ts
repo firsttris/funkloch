@@ -22,6 +22,51 @@ const measurement = (ts: number, raw: number): Measurement => ({
 })
 
 describe('createIngest', () => {
+  test('two adapters describing the same Thread devices are merged, not alternated', () => {
+    const t = tempDb()
+    const ingest = createIngest(t.db, createLog('silent'))
+    cleanup = () => {
+      ingest.stop()
+      t.cleanup()
+    }
+    const info = {
+      protocol: 'thread',
+      address: 'a2',
+      model: null,
+      vendor: null,
+      power: 'mains' as const,
+      networkAddress: null,
+    }
+    const otbr = (ts: number) =>
+      ingest.emit({
+        kind: 'devices',
+        protocol: 'thread',
+        ts,
+        complete: false,
+        devices: [{ ...info, name: 'a2', role: 'router', networkAddress: '0x0400' }],
+        source: { id: 'otbr', prefer: ['role', 'networkAddress'] },
+      })
+    const matter = (ts: number) =>
+      ingest.emit({
+        kind: 'devices',
+        protocol: 'thread',
+        ts,
+        complete: false,
+        devices: [{ ...info, name: 'Eve Energy', role: 'unknown', vendor: 'Eve' }],
+        source: { id: 'matter', prefer: ['name', 'vendor', 'model', 'power'] },
+      })
+    const stored = () =>
+      t.db
+        .select({ name: devices.name, role: devices.role, vendor: devices.vendor })
+        .from(devices)
+        .get()
+    otbr(1)
+    matter(2)
+    expect(stored()).toEqual({ name: 'Eve Energy', role: 'router', vendor: 'Eve' })
+    otbr(3)
+    expect(stored()).toEqual({ name: 'Eve Energy', role: 'router', vendor: 'Eve' })
+  })
+
   test('a burst within one millisecond keeps every sample', () => {
     const t = tempDb()
     const ingest = createIngest(t.db, createLog('silent'))

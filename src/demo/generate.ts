@@ -1,5 +1,6 @@
 // Deterministic demo data: the same seed and the same `now` give the same history, so the
 // screenshots and E2E tests see the same pages.
+import { wifiScore } from '~/adapters/matter/meta'
 import { threadScore } from '~/adapters/otbr/meta'
 import { zigbeeScore } from '~/adapters/zigbee2mqtt/meta'
 import { clampScore } from '~/core/score'
@@ -12,7 +13,13 @@ import {
   MINUTE,
   type TxCounters,
 } from '~/core/types'
-import { DEMO_DEVICES, type DemoDevice, THREAD_BORDER_ROUTER, ZIGBEE_COORDINATOR } from './devices'
+import {
+  DEMO_DEVICES,
+  type DemoDevice,
+  THREAD_BORDER_ROUTER,
+  WIFI_ACCESS_POINT,
+  ZIGBEE_COORDINATOR,
+} from './devices'
 
 export const HISTORY_DAYS = 30
 
@@ -56,6 +63,20 @@ export const measurementAt = (device: DemoDevice, ts: number, score: number): Me
       lqi,
       rssi: null,
       battery: device.power === 'battery' ? 64 : null,
+      source: 'demo',
+    }
+  }
+  if (device.protocol === 'wifi') {
+    const rssi = Math.round(-90 + (target / 100) * 40)
+    return {
+      protocol: 'wifi',
+      address: device.address,
+      ts,
+      score: wifiScore(rssi),
+      raw: rssi,
+      lqi: null,
+      rssi,
+      battery: null,
       source: 'demo',
     }
   }
@@ -169,6 +190,17 @@ export const infrastructure: DeviceInfo[] = [
     role: 'border_router',
     model: 'OpenThread Border Router',
     vendor: 'OpenThread',
+    power: 'mains',
+    networkAddress: null,
+  },
+  {
+    protocol: 'wifi',
+    address: WIFI_ACCESS_POINT,
+    // As the Matter adapter names an access point: SSID and the end of the BSSID
+    name: 'Heimnetz · 22:33',
+    role: 'access_point',
+    model: null,
+    vendor: null,
     power: 'mains',
     networkAddress: null,
   },

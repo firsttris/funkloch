@@ -52,6 +52,7 @@ nav:
   - Networks:
       - Zigbee2MQTT: zigbee2mqtt.md
       - Thread (OTBR): thread.md
+      - Matter: matter.md
   - Using Funkloch:
       - Signal, trend and reachability: signal.md
       - Events and notifications: notifications.md

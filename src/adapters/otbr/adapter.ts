@@ -101,7 +101,9 @@ export const createOtbrAdapter = (options: OtbrOptions): Adapter => {
   }
 
   return {
-    meta: threadMeta,
+    id: threadMeta.id,
+    label: threadMeta.label,
+    protocols: [threadMeta],
     start,
     status: () => status,
     requestTopology: () => requestTopology(),

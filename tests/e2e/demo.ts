@@ -4,6 +4,7 @@ import { DEMO_DEVICES } from '../../src/demo/devices'
 
 export const DEVICES = DEMO_DEVICES.length
 export const THREAD_DEVICES = DEMO_DEVICES.filter((d) => d.protocol === 'thread').length
+export const WIFI_DEVICES = DEMO_DEVICES.filter((d) => d.protocol === 'wifi').length
 
 /**
  * The moment the screenshots show (FUNKLOCH_DEMO_NOW): the demo stands still there, so a picture

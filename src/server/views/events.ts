@@ -2,7 +2,7 @@ import '@tanstack/react-start/server-only'
 import { DAY } from '~/core/types'
 import { eventCounts, eventsSince } from '~/db/queries'
 import type { ViewContext } from './context'
-import { adapterStates, protocolInfo } from './shared'
+import { adapterProtocols, adapterStates, protocolInfo } from './shared'
 
 export const EVENT_KINDS = ['offline', 'signal', 'topology', 'network'] as const
 export type EventKindFilter = (typeof EVENT_KINDS)[number] | 'all'
@@ -28,7 +28,7 @@ export const eventsView = (
     kind,
     days,
     adapters: states,
-    protocols: protocolInfo(states.map((a) => a.id)),
+    protocols: protocolInfo(adapterProtocols(adapters)),
     counts,
     /** The list stops at `limit`; the counts and the CSV have them all */
     truncated: counts[kind] > limit,

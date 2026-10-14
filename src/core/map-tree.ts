@@ -63,7 +63,7 @@ export type MapTree = {
 }
 
 const RANK: Record<Status, number> = { offline: 0, weak: 1, mid: 2, unknown: 3, good: 4 }
-const INFRASTRUCTURE: Role[] = ['coordinator', 'border_router', 'router']
+const INFRASTRUCTURE: Role[] = ['coordinator', 'border_router', 'access_point', 'router']
 
 /** Signal bars 0–4 from a link score 0–100, as a phone shows reception */
 export const signalBars = (score: number | null) =>

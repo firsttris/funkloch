@@ -18,6 +18,13 @@ export const configSchema = z.object({
   ZIGBEE2MQTT_BASE_TOPIC: z.string().min(1).default('zigbee2mqtt'),
   ZIGBEE2MQTT_NETWORKMAP_HOURS: z.coerce.number().min(1).default(6),
   OTBR_URL: optionalUrl,
+  /** matterjs-server's WebSocket, e.g. ws://localhost:5580/ws */
+  MATTER_SERVER_URL: optionalUrl.refine(
+    (value) => value === undefined || /^wss?:$/.test(new URL(value).protocol),
+    'must start with ws:// or wss://',
+  ),
+  /** Minutes between two reads of the neighbor tables and Wi-Fi signals */
+  MATTER_POLL_MINUTES: z.coerce.number().min(5).max(1440).default(15),
   PORT: z.coerce.number().int().positive().default(8090),
   DATA_DIR: z.string().min(1).default('./data'),
   FUNKLOCH_DEMO: flag,

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { DEVICES, THREAD_DEVICES } from './demo'
+import { DEVICES, THREAD_DEVICES, WIFI_DEVICES } from './demo'
 
 test.describe('device list', () => {
   test('shows every demo device, worst first', async ({ page }) => {
@@ -32,6 +32,15 @@ test.describe('device list', () => {
     await expect(page.getByTestId('device-row')).toHaveCount(THREAD_DEVICES)
     await page.getByRole('button', { name: `Alle (${DEVICES})` }).click()
     await expect(page.getByTestId('device-row')).toHaveCount(DEVICES)
+  })
+
+  test('Wi-Fi devices from Matter show their RSSI', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: `Wi-Fi (${WIFI_DEVICES})` }).click()
+    await expect(page.getByTestId('device-row')).toHaveCount(WIFI_DEVICES)
+    const plug = page.getByTestId('device-row').filter({ hasText: 'Steckdose Waschmaschine' })
+    await expect(plug).toContainText(/−\d+ dBm/)
+    await expect(plug).toContainText('Heimnetz · 22:33')
   })
 
   test('switches the sparkline range', async ({ page }) => {

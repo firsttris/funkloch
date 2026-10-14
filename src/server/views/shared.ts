@@ -29,10 +29,15 @@ export type ProtocolInfo = ReturnType<typeof protocolInfo>[number]
 
 export const adapterStates = (adapters: readonly Adapter[]) =>
   adapters.map((adapter) => ({
-    id: adapter.meta.id,
-    label: adapter.meta.label,
+    id: adapter.id,
+    label: adapter.label,
     ...adapter.status(),
   }))
+
+/** The protocols the adapters that are on measure and map, each once */
+export const adapterProtocols = (adapters: readonly Adapter[]) => [
+  ...new Set(adapters.flatMap((adapter) => adapter.protocols.map((meta) => meta.id))),
+]
 
 /** Every listed device with its status, score, sparkline and trend */
 export const deviceRows = (db: Db, now: number, rangeHours: number, thresholds: Thresholds) =>

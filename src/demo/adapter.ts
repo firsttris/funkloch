@@ -78,5 +78,12 @@ export const createDemoAdapter = (
     send({ kind: 'topology', topology: { protocol: meta.id, ts, links: linksAt(meta.id, 0, ts) } })
   }
 
-  return { meta, start, status: () => status, requestTopology }
+  return {
+    id: meta.id,
+    label: meta.label,
+    protocols: [meta],
+    start,
+    status: () => status,
+    requestTopology,
+  }
 }

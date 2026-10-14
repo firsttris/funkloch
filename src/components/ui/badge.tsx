@@ -7,6 +7,7 @@ const badge = cva('inline-flex items-center gap-1.5 rounded-full px-[9px] py-0.5
     tone: {
       zigbee: 'bg-zigbee-bg font-semibold text-zigbee',
       thread: 'bg-thread-bg font-semibold text-thread',
+      wifi: 'bg-wifi-bg font-semibold text-wifi',
       neutral: 'border border-border bg-track font-medium text-foreground-muted',
       weak: 'bg-weak-bg font-semibold text-weak',
     },

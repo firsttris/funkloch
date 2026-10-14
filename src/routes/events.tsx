@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
 import { eventDetail, eventTitle, KIND_TONE, kindLabel } from '~/components/labels'
 import { NotificationSettings, settingsQuery } from '~/components/notification-settings'
+import { protocolStyle } from '~/components/protocol-style'
 import { Card, CardHeader, CardTitle } from '~/components/ui/card'
 import { ChipFilter } from '~/components/ui/chip-filter'
 import { Segmented } from '~/components/ui/segmented'
@@ -212,10 +213,10 @@ const EventText = ({
           <span
             className={cn(
               'rounded px-1.5 text-[10px] font-bold',
-              event.protocol === 'zigbee' ? 'bg-zigbee-bg text-zigbee' : 'bg-thread-bg text-thread',
+              protocolStyle(event.protocol ?? '').chip,
             )}
           >
-            {protocolLabel === 'Zigbee' ? 'ZB' : protocolLabel === 'Thread' ? 'TH' : protocolLabel}
+            {event.protocol ? protocolStyle(event.protocol).short : protocolLabel}
           </span>
         ) : null}
       </div>

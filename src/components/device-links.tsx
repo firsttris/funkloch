@@ -72,7 +72,9 @@ const LinkQuality = ({
   protocol: string
 }) => {
   const max = protocol === 'zigbee' ? 255 : 3
-  const pct = lqi === null ? 0 : Math.round((lqi / max) * 100)
+  // Wi-Fi has no link quality: its RSSI from −90 to −50 dBm fills the bar, as its score does
+  const share = lqi !== null ? lqi / max : rssi !== null ? (rssi + 90) / 40 : 0
+  const pct = Math.round(Math.min(1, Math.max(0, share)) * 100)
   return (
     <div className="flex flex-col items-end gap-1">
       <span className="font-mono text-xs text-foreground-muted">

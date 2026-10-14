@@ -6,6 +6,8 @@ export type ProtocolId = string
 export type Role =
   | 'coordinator'
   | 'border_router'
+  /** A Wi-Fi access point: the root of a Wi-Fi map, which Funkloch knows only by its BSSID */
+  | 'access_point'
   | 'router'
   /** A Thread child that may become a router (REED) when the mesh needs one */
   | 'router_eligible'
@@ -27,6 +29,9 @@ export type DeviceInfo = {
   /** Short network address, if the protocol has one */
   networkAddress: string | null
 }
+
+/** The fields of a device that an adapter describes */
+export type DeviceField = Exclude<keyof DeviceInfo, 'protocol' | 'address'>
 
 export type Measurement = {
   protocol: ProtocolId
@@ -87,7 +92,18 @@ export type Observation =
    * devices missing from it; a partial one (Thread: only the devices that answered) only adds and
    * updates, so a device that drops out turns offline through its silence instead.
    */
-  | { kind: 'devices'; protocol: ProtocolId; ts: number; devices: DeviceInfo[]; complete: boolean }
+  | {
+      kind: 'devices'
+      protocol: ProtocolId
+      ts: number
+      devices: DeviceInfo[]
+      complete: boolean
+      /**
+       * Where two adapters describe the same devices (OTBR and Matter for Thread): which one this
+       * is, and the fields it knows best. Without it the list is the protocol's only one.
+       */
+      source?: { id: string; prefer: readonly DeviceField[] }
+    }
   | { kind: 'measurement'; measurement: Measurement }
   /** A message without a signal value: the device is alive */
   | { kind: 'seen'; protocol: ProtocolId; address: string; ts: number; battery: number | null }

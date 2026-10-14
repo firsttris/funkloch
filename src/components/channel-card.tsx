@@ -1,3 +1,4 @@
+import { protocolStyle } from '~/components/protocol-style'
 import { ago } from '~/lib/format'
 import { m } from '~/paraglide/messages.js'
 import type { Overview } from '~/server/views/overview'
@@ -7,12 +8,7 @@ type Channels = NonNullable<Overview['channels']>
 const MAX_BAR = 82
 const MIN_BAR = 6
 
-const networkColor = (protocol: string) =>
-  protocol === 'zigbee'
-    ? 'var(--zigbee)'
-    : protocol === 'thread'
-      ? 'var(--thread)'
-      : 'var(--foreground-muted)'
+const networkColor = (protocol: string) => `var(${protocolStyle(protocol).color})`
 
 const barColor = (bar: Channels['bars'][number]) =>
   bar.network

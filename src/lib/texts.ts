@@ -10,6 +10,7 @@ type Options = { locale?: Locale }
 const ROLES: Record<Role, (inputs: object, options?: Options) => string> = {
   coordinator: m.role_coordinator,
   border_router: m.role_border_router,
+  access_point: m.role_access_point,
   router: m.role_router,
   router_eligible: m.role_router_eligible,
   end_device: m.role_end_device,
