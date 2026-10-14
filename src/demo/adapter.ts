@@ -15,7 +15,12 @@ import {
 
 export const LIVE_EVERY_MS = 3000
 
-export const createDemoAdapter = (meta: ProtocolMeta, clock: () => number = Date.now): Adapter => {
+export const createDemoAdapter = (
+  meta: ProtocolMeta,
+  clock: () => number = Date.now,
+  /** false: the network as seeded, with no readings coming in (screenshots at a fixed time) */
+  live = true,
+): Adapter => {
   const status: AdapterStatus = { connected: true, error: null, since: clock() }
   const devices = DEMO_DEVICES.filter((d) => d.protocol === meta.id)
   const online = devices.filter((d) => !(d.offline ?? []).some(([, to]) => to === 0))
@@ -33,6 +38,7 @@ export const createDemoAdapter = (meta: ProtocolMeta, clock: () => number = Date
       complete: true,
     })
     emit({ kind: 'bridge', protocol: meta.id, ts: now, online: true })
+    if (!live) return async () => {}
     const rnd = random(now)
     const timer = setInterval(() => {
       const device = online[Math.floor(rnd() * online.length)]

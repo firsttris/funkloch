@@ -40,8 +40,8 @@ Update what the change affects, in the same commit, and only that:
 - the docs in `docs/` that describe it;
 - the texts in both `messages/de.json` and `messages/en.json`;
 - the README when a feature a user sees is added, changed or removed;
-- the screenshots after a change to the look: **Actions → Update screenshots → Run workflow**, then
-  look at the new pictures.
+- the screenshots after a change to the look: **Update screenshots** runs by itself after the push
+  to main (by hand under **Actions** too); look at the new pictures it commits.
 
 ## Checks
 

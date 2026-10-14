@@ -96,6 +96,7 @@ Each network is on when its variable is set; everything else has a default.
 | `LOG_LEVEL` | `trace` to `fatal` | `info` |
 | `FUNKLOCH_RESET_PASSWORD` | `1`: forget the admin password at start | |
 | `FUNKLOCH_DEMO` | `1`: a demo network instead of your own, no login | |
+| `FUNKLOCH_DEMO_NOW` | with the demo: an ISO time it stands still at, without live readings (for the screenshots) | |
 
 Thresholds, the network map interval, retention, notification rules and channels are set in the
 web UI (**Settings** and **Events**) and kept in the database.

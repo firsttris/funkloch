@@ -1,13 +1,30 @@
 // bun run screenshots: the pictures for the README and the docs, light and dark
 import { expect, test } from '@playwright/test'
-import { DEVICES } from './demo'
+import { DEVICES, SCREENSHOT_NOW } from './demo'
 
 const DIR = 'docs/screenshots'
+
+// The browser's clock at the demo's moment too, so nothing on a page depends on the day it runs
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(SCREENSHOT_NOW)
+})
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(scheme, () => {
     test.use({ colorScheme: scheme })
     const suffix = scheme === 'dark' ? '-dark' : ''
+
+    test('network map, the picture on top of the README', async ({ page }) => {
+      await page.goto('/network')
+      await expect(page.getByRole('link', { name: /^Koordinator/ })).toBeVisible()
+      // the build-up animation has ended, so every line and tile is drawn
+      await page.waitForTimeout(2500)
+      await page.screenshot({
+        path: `${DIR}/hero${suffix}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      })
+    })
 
     test('device list', async ({ page }) => {
       await page.goto('/')

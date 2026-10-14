@@ -71,5 +71,8 @@ Recordings from real networks keep the schemas honest: see [Recording fixtures](
 **Release**: all checks (unless main's CI already ran them for the code: the release commit only
 raises the version), the image `tristanteu/funkloch` for amd64 and arm64 on Docker Hub, and the
 GitHub release. The image is started in CI whenever what it is built from changes; its build
-cache is the release's, so the release builds on layers that are already there. **Actions → Update screenshots** renews the pictures in
-`docs/screenshots` from the demo.
+cache is the release's, so the release builds on layers that are already there. **Update screenshots** renews the pictures in `docs/screenshots` from the demo after every push
+to main that touches the app (`src/`, `public/`, the texts, the screenshot test or the packages),
+and by hand under **Actions**; the commit it makes starts no other workflow. `bun run screenshots`
+runs the demo standing still at one moment (`FUNKLOCH_DEMO_NOW`, and the browser's clock with it),
+so a picture changes only when the look does and the workflow commits nothing otherwise.

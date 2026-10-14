@@ -50,7 +50,10 @@ const openDatabase = (config: Config, now: number) => {
 
 export const startRuntime = (config: Config): Runtime => {
   const log = createLog(config.LOG_LEVEL)
-  const startedAt = Date.now()
+  // The demo can stand still at one moment, for screenshots that only change with the look
+  const frozen = config.FUNKLOCH_DEMO ? config.FUNKLOCH_DEMO_NOW : undefined
+  const clock = frozen === undefined ? Date.now : () => frozen
+  const startedAt = clock()
   const db = openDatabase(config, startedAt)
   if (config.FUNKLOCH_RESET_PASSWORD && !config.FUNKLOCH_DEMO) {
     resetAdmin(db)
@@ -59,12 +62,12 @@ export const startRuntime = (config: Config): Runtime => {
   const settingsDefaults = defaultsFrom(config)
   const settings = () => loadSettings(db, settingsDefaults)
   const adapters = config.FUNKLOCH_DEMO
-    ? [createDemoAdapter(zigbeeMeta), createDemoAdapter(threadMeta)]
+    ? [zigbeeMeta, threadMeta].map((meta) => createDemoAdapter(meta, clock, frozen === undefined))
     : adaptersFromConfig(config, log, () => settings().networkmapHours)
   if (adapters.length === 0) {
     log.warn('No adapter is on: set ZIGBEE2MQTT_MQTT_URL or OTBR_URL, or FUNKLOCH_DEMO=1')
   }
-  const ingest = createIngest(db, log)
+  const ingest = createIngest(db, log, clock)
   const stopAdapters = adapters.map((adapter) => adapter.start(ingest.emit))
   const mqttOut = config.ZIGBEE2MQTT_MQTT_URL
     ? createMqttPublisher({
@@ -83,18 +86,19 @@ export const startRuntime = (config: Config): Runtime => {
         notifying = false
       })
   }
-  const stopScheduler = startScheduler(db, log, settings, { minutely: notify })
+  const stopScheduler = startScheduler(db, log, settings, { minutely: notify }, clock)
   const live = createLiveFeed(db)
   log.info(
     {
       adapters: adapters.map((a) => a.meta.id),
       demo: config.FUNKLOCH_DEMO,
+      ...(frozen === undefined ? {} : { demoNow: new Date(frozen).toISOString() }),
       dataDir: config.DATA_DIR,
     },
     'funkloch started',
   )
 
-  const viewContext = (): ViewContext => ({ db, now: Date.now(), settings: settings(), adapters })
+  const viewContext = (): ViewContext => ({ db, now: clock(), settings: settings(), adapters })
 
   const stop = async () => {
     live.stop()

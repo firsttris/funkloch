@@ -36,7 +36,7 @@ docker run -d --name funkloch --network host -v funkloch-data:/data \
 [FAQ](#-faq) •
 [Documentation](https://firsttris.github.io/funkloch/)
 
-<img src="docs/screenshots/devices.png" alt="Funkloch device list: Zigbee and Thread devices with signal bar, 24-hour sparkline, trend, last seen and parent device, worst first" width="900">
+<img src="docs/screenshots/hero.png" alt="Funkloch network map: the coordinator on top, each router with the devices that connect through it, signal bars on every link, a weak link that many devices hang on marked as a bottleneck" width="900">
 
 </div>
 
@@ -160,15 +160,18 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 <table>
   <tr>
+    <td><img src="docs/screenshots/devices.png" alt="Funkloch device list: Zigbee and Thread devices with signal bar, 24-hour sparkline, trend, last seen and parent device, worst first"></td>
     <td><img src="docs/screenshots/device.png" alt="Funkloch device detail: LQI history of a Zigbee temperature sensor over 7 days with min–max band, offline stretch and weak threshold"></td>
+  </tr>
+  <tr>
     <td><img src="docs/screenshots/network.png" alt="Funkloch network map of a Zigbee mesh: the coordinator on top, routers below with their devices, signal bars on every link"></td>
-  </tr>
-  <tr>
     <td><img src="docs/screenshots/heatmap-dark.png" alt="Funkloch heatmap in dark mode: signal quality of every Zigbee and Thread device by hour over 7 days, with a recurring evening dropout"></td>
-    <td><img src="docs/screenshots/events.png" alt="Funkloch events: offline, weak signal, falling trend and parent changes by day, with notification rules for ntfy, webhook and MQTT"></td>
   </tr>
   <tr>
+    <td><img src="docs/screenshots/events.png" alt="Funkloch events: offline, weak signal, falling trend and parent changes by day, with notification rules for ntfy, webhook and MQTT"></td>
     <td><img src="docs/screenshots/router.png" alt="Funkloch router check of an ESP32-C6 Zigbee router in the cellar: no device uses it, its neighbors cover the area, its way to the coordinator is weak"></td>
+  </tr>
+  <tr>
     <td><img src="docs/screenshots/thread-router-dark.png" alt="Funkloch Thread router in dark mode: transmit errors per hour over 7 days from the MAC counters, about 10 % against a threshold of 5 %"></td>
   </tr>
 </table>

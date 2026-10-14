@@ -1,8 +1,11 @@
 import { defineConfig, devices } from '@playwright/test'
+import { SCREENSHOT_NOW } from './tests/e2e/demo'
 
 const PORT = 8099
 /** A second server without the demo, for the login */
 const AUTH_PORT = 8098
+/** bun run screenshots: the demo stands still at one moment (tests/e2e/demo.ts) */
+const screenshots = process.env.FUNKLOCH_SCREENSHOTS === '1'
 // Outside the Playwright image a preinstalled Chromium can be named here
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined
 
@@ -59,10 +62,12 @@ export default defineConfig({
     {
       command: 'bun serve.ts',
       url: `http://localhost:${PORT}/healthz`,
-      reuseExistingServer: !process.env.CI,
+      // A running server may be at another time; the screenshots always start their own
+      reuseExistingServer: !process.env.CI && !screenshots,
       timeout: 60_000,
       env: {
         FUNKLOCH_DEMO: '1',
+        ...(screenshots ? { FUNKLOCH_DEMO_NOW: SCREENSHOT_NOW } : {}),
         DATA_DIR: 'test-results/demo-data',
         PORT: String(PORT),
         TZ: 'Europe/Berlin',

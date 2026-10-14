@@ -25,6 +25,15 @@ describe('loadConfig', () => {
     expect(config.FUNKLOCH_DEMO).toBe(true)
   })
 
+  test('the demo can stand still at a moment given as ISO time', () => {
+    expect(loadConfig({}).FUNKLOCH_DEMO_NOW).toBeUndefined()
+    expect(loadConfig({ FUNKLOCH_DEMO_NOW: '' }).FUNKLOCH_DEMO_NOW).toBeUndefined()
+    expect(loadConfig({ FUNKLOCH_DEMO_NOW: '2026-10-13T06:30:00Z' }).FUNKLOCH_DEMO_NOW).toBe(
+      Date.parse('2026-10-13T06:30:00Z'),
+    )
+    expect(() => loadConfig({ FUNKLOCH_DEMO_NOW: 'yesterday' })).toThrow(/FUNKLOCH_DEMO_NOW/)
+  })
+
   test('rejects a network map interval below one hour and a broken URL', () => {
     expect(() => loadConfig({ ZIGBEE2MQTT_NETWORKMAP_HOURS: '0.5' })).toThrow(/NETWORKMAP/)
     expect(() => loadConfig({ OTBR_URL: 'not a url' })).toThrow(/OTBR_URL/)

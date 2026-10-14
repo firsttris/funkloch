@@ -17,7 +17,7 @@
     "test": "bun --bun vitest run --project unit",
     "test:watch": "bun --bun vitest --project unit",
     "e2e": "playwright test --project=chromium --project=auth",
-    "screenshots": "playwright test --project=screenshots",
+    "screenshots": "FUNKLOCH_SCREENSHOTS=1 playwright test --project=screenshots",
     "db:generate": "drizzle-kit generate",
     "check": "bun run typecheck && bun run lint && bun run test",
     "release:patch": "npm version patch",

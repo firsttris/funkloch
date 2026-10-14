@@ -5,6 +5,8 @@
 drop out and how they are connected, instead of one snapshot. One container next to Zigbee2MQTT
 and your border router, read-only, no cloud.
 
+![Funkloch network map: the coordinator on top, each router with the devices that connect through it, signal bars on every link, a weak link that many devices hang on marked as a bottleneck](screenshots/hero.png)
+
 ![Funkloch device list: Zigbee and Thread devices with traffic light, signal bar, 24-hour sparkline, trend and parent device, worst first](screenshots/devices.png)
 
 ## What it shows
