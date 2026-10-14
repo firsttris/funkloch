@@ -86,10 +86,11 @@ export const usePanZoom = (size: { width: number; height: number }) => {
   }, [zoomAt])
 
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
+    // Every press starts a new gesture: a drag before must not swallow the click on a control
+    moved.current = 0
     if ((event.target as HTMLElement).closest('[data-topo-control]')) return
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
     pinch.current = null
-    moved.current = 0
   }
   const onPointerMove = (event: PointerEvent<HTMLElement>) => {
     const prev = pointers.current.get(event.pointerId)
