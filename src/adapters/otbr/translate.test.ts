@@ -10,6 +10,7 @@ import {
   networkDiagnosticSchema,
 } from './schemas'
 import {
+  countersFromDiagnostics,
   fromDiagnostics,
   fromEnergyScan,
   fromLegacyDiagnostics,
@@ -155,6 +156,36 @@ describe('fromDiagnostics', () => {
 
   test('nothing in, nothing out', () => {
     expect(fromDiagnostics([], 0)).toEqual({ measurements: [], links: [] })
+  })
+})
+
+describe('countersFromDiagnostics', () => {
+  test('ifOutErrors against the unicast and broadcast frames sent', () => {
+    expect(countersFromDiagnostics(diagnostics, 1000)).toEqual([
+      {
+        protocol: 'thread',
+        address: '96518e5497d5b9f3',
+        ts: 1000,
+        unicast: 6,
+        broadcast: 926,
+        errors: 0,
+      },
+      {
+        protocol: 'thread',
+        address: '2a55d952bc7b4008',
+        ts: 1000,
+        unicast: 9702,
+        broadcast: 3998,
+        errors: 1326,
+      },
+    ])
+  })
+
+  test('a diagnostic without MAC counters gives none', () => {
+    const [first] = diagnostics
+    if (!first) throw new Error('fixture')
+    const { macCounters: _, ...attributes } = first.attributes
+    expect(countersFromDiagnostics([{ ...first, attributes }], 0)).toEqual([])
   })
 })
 

@@ -3,7 +3,15 @@
 import { threadScore } from '~/adapters/otbr/meta'
 import { zigbeeScore } from '~/adapters/zigbee2mqtt/meta'
 import { clampScore } from '~/core/score'
-import { DAY, type DeviceInfo, HOUR, type Link, type Measurement, MINUTE } from '~/core/types'
+import {
+  DAY,
+  type DeviceInfo,
+  HOUR,
+  type Link,
+  type Measurement,
+  MINUTE,
+  type TxCounters,
+} from '~/core/types'
 import { DEMO_DEVICES, type DemoDevice, THREAD_BORDER_ROUTER, ZIGBEE_COORDINATOR } from './devices'
 
 export const HISTORY_DAYS = 30
@@ -87,6 +95,41 @@ export const history = (device: DemoDevice, now: number, seed: number) => {
     measurements.push(measurementAt(device, at, scoreAt(device, at, now, rnd)))
   }
   return measurements
+}
+
+/** How often the demo reads the transmit counters, and the frames a router sends in that time */
+export const COUNTER_EVERY = 15 * MINUTE
+const FRAMES_PER_READING = 140
+
+export type CounterTotals = Pick<TxCounters, 'unicast' | 'broadcast' | 'errors'>
+
+/** The counters after one more interval: about 140 frames, each failing at the device's rate */
+export const counterStep = (
+  device: DemoDevice,
+  total: CounterTotals,
+  rnd: () => number,
+): CounterTotals => {
+  const frames = Math.round(FRAMES_PER_READING * (0.8 + rnd() * 0.4))
+  const unicast = Math.round(frames * 0.7)
+  return {
+    unicast: total.unicast + unicast,
+    broadcast: total.broadcast + frames - unicast,
+    errors: total.errors + Math.floor(frames * (device.txErrors ?? 0) + rnd()),
+  }
+}
+
+/** Counter readings of a device with a transmit error rate over the last `days`, from zero */
+export const counterHistory = (device: DemoDevice, now: number, days: number, seed: number) => {
+  if (device.txErrors === undefined) return []
+  const rnd = random(seed)
+  const readings: TxCounters[] = []
+  let total: CounterTotals = { unicast: 0, broadcast: 0, errors: 0 }
+  const first = Math.ceil((now - days * DAY) / COUNTER_EVERY) * COUNTER_EVERY
+  for (let ts = first; ts <= now; ts += COUNTER_EVERY) {
+    total = counterStep(device, total, rnd)
+    readings.push({ protocol: device.protocol, address: device.address, ts, ...total })
+  }
+  return readings
 }
 
 /** Offline and online changes from the offline stretches, at the silence limit after the last message */

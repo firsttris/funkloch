@@ -61,6 +61,16 @@ describe('OTBR poll, REST API under /api', () => {
     expect(problems).toEqual([])
   })
 
+  test('each router answers its MAC counters, read as transmit counters', async () => {
+    const { poll, take, of } = setup()
+    await poll.cycle()
+    const counters = of(take(), 'counters').map((o) => o.counters)
+    expect(counters.map((c) => [c.address, c.unicast, c.broadcast, c.errors])).toEqual([
+      ['96518e5497d5b9f3', 6, 926, 0],
+      ['2a55d952bc7b4008', 9702, 3998, 1326],
+    ])
+  })
+
   test('each part waits for its interval; a requested topology comes at once', async () => {
     const { poll, take, of, otbr, advance } = setup()
     await poll.cycle()

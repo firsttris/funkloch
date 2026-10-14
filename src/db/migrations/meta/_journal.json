@@ -36,6 +36,13 @@
       "when": 1791876256693,
       "tag": "0004_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791962605041,
+      "tag": "0005_tx_counters",
+      "breakpoints": true
     }
   ]
 }

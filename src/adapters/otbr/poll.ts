@@ -17,7 +17,13 @@ import {
   type NetworkDiagnostic,
   nodeSchema,
 } from './schemas'
-import { fromDiagnostics, fromEnergyScan, fromLegacyDiagnostics, toDeviceInfo } from './translate'
+import {
+  countersFromDiagnostics,
+  fromDiagnostics,
+  fromEnergyScan,
+  fromLegacyDiagnostics,
+  toDeviceInfo,
+} from './translate'
 
 const PROTOCOL = threadMeta.id
 
@@ -148,7 +154,10 @@ export const createOtbrPoll = (deps: PollDeps) => {
     return { ok: true as const, value: items.flatMap((item) => (item.ok ? [item.value.data] : [])) }
   }
 
-  /** Neighbor and child tables of all routers: the measurements, and the topology when due */
+  /**
+   * Neighbor and child tables and MAC counters of all routers: the measurements, the counters,
+   * and the topology when due
+   */
   const readDiagnostics = async (ts: number): Promise<Result<void>> => {
     const routers = known.filter(isRouter)
     last.diagnostics = ts
@@ -158,7 +167,7 @@ export const createOtbrPoll = (deps: PollDeps) => {
         type: 'getNetworkDiagnosticTask',
         attributes: {
           destination: router.address,
-          types: ['extAddress', 'rloc16', 'routerNeighbors', 'children'],
+          types: ['extAddress', 'rloc16', 'routerNeighbors', 'children', 'macCounters'],
           timeout: DIAGNOSTIC_TIMEOUT,
         },
       })),
@@ -172,6 +181,8 @@ export const createOtbrPoll = (deps: PollDeps) => {
     const roots = new Set(known.filter((d) => d.role === 'border_router').map((d) => d.address))
     const { measurements, links } = fromDiagnostics(diagnostics, now(), roots)
     for (const measurement of measurements) emit({ kind: 'measurement', measurement })
+    for (const counters of countersFromDiagnostics(diagnostics, now()))
+      emit({ kind: 'counters', counters })
     if (topologyDue(ts)) emitTopology(links, ts)
     return ok
   }

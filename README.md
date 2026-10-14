@@ -119,6 +119,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 - **Raw value chart** (LQI or RSSI): every message for 24 hours, hourly median with min–max band
   for 7 and 30 days, offline stretches and the weak threshold drawn in.
 - **Messages per hour**, **parent changes**, **connections** and the device's **events**.
+- **Transmit errors** of Thread routers from their MAC counters: how often the channel was busy,
+  per hour over 7 days, with a warning from 5 % a day.
 
 ### 🕸️ Network map and heatmap
 
@@ -133,8 +135,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 ### 🔔 Events and notifications
 
-- **Events**: offline and back, below threshold, falling trend, recurring pattern, parent or role
-  change, new or removed device, bridge offline, noisy channel; CSV export.
+- **Events**: offline and back, below threshold, falling trend, recurring pattern, many transmit
+  errors, parent or role change, new or removed device, bridge offline, noisy channel; CSV export.
 - **Notifications** by **ntfy**, **webhook** (JSON) or **MQTT**, with a wait time for offline and
   weak signal, one message per device and hour, in German or English.
 

@@ -33,6 +33,8 @@ export const devices = sqliteTable(
     online: integer('online', { mode: 'boolean' }).notNull().default(true),
     /** The signal is below the weak threshold (the last signal event said so) */
     signalWeak: integer('signal_weak', { mode: 'boolean' }).notNull().default(false),
+    /** The transmit error rate is above the warning rate (the last event said so) */
+    txErrorsHigh: integer('tx_errors_high', { mode: 'boolean' }).notNull().default(false),
     /** Trend at the last hourly check: down, flat, up or none */
     trend: text('trend'),
     /** Median gap between messages over 7 days, refreshed by the hourly job */
@@ -58,6 +60,21 @@ export const samples = sqliteTable(
     source: text('source').notNull(),
   },
   (t) => [primaryKey({ columns: [t.deviceId, t.ts] }), index('samples_ts').on(t.ts)],
+)
+
+/** Cumulative transmit counters of a device's radio, one row per reading (Thread MAC counters) */
+export const counters = sqliteTable(
+  'counters',
+  {
+    deviceId: integer('device_id')
+      .notNull()
+      .references(() => devices.id, { onDelete: 'cascade' }),
+    ts: integer('ts').notNull(),
+    unicast: integer('unicast').notNull(),
+    broadcast: integer('broadcast').notNull(),
+    errors: integer('errors').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.deviceId, t.ts] }), index('counters_ts').on(t.ts)],
 )
 
 export const hourly = sqliteTable(

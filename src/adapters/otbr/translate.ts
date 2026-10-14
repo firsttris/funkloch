@@ -1,5 +1,5 @@
 // OTBR answers to observations. Pure: the adapter passes in what it fetched and the time.
-import type { DeviceInfo, Link, Measurement, Role } from '~/core/types'
+import type { DeviceInfo, Link, Measurement, Role, TxCounters } from '~/core/types'
 import { withUplinks } from '~/core/uplinks'
 import { threadMeta, threadScore } from './meta'
 import type {
@@ -134,6 +134,26 @@ export const fromDiagnostics = (
 
   return { measurements, links: withUplinks(links, roots, threadMeta.linkScore) }
 }
+
+/** The transmit counters of every router that sent its MAC counters */
+export const countersFromDiagnostics = (
+  diagnostics: readonly NetworkDiagnostic[],
+  ts: number,
+): TxCounters[] =>
+  diagnostics.flatMap((d) => {
+    const counters = d.attributes.macCounters
+    if (!counters) return []
+    return [
+      {
+        protocol: PROTOCOL,
+        address: d.attributes.extAddress.toLowerCase(),
+        ts,
+        unicast: counters.ifOutUcastPkts,
+        broadcast: counters.ifOutBroadcastPkts,
+        errors: counters.ifOutErrors,
+      },
+    ]
+  })
 
 /** Energy per channel: the strongest of the samples, in dBm */
 export const fromEnergyScan = (scan: EnergyScan) =>

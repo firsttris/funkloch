@@ -5,7 +5,12 @@ import { HOUR, MINUTE } from './types'
 
 const rules = DEFAULT_SETTINGS.rules
 const now = 1000 * HOUR
-const none: History = { lastSent: new Map(), offlineSent: new Set(), weakSent: new Set() }
+const none: History = {
+  lastSent: new Map(),
+  offlineSent: new Set(),
+  weakSent: new Set(),
+  txErrorsSent: new Set(),
+}
 const event = (type: string, ago: number, deviceOnline: boolean | null = false) => ({
   id: 1,
   ts: now - ago,
@@ -30,6 +35,15 @@ describe('decide', () => {
     expect(decide(event('online', MINUTE, true), rules, sent, now)).toBe('send')
     expect(decide(event('signal_recovered', MINUTE), rules, none, now)).toBe('skip')
     expect(decide(event('signal_recovered', MINUTE), rules, sent, now)).toBe('send')
+  })
+
+  test('transmit errors back to normal only follow a sent warning', () => {
+    expect(decide(event('tx_errors_high', MINUTE), rules, none, now)).toBe('send')
+    expect(decide(event('tx_errors_normal', MINUTE), rules, none, now)).toBe('skip')
+    const sent = { ...none, txErrorsSent: new Set([7]) }
+    expect(decide(event('tx_errors_normal', MINUTE), rules, sent, now)).toBe('send')
+    const off = { ...rules, transmit: { enabled: false } }
+    expect(decide(event('tx_errors_high', MINUTE), off, none, now)).toBe('skip')
   })
 
   test('a rule that is off skips its events', () => {

@@ -297,5 +297,17 @@
   "network_history": "{label}, last 24 hours",
   "network_history_ago": "24 h ago",
   "network_history_now": "now {value}",
-  "network_history_empty": "No values in the last 24 hours yet."
+  "network_history_empty": "No values in the last 24 hours yet.",
+  "rule_transmit": "Transmit errors of a Thread router above 5 %",
+  "event_tx_errors_high": "Many transmit errors",
+  "event_tx_errors_high_detail": "{rate} % of {frames} frames in 24 h (threshold {threshold} %)",
+  "event_tx_errors_normal": "Transmit errors back to normal",
+  "event_tx_errors_normal_detail": "{rate} % of {frames} frames in 24 h",
+  "kpi_tx_errors": "Transmit errors 24 h",
+  "kpi_tx_errors_hint": "{errors} of {frames} frames · threshold {threshold} %",
+  "kpi_tx_errors_none": "too little sent for a rate",
+  "tx_errors_title": "Transmit errors per hour",
+  "tx_errors_hint": "Last 7 days · share of frames that found the channel busy (MAC counters)",
+  "tx_errors_aria": "Transmit errors per hour over the last 7 days, at most {max} %",
+  "tx_errors_threshold": "threshold {threshold} %"
 }

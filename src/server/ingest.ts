@@ -7,6 +7,7 @@ import {
   type SeenInput,
   storeBatch,
   storeBridgeState,
+  storeCounters,
   storeReportedAvailability,
   storeTopology,
 } from '~/db/store'
@@ -68,6 +69,8 @@ export const createIngest = (db: Db, log: Log, clock: () => number = Date.now) =
         return guarded('channel scan', () =>
           storeChannelScan(db, observation.ts, observation.channels),
         )
+      case 'counters':
+        return guarded('counters', () => storeCounters(db, observation.counters))
       case 'channel':
         return guarded('channel', () =>
           storeNetworkChannel(db, observation.protocol, observation.channel),

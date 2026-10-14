@@ -297,5 +297,17 @@
   "network_history": "{label}, letzte 24 Stunden",
   "network_history_ago": "vor 24 h",
   "network_history_now": "jetzt {value}",
-  "network_history_empty": "Noch keine Werte in den letzten 24 Stunden."
+  "network_history_empty": "Noch keine Werte in den letzten 24 Stunden.",
+  "rule_transmit": "Sendefehler eines Thread-Routers über 5 %",
+  "event_tx_errors_high": "Viele Sendefehler",
+  "event_tx_errors_high_detail": "{rate} % von {frames} Frames in 24 h (Schwelle {threshold} %)",
+  "event_tx_errors_normal": "Sendefehler wieder normal",
+  "event_tx_errors_normal_detail": "{rate} % von {frames} Frames in 24 h",
+  "kpi_tx_errors": "Sendefehler 24 h",
+  "kpi_tx_errors_hint": "{errors} von {frames} Frames · Schwelle {threshold} %",
+  "kpi_tx_errors_none": "zu wenig gesendet für eine Rate",
+  "tx_errors_title": "Sendefehler pro Stunde",
+  "tx_errors_hint": "Letzte 7 Tage · Anteil der Frames, bei denen der Kanal belegt war (MAC-Zähler)",
+  "tx_errors_aria": "Sendefehler pro Stunde über die letzten 7 Tage, höchstens {max} %",
+  "tx_errors_threshold": "Schwelle {threshold} %"
 }

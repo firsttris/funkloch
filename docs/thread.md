@@ -12,7 +12,7 @@ Images with the `/api` resources (ot-br-posix from 2024 on) give the most:
 |---|---|---|
 | 15 min | `updateDeviceCollectionTask`, then `GET /api/devices` | the devices: extended address, role and host name from SRP (the list carries no vendor or model) |
 | 15 min | `GET /node/dataset/active` | the channel (only the channel is read, never the keys) |
-| 5 min | `getNetworkDiagnosticTask` to each router (`routerNeighbors`, `children`) | one reading per device: RSSI and link margin as its parent or best neighbor hears it |
+| 5 min | `getNetworkDiagnosticTask` to each router (`routerNeighbors`, `children`, `macCounters`) | one reading per device: RSSI and link margin as its parent or best neighbor hears it; each router's transmit counters |
 | 1 h | the same diagnostics | the mesh for the network map |
 | 6 h | `getEnergyScanTask` to the border router | energy per channel 11–26 for the 2.4 GHz card |
 
@@ -48,6 +48,13 @@ under **Settings → Device names**; Funkloch keeps it across restarts and re-jo
 The Thread score uses the RSSI (−100 dBm → 0, −50 dBm → 100) and is capped by the link quality
 derived from the link margin (3 → 100, 2 → 59, 1 → 24, 0 → 0), so a strong but unreliable link does
 not look good. Details: [Signal, trend and reachability](signal.md).
+
+## Transmit errors
+
+A router's MAC counters say how many of its frames found the channel busy. Funkloch shows the rate
+on the router's page and reports it from 5 % over 24 hours: see
+[Signal, trend and reachability](signal.md#transmit-errors-thread-routers). Older images without
+`/api` give no counters.
 
 ## Device lists are never complete
 

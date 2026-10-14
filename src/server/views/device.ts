@@ -16,9 +16,17 @@ import { deviceStatus } from '~/core/devices'
 import { hourlySeries } from '~/core/rollup'
 import { median } from '~/core/stats'
 import { trend } from '~/core/trend'
+import {
+  counterDeltas,
+  hourlyTxErrorRates,
+  TX_ERROR_WARN,
+  TX_ERROR_WINDOW,
+  txErrorRate,
+} from '~/core/tx-errors'
 import { DAY, HOUR, type Role } from '~/core/types'
 import {
   availabilityOf,
+  countersOf,
   deviceById,
   displayName,
   eventsOf,
@@ -37,6 +45,24 @@ import { deviceRows, protocolInfo } from './shared'
 
 /** How long back a child's parent history is read for "connected since" */
 const SINCE_WINDOW = 90 * DAY
+
+/** Days the transmit error chart covers */
+const TX_ERROR_DAYS = 7
+
+/** The transmit error rate of the last day and per hour; null for a device without counters */
+const txErrorsView = (db: ViewContext['db'], deviceId: number, high: boolean, now: number) => {
+  const from = now - TX_ERROR_DAYS * DAY + HOUR
+  const readings = countersOf(db, deviceId, from - HOUR)
+  if (readings.length === 0) return null
+  const deltas = counterDeltas(readings)
+  return {
+    high,
+    threshold: TX_ERROR_WARN * 100,
+    day: txErrorRate(deltas, now - TX_ERROR_WINDOW),
+    from,
+    hourly: hourlyTxErrorRates(deltas, from, now),
+  }
+}
 
 /** Null when there is no such device */
 export const deviceView = ({ db, now, settings }: ViewContext, id: number, range: DetailRange) => {
@@ -117,6 +143,7 @@ export const deviceView = ({ db, now, settings }: ViewContext, id: number, range
       ),
     },
     chart,
+    txErrors: txErrorsView(db, device.id, device.txErrorsHigh, now),
     offline: offlineIntervals(availability.changes, availability.onlineAtStart, from, now),
     messages: {
       from: messageFrom,

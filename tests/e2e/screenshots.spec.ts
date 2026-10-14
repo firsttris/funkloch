@@ -1,5 +1,6 @@
 // bun run screenshots: the pictures for the README and the docs, light and dark
 import { expect, test } from '@playwright/test'
+import { DEVICES } from './demo'
 
 const DIR = 'docs/screenshots'
 
@@ -10,7 +11,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
     test('device list', async ({ page }) => {
       await page.goto('/')
-      await expect(page.getByTestId('device-row')).toHaveCount(13)
+      await expect(page.getByTestId('device-row')).toHaveCount(DEVICES)
       await page.screenshot({
         path: `${DIR}/devices${suffix}.png`,
         fullPage: true,
@@ -42,7 +43,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
     test('heatmap', async ({ page }) => {
       await page.goto('/heatmap')
-      await expect(page.getByTestId('heat-row')).toHaveCount(13)
+      await expect(page.getByTestId('heat-row')).toHaveCount(DEVICES)
       await page.screenshot({
         path: `${DIR}/heatmap${suffix}.png`,
         fullPage: true,

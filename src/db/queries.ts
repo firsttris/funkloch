@@ -6,7 +6,7 @@ import { hourStart } from '~/core/rollup'
 import { median } from '~/core/stats'
 import { ROOT_ROLES } from '~/core/topology'
 import type { Db } from './client'
-import { devices, events, hourly, links, samples, snapshots } from './schema'
+import { counters, devices, events, hourly, links, samples, snapshots } from './schema'
 
 export const displayName = (d: { name: string; customName: string | null }) =>
   d.customName ?? d.name
@@ -295,3 +295,36 @@ export const activeDevices = (db: Db) =>
     .where(isNull(devices.removedAt))
     .orderBy(asc(devices.protocol), asc(devices.name))
     .all()
+
+/** Counter readings of a device since `from`, oldest first, with the last one before as a base */
+export const countersOf = (db: Db, deviceId: number, from: number) => {
+  const columns = {
+    ts: counters.ts,
+    unicast: counters.unicast,
+    broadcast: counters.broadcast,
+    errors: counters.errors,
+  }
+  const base = db
+    .select(columns)
+    .from(counters)
+    .where(and(eq(counters.deviceId, deviceId), lt(counters.ts, from)))
+    .orderBy(desc(counters.ts))
+    .limit(1)
+    .get()
+  const since = db
+    .select(columns)
+    .from(counters)
+    .where(and(eq(counters.deviceId, deviceId), gte(counters.ts, from)))
+    .orderBy(asc(counters.ts))
+    .all()
+  return base ? [base, ...since] : since
+}
+
+/** Devices with counter readings since `from` */
+export const devicesWithCounters = (db: Db, from: number) =>
+  db
+    .selectDistinct({ deviceId: counters.deviceId })
+    .from(counters)
+    .where(gte(counters.ts, from))
+    .all()
+    .map((r) => r.deviceId)

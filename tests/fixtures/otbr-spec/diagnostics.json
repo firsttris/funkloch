@@ -19,7 +19,18 @@
             "lastRssi": -60
           }
         ],
-        "children": []
+        "children": [],
+        "macCounters": {
+          "ifInUnknownProtos": 0,
+          "ifInErrors": 0,
+          "ifOutErrors": 0,
+          "ifInUcastPkts": 9,
+          "ifInBroadcastPkts": 1167,
+          "ifInDiscards": 0,
+          "ifOutUcastPkts": 6,
+          "ifOutBroadcastPkts": 926,
+          "ifOutDiscards": 0
+        }
       }
     },
     {
@@ -55,7 +66,18 @@
             "averageRssi": -80,
             "lastRssi": -79
           }
-        ]
+        ],
+        "macCounters": {
+          "ifInUnknownProtos": 0,
+          "ifInErrors": 12,
+          "ifOutErrors": 1326,
+          "ifInUcastPkts": 8811,
+          "ifInBroadcastPkts": 5120,
+          "ifInDiscards": 40,
+          "ifOutUcastPkts": 9702,
+          "ifOutBroadcastPkts": 3998,
+          "ifOutDiscards": 0
+        }
       }
     },
     {

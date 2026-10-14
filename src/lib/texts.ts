@@ -2,7 +2,7 @@
 // request's language; the notifications pass the one from the settings.
 import type { Role } from '~/core/types'
 import { m } from '~/paraglide/messages.js'
-import type { Locale } from '~/paraglide/runtime.js'
+import { getLocale, type Locale } from '~/paraglide/runtime.js'
 
 type Options = { locale?: Locale }
 
@@ -38,6 +38,8 @@ const TITLES: Record<string, (inputs: object, options?: Options) => string> = {
   parent_changed: m.event_parent_changed,
   role_changed: m.event_role_changed,
   pattern: m.event_pattern,
+  tx_errors_high: m.event_tx_errors_high,
+  tx_errors_normal: m.event_tx_errors_normal,
 }
 
 export const eventTitle = (event: EventLike, locale?: Locale) =>
@@ -45,6 +47,12 @@ export const eventTitle = (event: EventLike, locale?: Locale) =>
 
 const text = (value: string | number | boolean | null | undefined) =>
   value === null || value === undefined ? '–' : String(value)
+
+/** A number in the language of the text, e.g. "9,7" or "13.700" */
+const localNumber = (value: string | number | boolean | null | undefined, locale?: Locale) =>
+  typeof value === 'number'
+    ? new Intl.NumberFormat(locale ?? getLocale(), { maximumFractionDigits: 1 }).format(value)
+    : text(value)
 
 /** The line after the title, from the event's details */
 export const eventDetail = (event: EventLike, locale?: Locale) => {
@@ -79,6 +87,20 @@ export const eventDetail = (event: EventLike, locale?: Locale) => {
     case 'channel_busy':
       return m.event_channel_busy_detail(
         { channel: text(d.channel), energy: text(d.energy).replace('-', '−') },
+        o,
+      )
+    case 'tx_errors_high':
+    case 'tx_errors_normal':
+      return (
+        event.type === 'tx_errors_high'
+          ? m.event_tx_errors_high_detail
+          : m.event_tx_errors_normal_detail
+      )(
+        {
+          rate: localNumber(d.rate, locale),
+          frames: localNumber(d.frames, locale),
+          threshold: localNumber(d.threshold, locale),
+        },
         o,
       )
     case 'pattern':

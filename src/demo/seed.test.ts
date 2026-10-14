@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { HOUR } from '~/core/types'
-import { devices, events, hourly, samples, snapshots } from '~/db/schema'
+import { counters, devices, events, hourly, samples, snapshots } from '~/db/schema'
 import { tempDb } from '~/db/test-db'
 import { DEMO_DEVICES } from './devices'
 import { history } from './generate'
@@ -28,6 +28,8 @@ describe('seedDemo', () => {
     )
     expect(oldest).toBeGreaterThanOrEqual(NOW - 14 * 24 * HOUR)
     expect(t.db.select().from(snapshots).all().length).toBeGreaterThan(0)
+    // transmit counters for the Thread routers, every 15 minutes over the samples' 14 days
+    expect(t.db.select().from(counters).all().length).toBeGreaterThan(4 * 14 * 24 * 4)
     const garage = t.db
       .select()
       .from(devices)
@@ -48,6 +50,7 @@ describe('seedDemo', () => {
       'parent_changed',
       'trend_down',
       'trend_down',
+      'tx_errors_high',
       'pattern',
       'signal_weak',
     ])

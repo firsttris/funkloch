@@ -58,6 +58,22 @@ export type Link = {
   parent: boolean
 }
 
+/**
+ * Cumulative transmit counters of a device's radio. They start again at zero when the device
+ * restarts, so only the differences between two readings mean something.
+ */
+export type TxCounters = {
+  protocol: ProtocolId
+  address: string
+  ts: number
+  /** Unique unicast transmission requests */
+  unicast: number
+  /** Unique broadcast transmission requests */
+  broadcast: number
+  /** Failed transmission attempts (for Thread: the channel was busy) */
+  errors: number
+}
+
 export type Topology = {
   protocol: ProtocolId
   ts: number
@@ -77,6 +93,7 @@ export type Observation =
   | { kind: 'seen'; protocol: ProtocolId; address: string; ts: number; battery: number | null }
   | { kind: 'availability'; report: AvailabilityReport }
   | { kind: 'topology'; topology: Topology }
+  | { kind: 'counters'; counters: TxCounters }
   | { kind: 'bridge'; protocol: ProtocolId; ts: number; online: boolean }
   /** Energy per 2.4 GHz channel (11–26) in dBm, from an energy scan */
   | {

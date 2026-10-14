@@ -62,6 +62,8 @@ export const KIND_TONE: Record<string, string> = {
 export const eventColor = (event: { kind: string; type: string }) =>
   event.type === 'offline'
     ? 'bg-offline'
-    : event.kind === 'signal' && event.type !== 'signal_recovered'
+    : event.kind === 'signal' &&
+        event.type !== 'signal_recovered' &&
+        event.type !== 'tx_errors_normal'
       ? 'bg-weak'
       : 'bg-foreground'

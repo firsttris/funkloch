@@ -20,9 +20,9 @@ const idOf = (name: string) => {
 }
 
 describe('overview', () => {
-  test('lists the 13 demo devices, worst first, with KPIs', () => {
+  test('lists the 14 demo devices, worst first, with KPIs', () => {
     const view = overviewView(env.context, '24h')
-    expect(view.rows).toHaveLength(13)
+    expect(view.rows).toHaveLength(14)
     expect(view.rows[0]).toMatchObject({ name: 'Türsensor Garage', status: 'offline' })
     expect(view.rows[1]).toMatchObject({
       name: 'Temperatursensor Keller',
@@ -30,9 +30,9 @@ describe('overview', () => {
       trend: 'down',
     })
     expect(view.counts).toMatchObject({
-      total: 13,
+      total: 14,
       offline: 1,
-      byProtocol: { zigbee: 8, thread: 5 },
+      byProtocol: { zigbee: 8, thread: 6 },
     })
     expect(view.protocols.map((p) => p.id).sort()).toEqual(['thread', 'zigbee'])
   })
@@ -125,6 +125,21 @@ describe('device detail', () => {
     expect(view?.current?.text).toMatch(/LQI \d · −\d+ dBm/)
   })
 
+  test('a Thread router shows its transmit error rate; the ESP32-C6 fails one frame in ten', () => {
+    const esp = deviceView(env.context, idOf('52bbac72ec804b82'), '7d')
+    expect(esp?.txErrors?.high).toBe(true)
+    expect(esp?.txErrors?.threshold).toBe(5)
+    expect(esp?.txErrors?.day?.rate).toBeGreaterThan(0.08)
+    expect(esp?.txErrors?.day?.frames).toBeGreaterThan(10_000)
+    expect(esp?.txErrors?.hourly).toHaveLength(7 * 24)
+    expect(esp?.events.map((e) => e.type)).toContain('tx_errors_high')
+    const strip = deviceView(env.context, idOf('Lichtleiste TV'), '7d')
+    expect(strip?.txErrors?.high).toBe(false)
+    expect(strip?.txErrors?.day?.rate).toBeLessThan(0.005)
+    // Zigbee has no MAC counters
+    expect(deviceView(env.context, idOf('Lampe Küche'), '7d')?.txErrors).toBeNull()
+  })
+
   test('an unknown device is null', () => {
     expect(deviceView(env.context, 99_999, '7d')).toBeNull()
   })
@@ -209,8 +224,8 @@ describe('network', () => {
 describe('events', () => {
   test('lists the demo events, newest first, with counts per kind', () => {
     const view = eventsView(env.context, 'all', 30)
-    expect(view.counts).toMatchObject({ all: 9, offline: 3, signal: 4, topology: 2, network: 0 })
-    expect(view.events).toHaveLength(9)
+    expect(view.counts).toMatchObject({ all: 10, offline: 3, signal: 5, topology: 2, network: 0 })
+    expect(view.events).toHaveLength(10)
     const times = view.events.map((e) => e.ts)
     expect(times).toEqual([...times].sort((a, b) => b - a))
     expect(view.events.find((e) => e.type === 'parent_changed')?.device).toBe(
@@ -222,7 +237,7 @@ describe('events', () => {
     expect(eventsView(env.context, 'topology', 30).events.every((e) => e.kind === 'topology')).toBe(
       true,
     )
-    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(9)
+    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(10)
   })
 
   test('a list cut at its limit says so', () => {
@@ -236,7 +251,7 @@ describe('events', () => {
     const csv = eventsCsv(env.context, 'all', 30)
     const lines = csv.trim().split('\n')
     expect(lines[0]).toBe('time,kind,type,protocol,device,address,details')
-    expect(lines).toHaveLength(10)
+    expect(lines).toHaveLength(11)
     expect(csv).toContain('"{""from"":""Steckdose Wohnzimmer"",""to"":""Rollladen Schlafzimmer""}"')
   })
 })
@@ -244,7 +259,7 @@ describe('events', () => {
 describe('heatmap', () => {
   test('one row per device with one cell per hour, worst first', () => {
     const view = heatmapView(env.context, 7)
-    expect(view.rows).toHaveLength(13)
+    expect(view.rows).toHaveLength(14)
     for (const row of view.rows) expect(row.cells).toHaveLength(7 * 24)
     expect(view.rows[0]?.name).toBe('Türsensor Garage')
     expect(view.rows.at(-1)?.cells).toMatch(/^g+$/)

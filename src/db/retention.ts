@@ -1,7 +1,7 @@
 import { lt } from 'drizzle-orm'
 import { DAY } from '~/core/types'
 import type { Db } from './client'
-import { channelScans, events, hourly, samples, snapshots } from './schema'
+import { channelScans, counters, events, hourly, samples, snapshots } from './schema'
 
 export type Retention = { samplesDays: number; hourlyDays: number }
 
@@ -11,6 +11,9 @@ export const DEFAULT_RETENTION: Retention = { samplesDays: 14, hourlyDays: 365 }
 export const applyRetention = (db: Db, now: number, retention = DEFAULT_RETENTION) => {
   db.delete(samples)
     .where(lt(samples.ts, now - retention.samplesDays * DAY))
+    .run()
+  db.delete(counters)
+    .where(lt(counters.ts, now - retention.samplesDays * DAY))
     .run()
   db.delete(hourly)
     .where(lt(hourly.hour, now - retention.hourlyDays * DAY))

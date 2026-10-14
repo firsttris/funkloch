@@ -107,6 +107,11 @@ export const NotificationSettings = () => {
           onChange={(e) => setRules({ pattern: { enabled: e.target.checked } })}
         />
         <Checkbox
+          label={m.rule_transmit()}
+          checked={rules.transmit.enabled}
+          onChange={(e) => setRules({ transmit: { enabled: e.target.checked } })}
+        />
+        <Checkbox
           label={m.rule_topology()}
           checked={rules.topology.enabled}
           onChange={(e) => setRules({ topology: { enabled: e.target.checked } })}

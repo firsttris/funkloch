@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { DEVICES, THREAD_DEVICES } from './demo'
 
 test.describe('device list', () => {
   test('shows every demo device, worst first', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1, name: 'Geräte' })).toBeVisible()
     const rows = page.getByTestId('device-row')
-    await expect(rows).toHaveCount(13)
+    await expect(rows).toHaveCount(DEVICES)
     await expect(rows.first()).toContainText('Türsensor Garage')
     await expect(rows.first()).toContainText('Offline')
     await expect(rows.nth(1)).toContainText('Schwach')
@@ -26,11 +27,11 @@ test.describe('device list', () => {
 
   test('filters by protocol through the URL', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('button', { name: 'Thread (5)' }).click()
+    await page.getByRole('button', { name: `Thread (${THREAD_DEVICES})` }).click()
     await expect(page).toHaveURL(/protocol=thread/)
-    await expect(page.getByTestId('device-row')).toHaveCount(5)
-    await page.getByRole('button', { name: 'Alle (13)' }).click()
-    await expect(page.getByTestId('device-row')).toHaveCount(13)
+    await expect(page.getByTestId('device-row')).toHaveCount(THREAD_DEVICES)
+    await page.getByRole('button', { name: `Alle (${DEVICES})` }).click()
+    await expect(page.getByTestId('device-row')).toHaveCount(DEVICES)
   })
 
   test('switches the sparkline range', async ({ page }) => {
@@ -64,6 +65,15 @@ test.describe('device detail', () => {
     await expect(page.getByText('Wieder erreichbar').last()).toBeVisible()
   })
 
+  test('a Thread router shows its transmit errors against the threshold', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('link', { name: '52bbac72ec804b82' }).click()
+    await expect(page.getByText('Sendefehler 24 h')).toBeVisible()
+    await expect(page.getByText(/von [\d.]+ Frames · Schwelle 5 %/)).toBeVisible()
+    await expect(page.getByRole('img', { name: /Sendefehler pro Stunde/ })).toBeVisible()
+    await expect(page.getByText('Viele Sendefehler')).toBeVisible()
+  })
+
   test('changes the range', async ({ page }) => {
     await page.goto('/')
     await page.getByRole('link', { name: 'Steckdose Terrasse' }).click()
@@ -82,7 +92,7 @@ test.describe('device detail', () => {
     await page.goto('/nowhere')
     await expect(page.getByRole('heading', { name: 'Seite nicht gefunden' })).toBeVisible()
     await page.getByRole('link', { name: 'Alle Geräte' }).click()
-    await expect(page.getByTestId('device-row')).toHaveCount(13)
+    await expect(page.getByTestId('device-row')).toHaveCount(DEVICES)
   })
 })
 

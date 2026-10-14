@@ -53,11 +53,37 @@ Once a day (3 a.m.) Funkloch looks at the last 7 days by hour. A device that is 
 hours on at least 5 of 7 days (a window of at most 12 hours), and rarely weak outside it, gets a
 **recurring pattern**: typically Wi-Fi load in the evening or a device that runs at that time.
 
+## Transmit errors (Thread routers)
+
+With every reading (every 5 minutes) Funkloch asks each Thread router for its MAC counters
+(`macCounters` in the network diagnostics). They count up from the router's start, so Funkloch
+works with the difference between two readings; a counter lower than before means the router
+restarted, and the new value counts from zero. The transmit error rate is
+
+> Δ`ifOutErrors` / (Δ`ifOutUcastPkts` + Δ`ifOutBroadcastPkts`)
+
+OpenThread fills `ifOutErrors` with the failed clear channel assessments (`mTxErrCca` in openthread
+`src/core/thread/net_diag_tlvs.cpp`): the router wanted to send and found the channel busy. The
+packet counters count each frame once, however often it was retried (`include/openthread/link.h`).
+The rate therefore says how often the router cannot get on air: Wi-Fi or another transmitter close
+to it, or a radio that hears the channel as busy. Its RSSI does not show this: a router can be
+heard well and still fail to send.
+
+The router's page shows the rate of the last 24 hours and one bar per hour over 7 days (an hour
+with fewer than 20 frames has none). From **5 %** over 24 hours the rate is marked and becomes the
+event *many transmit errors*; below 3 % it is *back to normal*. Fewer than 200 frames in 24 hours
+give no rate.
+
+Why 5 %: routers on a quiet channel stay far below 1 % (on the network that led to this check, the
+other routers below 0.1 %, an ESP32-C6 router in the cellar at about 10 %). 5 % is fifty times the
+normal case and means one frame in twenty met a busy channel, while an hour of Wi-Fi load or a
+microwave does not reach it over 24 hours.
+
 ## Storage
 
 | Data | Kept |
 |---|---|
-| every reading | 14 days (2–90) |
+| every reading, the transmit counters | 14 days (2–90) |
 | hourly median, min, max, message count, minutes offline | 365 days (30–3650) |
 | network maps | as long as the hourly values |
 | events | as long as the hourly values |

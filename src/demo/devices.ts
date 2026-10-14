@@ -1,6 +1,7 @@
 // The devices of the mockup, with the stories it tells: a sensor in the cellar that slowly gets
 // worse and changes its parent, a socket on the terrace that drops every evening, a door sensor
-// in the garage that went silent six hours ago.
+// in the garage that went silent six hours ago, a Thread router built from an ESP32-C6 that fails
+// to send one frame in ten.
 import type { PowerSource, Role } from '~/core/types'
 
 export type DemoDevice = {
@@ -22,6 +23,8 @@ export type DemoDevice = {
   offline?: [number, number][]
   /** Parent over time: [hours before now since when, parent address] */
   parents: [number, string][]
+  /** Share of frames that fail to go out (Thread routers' MAC counters) */
+  txErrors?: number
 }
 
 export const ZIGBEE_COORDINATOR = '0x00124b0024c1a2f0'
@@ -184,6 +187,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
     noise: 5,
     eveningDip: 33,
     parents: [[720, '6c0d2e9f41a7b852']],
+    txErrors: 0.006,
   },
   {
     protocol: 'thread',
@@ -233,6 +237,7 @@ export const DEMO_DEVICES: DemoDevice[] = [
     ],
     noise: 3,
     parents: [[720, THREAD_BORDER_ROUTER]],
+    txErrors: 0.0008,
   },
   {
     protocol: 'thread',
@@ -249,5 +254,23 @@ export const DEMO_DEVICES: DemoDevice[] = [
     ],
     noise: 2,
     parents: [[720, THREAD_BORDER_ROUTER]],
+    txErrors: 0.0005,
+  },
+  {
+    protocol: 'thread',
+    address: '52bbac72ec804b82',
+    name: '52bbac72ec804b82',
+    role: 'router',
+    power: 'mains',
+    model: 'ESP32-C6 Thread Router',
+    vendor: 'Espressif',
+    interval: 5,
+    level: [
+      [720, 52],
+      [0, 50],
+    ],
+    noise: 4,
+    parents: [[720, THREAD_BORDER_ROUTER]],
+    txErrors: 0.097,
   },
 ]

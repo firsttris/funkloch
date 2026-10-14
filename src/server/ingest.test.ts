@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import type { Measurement } from '~/core/types'
-import { channelScans, devices, samples } from '~/db/schema'
+import { channelScans, counters, devices, samples } from '~/db/schema'
 import { applyDevices, getSetting } from '~/db/store'
 import { tempDb } from '~/db/test-db'
 import { createIngest } from './ingest'
@@ -53,6 +53,21 @@ describe('createIngest', () => {
       { ts: 5000, raw: 10 },
       { ts: 5001, raw: 20 },
       { ts: 5002, raw: 30 },
+    ])
+  })
+
+  test('transmit counters are stored at once, for a device not known yet too', () => {
+    const t = tempDb()
+    const ingest = createIngest(t.db, createLog('silent'))
+    cleanup = () => {
+      ingest.stop()
+      t.cleanup()
+    }
+    const reading = { protocol: 'thread', address: 'ab', unicast: 10, broadcast: 5, errors: 1 }
+    ingest.emit({ kind: 'counters', counters: { ...reading, ts: 1000 } })
+    ingest.emit({ kind: 'counters', counters: { ...reading, ts: 1000 } })
+    expect(t.db.select().from(counters).all()).toEqual([
+      { deviceId: 1, ts: 1000, unicast: 10, broadcast: 5, errors: 1 },
     ])
   })
 
