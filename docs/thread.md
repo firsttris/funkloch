@@ -1,8 +1,9 @@
 # Thread (OpenThread Border Router)
 
 Funkloch reads the REST API of the OpenThread Border Router (ot-br-posix), usually on port 8081.
-Set `OTBR_URL`, e.g. `http://localhost:8081`. Border routers of other makers (Apple, Google, Eve)
-have no such API.
+Set `OTBR_URL`, e.g. `http://localhost:8081`. Border routers of other makers (Apple, Google, Eve,
+Aqara) have no such API; their Thread network shows up through [Matter](matter.md), whose devices
+report their own neighbor tables.
 
 ## Newer images: `/api`
 

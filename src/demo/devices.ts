@@ -5,8 +5,11 @@
 // coordinator, and an ESP32-C6 Zigbee router next to it that no device uses.
 import type { PowerSource, Role } from '~/core/types'
 
+/** The networks of the demo: what Zigbee2MQTT, the OTBR and matterjs-server would deliver */
+export const DEMO_PROTOCOLS = ['zigbee', 'thread', 'wifi'] as const
+
 export type DemoDevice = {
-  protocol: 'zigbee' | 'thread'
+  protocol: 'zigbee' | 'thread' | 'wifi'
   address: string
   name: string
   role: Role
@@ -34,6 +37,8 @@ export type DemoDevice = {
 
 export const ZIGBEE_COORDINATOR = '0x00124b0024c1a2f0'
 export const THREAD_BORDER_ROUTER = '9e3a6f1c2b7d4e05'
+/** The Wi-Fi access point the Matter plugs on Wi-Fi hang on (its BSSID) */
+export const WIFI_ACCESS_POINT = 'f0:9f:c2:5e:22:33'
 
 const zigbee = (address: string) => `0x${address}`
 
@@ -357,5 +362,37 @@ export const DEMO_DEVICES: DemoDevice[] = [
       { to: OFFICE_THERMOSTAT, there: 14, back: 20 },
       { to: TV_LIGHTSTRIP, there: 4, back: 10 },
     ],
+  },
+  {
+    protocol: 'wifi',
+    address: '48:e1:e9:5a:10:2c',
+    name: 'Steckdose Waschmaschine',
+    role: 'end_device',
+    power: 'mains',
+    model: 'MSS315',
+    vendor: 'Meross',
+    interval: 15,
+    level: [
+      [720, 74],
+      [0, 73],
+    ],
+    noise: 3,
+    parents: [[720, WIFI_ACCESS_POINT]],
+  },
+  {
+    protocol: 'wifi',
+    address: '5c:62:8b:a1:07:4e',
+    name: 'Stehlampe Flur',
+    role: 'end_device',
+    power: 'mains',
+    model: 'Tapo P110M',
+    vendor: 'TP-Link',
+    interval: 15,
+    level: [
+      [720, 50],
+      [0, 49],
+    ],
+    noise: 3,
+    parents: [[720, WIFI_ACCESS_POINT]],
   },
 ]

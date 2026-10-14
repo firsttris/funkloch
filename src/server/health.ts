@@ -9,6 +9,6 @@ export const health = () => {
   } catch {
     database = false
   }
-  const adapters = runtime.adapters.map((adapter) => ({ id: adapter.meta.id, ...adapter.status() }))
+  const adapters = runtime.adapters.map((adapter) => ({ id: adapter.id, ...adapter.status() }))
   return { ok: database && adapters.every((a) => a.connected), database, adapters }
 }

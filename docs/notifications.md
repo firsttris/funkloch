@@ -11,7 +11,7 @@ of the range and says so when there are more; the CSV has them all.
 | Offline | **offline** (reported or silent), **back online** |
 | Signal | **below threshold** (median below *weak* for 30 minutes, back above it 5 points higher), **falling trend**, **recurring pattern**, **many transmit errors** (a Thread router fails 5 % of its frames over 24 hours, back to normal below 3 %) |
 | Topology | **parent changed**, **role changed** (e.g. a Thread router became a child) |
-| Network | **joined**, **removed**, **bridge offline** and **back** (Zigbee2MQTT or the border router), **channel noisy** (an energy scan finds a network's own channel above −76 dBm) |
+| Network | **joined**, **removed**, **bridge offline** and **back** (Zigbee2MQTT, the border router or matterjs-server), **channel noisy** (an energy scan finds a network's own channel above −76 dBm) |
 
 ## Rules
 

@@ -24,10 +24,18 @@ export type ProtocolMeta = {
 export type AdapterStatus = { connected: boolean; error: string | null; since: number | null }
 
 export type Adapter = {
-  meta: ProtocolMeta
+  /** Stable id, e.g. in /healthz */
+  id: string
+  label: string
+  /** The networks it measures and maps; it may also describe devices of others (see Matter) */
+  protocols: ProtocolMeta[]
   /** Starts listening; observations go to `emit`. Returns a function that stops the adapter. */
   start: (emit: (observation: Observation) => void) => () => Promise<void>
   status: () => AdapterStatus
-  /** Asks for a fresh topology now, if the protocol can */
-  requestTopology?: () => void
+  /** Asks for a fresh topology of one of its protocols now, if it can */
+  requestTopology?: (protocol: ProtocolId) => void
 }
+
+/** Whether the adapter measures and maps the protocol */
+export const delivers = (adapter: Adapter, protocol: ProtocolId) =>
+  adapter.protocols.some((meta) => meta.id === protocol)

@@ -20,9 +20,9 @@ const idOf = (name: string) => {
 }
 
 describe('overview', () => {
-  test('lists the 19 demo devices, worst first, with KPIs', () => {
+  test('lists the 21 demo devices, worst first, with KPIs', () => {
     const view = overviewView(env.context, '24h')
-    expect(view.rows).toHaveLength(19)
+    expect(view.rows).toHaveLength(21)
     expect(view.rows[0]).toMatchObject({ name: 'Türsensor Garage', status: 'offline' })
     expect(view.rows[1]).toMatchObject({
       name: 'Temperatursensor Keller',
@@ -30,11 +30,11 @@ describe('overview', () => {
       trend: 'down',
     })
     expect(view.counts).toMatchObject({
-      total: 19,
+      total: 21,
       offline: 1,
-      byProtocol: { zigbee: 13, thread: 6 },
+      byProtocol: { zigbee: 13, thread: 6, wifi: 2 },
     })
-    expect(view.protocols.map((p) => p.id).sort()).toEqual(['thread', 'zigbee'])
+    expect(view.protocols.map((p) => p.id).sort()).toEqual(['thread', 'wifi', 'zigbee'])
   })
 
   test('names the bottleneck: the cellar socket and its sensors over a weak link', () => {
@@ -52,7 +52,7 @@ describe('overview', () => {
 
   test('every row has a raw text and a parent, sparklines have the range length', () => {
     for (const row of overviewView(env.context, '24h').rows) {
-      expect(row.rawText).toMatch(/LQI/)
+      expect(row.rawText).toMatch(row.protocol === 'wifi' ? /^−\d+ dBm$/ : /LQI/)
       expect(row.via).not.toBeNull()
       expect(row.spark).toHaveLength(24)
     }
@@ -318,7 +318,7 @@ describe('events', () => {
 describe('heatmap', () => {
   test('one row per device with one cell per hour, worst first', () => {
     const view = heatmapView(env.context, 7)
-    expect(view.rows).toHaveLength(19)
+    expect(view.rows).toHaveLength(21)
     for (const row of view.rows) expect(row.cells).toHaveLength(7 * 24)
     expect(view.rows[0]?.name).toBe('Türsensor Garage')
     // the last rows have no weak or offline hour

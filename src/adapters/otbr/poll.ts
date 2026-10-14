@@ -27,6 +27,9 @@ import {
   vendorsFromDiagnostics,
 } from './translate'
 
+/** What the border router knows best when Matter describes the same devices */
+export const OTBR_SOURCE = { id: 'otbr', prefer: ['role', 'networkAddress'] } as const
+
 const PROTOCOL = threadMeta.id
 
 export const INTERVALS = {
@@ -103,7 +106,7 @@ export const createOtbrPoll = (deps: PollDeps) => {
 
   const emitDevices = (devices: DeviceInfo[], ts: number) => {
     known = devices
-    emit({ kind: 'devices', protocol: PROTOCOL, ts, devices, complete: false })
+    emit({ kind: 'devices', protocol: PROTOCOL, ts, devices, complete: false, source: OTBR_SOURCE })
   }
 
   const emitCollection = (ts: number) =>

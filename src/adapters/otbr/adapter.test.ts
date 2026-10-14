@@ -23,7 +23,7 @@ describe('OTBR adapter', () => {
     await until(() => observations.some((o) => o.kind === 'channels'))
     expect(adapter.status()).toMatchObject({ connected: true, error: null })
     expect(modes).toEqual(['api'])
-    expect(adapter.meta.id).toBe('thread')
+    expect(adapter.protocols.map((p) => p.id)).toEqual(['thread'])
     await stop()
   })
 
@@ -56,7 +56,7 @@ describe('OTBR adapter', () => {
     })
     await until(() => topologies.length === 1)
     // the first cycle is still scanning the channels: the request runs right after it
-    adapter.requestTopology?.()
+    adapter.requestTopology?.('thread')
     await until(() => topologies.length === 2)
     expect(topologies).toHaveLength(2)
     await stop()
@@ -79,12 +79,12 @@ describe('OTBR adapter', () => {
     otbr.fail.set('/api/actions', 503)
     // the devices are due again only after 15 minutes: a requested map hits the failing actions
     for (let i = 0; i < 3; i++) {
-      adapter.requestTopology?.()
+      adapter.requestTopology?.('thread')
       await new Promise((r) => setTimeout(r, 20))
     }
     await until(() => bridge.length === 2)
     otbr.fail.clear()
-    adapter.requestTopology?.()
+    adapter.requestTopology?.('thread')
     await until(() => bridge.length === 3)
     expect(bridge).toEqual([true, false, true])
     await stop()

@@ -24,7 +24,8 @@ waited for.
 ## Architecture
 
 ```
-src/adapters/   zigbee2mqtt (MQTT), otbr (REST): protocol → observations, score formula per protocol
+src/adapters/   zigbee2mqtt (MQTT), otbr (REST), matter (WebSocket to matterjs-server: Thread and
+                Wi-Fi): protocol → observations, score formula per protocol
 src/core/       pure functions: score, reachability, rollups, trend, events, patterns, notify, layout
 src/db/         Drizzle schema, migrations, storing observations, queries, jobs' database side
 src/jobs/       the scheduler: reachability and signal every minute, rollup and trend hourly,
@@ -37,7 +38,10 @@ src/demo/       the demo network
 
 The core knows no protocols: each adapter delivers devices, readings, availability, topologies and
 channel scans as `Observation`s. A new network is a new adapter with its own `ProtocolMeta` (labels,
-raw unit, score formula); nothing in the core changes. More in [CLAUDE.md](https://github.com/firsttris/funkloch/blob/main/CLAUDE.md).
+raw unit, score formula); nothing in the core changes. An adapter can deliver several protocols
+(Matter: Thread and Wi-Fi), and two adapters can describe the same devices (the OTBR and Matter
+for Thread): their device lists carry a `source` with the fields each knows best, and the ingest
+merges them field by field (`mergeDescribed` in `src/core/devices.ts`). More in [CLAUDE.md](https://github.com/firsttris/funkloch/blob/main/CLAUDE.md).
 
 ## Checks
 
@@ -56,7 +60,7 @@ mkdocs build --strict                # when docs/ or mkdocs.yml changed
 | Unit | next to the code in `src/core`, `src/adapters` | formulas, parsing, decisions; property tests with fast-check |
 | Database | `src/db/*.test.ts` | real SQLite files |
 | API | `tests/api` | the pages' data from the seeded demo at a fixed time |
-| Contract | `tests/contract` | every recorded Zigbee2MQTT message and OTBR answer passes the schemas |
+| Contract | `tests/contract` | every recorded Zigbee2MQTT message, OTBR answer and matterjs-server message passes the schemas |
 | Integration | `tests/integration` | the Zigbee adapter and MQTT notifications against Mosquitto |
 | E2E | `tests/e2e` | Chromium, Firefox and WebKit against the demo; login and settings; in CI in two halves at once |
 | Container | CI, when `docker/`, `serve.ts`, the package files, `vite.config.ts` or the migrations change | the image starts on amd64 and arm64, each on its own runner, and `/healthz` turns green |

@@ -3,7 +3,7 @@
   "version": "0.1.14",
   "private": true,
   "type": "module",
-  "description": "Signal history for every Zigbee and Thread device: trends, events and alerts for Zigbee2MQTT and OpenThread Border Router",
+  "description": "Signal history for every Zigbee, Thread and Matter device: trends, events and alerts for Zigbee2MQTT, OpenThread Border Router and matterjs-server",
   "license": "AGPL-3.0-only",
   "scripts": {
     "dev": "bun --bun vite dev",

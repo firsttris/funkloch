@@ -61,6 +61,15 @@ test.describe('network map', () => {
     await expect(page.getByRole('status')).toContainText('Angefordert')
   })
 
+  test('the Wi-Fi map hangs the stations on their access point', async ({ page }) => {
+    await page.goto('/network')
+    await page.getByRole('radio', { name: 'Wi-Fi' }).click()
+    await expect(page).toHaveURL(/protocol=wifi/)
+    await expect(page.getByRole('link', { name: /^Heimnetz · 22:33, Access Point/ })).toBeVisible()
+    await page.getByRole('link', { name: 'Stehlampe Flur, End Device' }).click()
+    await expect(page.getByRole('heading', { level: 2, name: 'Stehlampe Flur' })).toBeVisible()
+  })
+
   test('the snapshot slider goes back in time', async ({ page }) => {
     await page.goto('/network')
     const slider = page.getByLabel('Snapshot')

@@ -4,7 +4,7 @@ import { hourStart } from '~/core/rollup'
 import { DAY, HOUR } from '~/core/types'
 import { eventsOfType, hourlyCells } from '~/db/queries'
 import type { ViewContext } from './context'
-import { adapterStates, deviceRows, protocolInfo } from './shared'
+import { adapterProtocols, adapterStates, deviceRows, protocolInfo } from './shared'
 
 /** Share of hours that were weak or offline: the heatmap sorts by it, worst first */
 const badness = (cells: string) => {
@@ -41,7 +41,7 @@ export const heatmapView = ({ db, now, settings, adapters }: ViewContext, days: 
     hourMs: HOUR,
     adapters: states,
     protocols: protocolInfo([
-      ...new Set([...states.map((a) => a.id), ...rows.map((r) => r.protocol)]),
+      ...new Set([...adapterProtocols(adapters), ...rows.map((r) => r.protocol)]),
     ]),
     rows: rows.map(({ badness: _, ...row }) => row),
     findings: {

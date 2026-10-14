@@ -1,6 +1,8 @@
 import type { Config } from '~/config'
 import type { SignalFormat } from '~/db/detect'
 import type { Log } from '~/server/log'
+import { createMatterAdapter } from './matter/adapter'
+import { wifiMeta } from './matter/meta'
 import { createOtbrAdapter } from './otbr/adapter'
 import { threadMeta } from './otbr/meta'
 import type { Adapter, ProtocolMeta } from './types'
@@ -10,6 +12,7 @@ import { zigbeeMeta } from './zigbee2mqtt/meta'
 export const PROTOCOLS: Record<string, ProtocolMeta> = {
   [zigbeeMeta.id]: zigbeeMeta,
   [threadMeta.id]: threadMeta,
+  [wifiMeta.id]: wifiMeta,
 }
 
 /** An adapter is on when its environment variable is set. */
@@ -38,6 +41,18 @@ export const adaptersFromConfig = (
         url: config.OTBR_URL,
         onProblem: (message) => log.warn({ message }, 'otbr'),
         onMode: (mode) => log.info({ mode }, 'otbr REST API found'),
+      }),
+    )
+  }
+  if (config.MATTER_SERVER_URL) {
+    adapters.push(
+      createMatterAdapter({
+        url: config.MATTER_SERVER_URL,
+        pollMinutes: config.MATTER_POLL_MINUTES,
+        // With the OTBR on, it measures and maps Thread; Matter describes the devices
+        threadSignal: !config.OTBR_URL,
+        onProblem: (message) => log.warn({ message }, 'matter'),
+        onConnected: (info) => log.info(info, 'matterjs-server connected'),
       }),
     )
   }

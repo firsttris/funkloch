@@ -17,7 +17,7 @@ import {
   storeCounters,
   storeTopology,
 } from '~/db/store'
-import { DEMO_DEVICES } from './devices'
+import { DEMO_DEVICES, DEMO_PROTOCOLS } from './devices'
 import {
   availabilityChanges,
   channelScanAt,
@@ -37,7 +37,7 @@ const LAST_SCAN_AGO = 10 * MINUTE
 /** Fills an empty database with 30 days of the demo network, as if Funkloch had been running. */
 export const seedDemo = (db: Db, now: number) => {
   const start = now - HISTORY_DAYS * DAY
-  for (const protocol of ['zigbee', 'thread'])
+  for (const protocol of DEMO_PROTOCOLS)
     applyDevices(db, protocol, demoDeviceInfos(protocol), start)
 
   DEMO_DEVICES.forEach((device, i) => {
@@ -67,7 +67,7 @@ export const seedDemo = (db: Db, now: number) => {
   })
 
   for (let hoursAgo = 7 * 24; hoursAgo >= 0; hoursAgo -= TOPOLOGY_EVERY_HOURS) {
-    for (const protocol of ['zigbee', 'thread']) {
+    for (const protocol of DEMO_PROTOCOLS) {
       storeTopology(db, {
         protocol,
         ts: now - hoursAgo * HOUR,

@@ -16,7 +16,8 @@ describe('seedDemo', () => {
     const t = tempDb()
     cleanup = t.cleanup
     seedDemo(t.db, NOW)
-    expect(t.db.select().from(devices).all()).toHaveLength(DEMO_DEVICES.length + 2)
+    // plus the coordinator, the border router and the access point
+    expect(t.db.select().from(devices).all()).toHaveLength(DEMO_DEVICES.length + 3)
     expect(t.db.select().from(hourly).all().length).toBeGreaterThan(DEMO_DEVICES.length * 24 * 29)
     // raw samples only for 14 days
     const oldest = Math.min(

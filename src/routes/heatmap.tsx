@@ -3,6 +3,7 @@ import { createFileRoute, Link, stripSearchParams, useNavigate } from '@tanstack
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
 import { HeatRow } from '~/components/heat-row'
+import { protocolStyle } from '~/components/protocol-style'
 import { Card, CardHeader, CardHint, CardTitle } from '~/components/ui/card'
 import { ChipFilter } from '~/components/ui/chip-filter'
 import { Segmented } from '~/components/ui/segmented'
@@ -199,16 +200,10 @@ function HeatmapPage() {
                     <span
                       className={cn(
                         'shrink-0 rounded px-1.5 text-[10px] font-bold',
-                        row.protocol === 'zigbee'
-                          ? 'bg-zigbee-bg text-zigbee'
-                          : 'bg-thread-bg text-thread',
+                        protocolStyle(row.protocol).chip,
                       )}
                     >
-                      {row.protocol === 'zigbee'
-                        ? 'ZB'
-                        : row.protocol === 'thread'
-                          ? 'TH'
-                          : row.protocol}
+                      {protocolStyle(row.protocol).short}
                     </span>
                     <Link
                       to="/devices/$id"

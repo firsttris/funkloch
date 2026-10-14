@@ -25,6 +25,7 @@ import {
 import { MessagesChart } from '~/components/messages-chart'
 import { NotFound } from '~/components/not-found'
 import { ProtocolBadge } from '~/components/protocol-badge'
+import { protocolStyle } from '~/components/protocol-style'
 import { RouterFindingCard } from '~/components/router-finding-card'
 import { SignalChart } from '~/components/signal-chart'
 import { StatusDot } from '~/components/status'
@@ -252,7 +253,7 @@ function DevicePage() {
               offline={data.offline}
               markers={markers}
               band={data.range !== '24h'}
-              color={device.protocol === 'thread' ? '--thread' : '--zigbee'}
+              color={protocolStyle(device.protocol).color}
               label={m.chart_aria({ label: rawLabel, range: rangeLabel(data.range) })}
             />
           </ClientOnly>
@@ -262,7 +263,7 @@ function DevicePage() {
                 <span
                   className="h-0.5 w-4"
                   style={{
-                    background: `var(--${device.protocol === 'thread' ? 'thread' : 'zigbee'})`,
+                    background: `var(${protocolStyle(device.protocol).color})`,
                   }}
                 />
               }
@@ -275,7 +276,7 @@ function DevicePage() {
                   <span
                     className="h-2.5 w-4 rounded-sm opacity-20"
                     style={{
-                      background: `var(--${device.protocol === 'thread' ? 'thread' : 'zigbee'})`,
+                      background: `var(${protocolStyle(device.protocol).color})`,
                     }}
                   />
                 }

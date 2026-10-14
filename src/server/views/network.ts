@@ -1,5 +1,6 @@
 import '@tanstack/react-start/server-only'
 import { PROTOCOLS } from '~/adapters/registry'
+import { delivers } from '~/adapters/types'
 import { deviceKind } from '~/core/device-kind'
 import { signalBars } from '~/core/map-tree'
 import { hourlySeries } from '~/core/rollup'
@@ -14,7 +15,7 @@ import {
 } from '~/db/queries'
 import { bottlenecksOf } from './bottlenecks'
 import type { ViewContext } from './context'
-import { adapterStates, deviceRows, protocolInfo } from './shared'
+import { adapterProtocols, adapterStates, deviceRows, protocolInfo } from './shared'
 
 export const SNAPSHOT_DAYS = 7
 
@@ -31,7 +32,7 @@ export const networkView = (
   selectedId: number | null,
 ) => {
   // Without a choice, the first protocol that is on
-  const protocol = requested ?? adapters[0]?.meta.id ?? 'zigbee'
+  const protocol = requested ?? adapterProtocols(adapters)[0] ?? 'zigbee'
   const meta = PROTOCOLS[protocol]
   const snapshots = snapshotsOf(db, protocol, now - SNAPSHOT_DAYS * DAY)
   const snapshot = snapshots.find((s) => s.id === snapshotId) ?? snapshots.at(-1) ?? null
@@ -93,11 +94,11 @@ export const networkView = (
   return {
     now,
     protocol,
-    protocols: protocolInfo([...new Set([...states.map((a) => a.id)])]),
+    protocols: protocolInfo(adapterProtocols(adapters)),
     adapters: states,
     snapshots: snapshots.map((s) => ({ id: s.id, ts: s.ts })),
     snapshot: snapshot ? { id: snapshot.id, ts: snapshot.ts } : null,
-    canRequest: adapters.some((a) => a.meta.id === protocol && a.requestTopology !== undefined),
+    canRequest: adapters.some((a) => delivers(a, protocol) && a.requestTopology !== undefined),
     networkmapHours: settings.networkmapHours,
     nodes: nodes.map((n) => ({ ...n, root: roots.has(n.id), kind: kinds.get(n.id) ?? 'device' })),
     edges: edges.map((e) => ({

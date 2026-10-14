@@ -2,6 +2,7 @@
 import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
+import { delivers } from '~/adapters/types'
 import { getRuntime } from '../runtime'
 import { deviceView } from '../views/device'
 import { eventsView } from '../views/events'
@@ -37,9 +38,11 @@ export const getNetwork = createServerFn({ method: 'GET' })
 export const requestTopology = createServerFn({ method: 'POST' })
   .validator(z.object({ protocol: z.string().min(1).max(40) }))
   .handler(({ data }) => {
-    const adapter = getRuntime().adapters.find((a) => a.meta.id === data.protocol)
+    const adapter = getRuntime().adapters.find(
+      (a) => delivers(a, data.protocol) && a.requestTopology !== undefined,
+    )
     if (!adapter?.requestTopology) return { requested: false }
-    adapter.requestTopology()
+    adapter.requestTopology(data.protocol)
     return { requested: true }
   })
 

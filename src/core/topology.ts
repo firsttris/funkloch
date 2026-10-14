@@ -25,8 +25,8 @@ export type MapEdge = {
   quality: Band | 'offline' | null
 }
 
-/** Coordinators and border routers: the root of the map, with no signal of their own */
-export const ROOT_ROLES: Role[] = ['coordinator', 'border_router']
+/** Coordinators, border routers and access points: the root of the map, with no signal of their own */
+export const ROOT_ROLES: Role[] = ['coordinator', 'border_router', 'access_point']
 export const isRoot = (role: Role) => ROOT_ROLES.includes(role)
 
 /**

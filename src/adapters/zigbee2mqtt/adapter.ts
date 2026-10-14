@@ -129,5 +129,12 @@ export const createZigbee2mqttAdapter = (options: Zigbee2mqttOptions): Adapter =
       })
   }
 
-  return { meta: zigbeeMeta, start, status: () => status, requestTopology }
+  return {
+    id: zigbeeMeta.id,
+    label: zigbeeMeta.label,
+    protocols: [zigbeeMeta],
+    start,
+    status: () => status,
+    requestTopology: () => requestTopology(),
+  }
 }

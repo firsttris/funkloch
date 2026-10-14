@@ -34,6 +34,15 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ FUNKLOCH_DEMO_NOW: 'yesterday' })).toThrow(/FUNKLOCH_DEMO_NOW/)
   })
 
+  test('reads matterjs-server’s WebSocket and the poll interval', () => {
+    const config = loadConfig({ MATTER_SERVER_URL: 'ws://localhost:5580/ws' })
+    expect(config.MATTER_SERVER_URL).toBe('ws://localhost:5580/ws')
+    expect(config.MATTER_POLL_MINUTES).toBe(15)
+    expect(loadConfig({ MATTER_SERVER_URL: '' }).MATTER_SERVER_URL).toBeUndefined()
+    expect(() => loadConfig({ MATTER_SERVER_URL: 'http://localhost:5580' })).toThrow(/ws:\/\//)
+    expect(() => loadConfig({ MATTER_POLL_MINUTES: '1' })).toThrow(/MATTER_POLL_MINUTES/)
+  })
+
   test('rejects a network map interval below one hour and a broken URL', () => {
     expect(() => loadConfig({ ZIGBEE2MQTT_NETWORKMAP_HOURS: '0.5' })).toThrow(/NETWORKMAP/)
     expect(() => loadConfig({ OTBR_URL: 'not a url' })).toThrow(/OTBR_URL/)

@@ -27,6 +27,8 @@
   --zigbee-bg: #fff1e8;
   --thread: #1d4ed8;
   --thread-bg: #eef3ff;
+  --wifi: #0f766e;
+  --wifi-bg: #e8f6f3;
 
   --chart-grid: #e4e4e7;
   --chart-axis: #a1a1aa;
@@ -67,6 +69,8 @@
   --zigbee-bg: #3a1d0e;
   --thread: #93b4ff;
   --thread-bg: #172345;
+  --wifi: #5eead4;
+  --wifi-bg: #0f2a27;
 
   --chart-grid: #2e2e33;
   --chart-axis: #71717a;
@@ -106,6 +110,8 @@
   --color-zigbee-bg: var(--zigbee-bg);
   --color-thread: var(--thread);
   --color-thread-bg: var(--thread-bg);
+  --color-wifi: var(--wifi);
+  --color-wifi-bg: var(--wifi-bg);
 }
 
 @layer base {

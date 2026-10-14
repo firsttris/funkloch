@@ -2,11 +2,11 @@
 
 <img src="public/favicon.svg" alt="Funkloch logo" width="72">
 
-<h1>Funkloch: signal history for Zigbee2MQTT and Thread devices</h1>
+<h1>Funkloch: signal history for Zigbee2MQTT, Thread and Matter devices</h1>
 
-**A self-hosted dashboard that records the signal quality of every Zigbee2MQTT and Thread (OpenThread Border Router) device over time.**<br>
+**A self-hosted dashboard that records the signal quality of every Zigbee2MQTT, Thread (OpenThread Border Router) and Matter (matterjs-server, Thread and Wi-Fi) device over time.**<br>
 It shows which devices get worse over days, which drop out and how they are connected, instead of one snapshot.<br>
-One Docker container next to Zigbee2MQTT and your OTBR, read-only, no cloud, open source.
+One Docker container next to Zigbee2MQTT, your OTBR or your Matter server, read-only, no cloud, open source.
 
 [![CI](https://github.com/firsttris/funkloch/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/funkloch/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/firsttris/funkloch?logo=github&label=release)](https://github.com/firsttris/funkloch/releases/latest)
@@ -17,6 +17,7 @@ One Docker container next to Zigbee2MQTT and your OTBR, read-only, no cloud, ope
 <br>
 [![Zigbee2MQTT 1.x | 2.x](https://img.shields.io/badge/Zigbee2MQTT-1.x%20%7C%202.x-ffc135?logo=zigbee&logoColor=black)](https://firsttris.github.io/funkloch/zigbee2mqtt.html)
 [![Thread: OpenThread Border Router](https://img.shields.io/badge/Thread-OpenThread%20Border%20Router-3b4fb5)](https://firsttris.github.io/funkloch/thread.html)
+[![Matter: matterjs-server](https://img.shields.io/badge/Matter-matterjs--server-0f766e)](https://firsttris.github.io/funkloch/matter.html)
 [![amd64 | arm64](https://img.shields.io/badge/image-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://firsttris.github.io/funkloch/installation.html)
 [![Bun](https://img.shields.io/badge/Bun-1.4-000000?logo=bun&logoColor=white)](https://bun.sh/)
 [![TanStack Start](https://img.shields.io/badge/TanStack%20Start-React%2019-20232a?logo=react&logoColor=61dafb)](https://tanstack.com/start)
@@ -49,8 +50,11 @@ getting worse since Friday, or that the socket on the terrace drops every evenin
 - **History instead of a snapshot**: every message is kept, condensed to hourly medians for a year.
 - **Early warning**: falling trends, devices that go silent, evenings that are always weak and
   parent changes stand out before a device is gone, with a message by ntfy, webhook or MQTT.
-- **Both networks in one list**: Zigbee and Thread on one 0–100 % scale, each chart in its own raw
-  unit (LQI, RSSI).
+- **Every network in one list**: Zigbee, Thread and Wi-Fi on one 0–100 % scale, each chart in its
+  own raw unit (LQI, RSSI).
+- **Thread behind any border router**: through matterjs-server, Matter devices report their own
+  neighbor tables, so the mesh shows up behind an Apple TV, a HomePod, a Nest hub or an Aqara hub
+  too, and Matter devices on Wi-Fi get their RSSI.
 - **Read-only**: Funkloch never switches, pairs or reconfigures anything.
 
 Runs on any Linux server, NAS or Raspberry Pi that runs Docker or Podman (amd64 and arm64).
@@ -66,6 +70,7 @@ Network=host
 Volume=funkloch-data:/data
 Environment=ZIGBEE2MQTT_MQTT_URL=mqtt://localhost:1883
 Environment=OTBR_URL=http://localhost:8081
+Environment=MATTER_SERVER_URL=ws://localhost:5580/ws
 Environment=TZ=Europe/Berlin
 AutoUpdate=registry
 
@@ -85,6 +90,7 @@ services:
     environment:
       ZIGBEE2MQTT_MQTT_URL: mqtt://localhost:1883
       OTBR_URL: http://localhost:8081
+      MATTER_SERVER_URL: ws://localhost:5580/ws
       TZ: Europe/Berlin
     restart: unless-stopped
 volumes:
@@ -100,6 +106,7 @@ set:
 | `ZIGBEE2MQTT_MQTT_USER`, `ZIGBEE2MQTT_MQTT_PASSWORD` | broker login | |
 | `ZIGBEE2MQTT_BASE_TOPIC` | Zigbee2MQTT base topic | `zigbee2mqtt` |
 | `OTBR_URL` | REST API of the OpenThread Border Router, e.g. `http://localhost:8081`; empty: Thread off | |
+| `MATTER_SERVER_URL` | WebSocket of matterjs-server, e.g. `ws://localhost:5580/ws`; empty: Matter off | |
 | `PORT` | port of the web UI | `8090` |
 | `TZ` | time zone for day boundaries | `UTC` |
 | `FUNKLOCH_DEMO` | `1` starts with a demo network instead | |
@@ -114,6 +121,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 - **Sparkline** of the last 24 hours or 7 days, **trend** over 72 hours, last seen and the
   **parent** it is connected through; worst devices first, filter by protocol.
 - **2.4 GHz energy scan**: interference per channel 11–26, the Zigbee and Thread channels marked.
+- **Matter**: names, makers, battery and reachability of every Matter device from matterjs-server;
+  next to the OTBR it names the Thread devices the border router only knows by address.
 
 ### 📈 Device history
 
@@ -127,7 +136,7 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 ### 🕸️ Network map and heatmap
 
-- **Network map** of the Zigbee mesh and the Thread network as a tree: the coordinator on top,
+- **Network map** of the Zigbee mesh, the Thread network and the Wi-Fi access points as a tree: the coordinator on top,
   each router with the devices that talk through it, signal bars on every link, problems in red.
   The routers wrap into rows to fit the screen, so the map shows at full size on a phone too.
   Drag and zoom, search, "problems only", a device's way to the coordinator lit up on hover, older
@@ -191,8 +200,10 @@ Funkloch is made for watching signal quality over time, not for controlling devi
 
 ### Does Funkloch change anything in my Zigbee or Thread network?
 
-No. It only listens to Zigbee2MQTT over MQTT and reads the OTBR REST API. The only requests it sends
-are the Zigbee2MQTT network map (at most hourly, every 6 hours by default) and OTBR diagnostics.
+No. It only listens to Zigbee2MQTT over MQTT, reads the OTBR REST API and matterjs-server's
+WebSocket. The only requests it sends are the Zigbee2MQTT network map (at most hourly, every 6 hours
+by default), OTBR diagnostics and Matter attribute reads (neighbor tables and Wi-Fi signal, every 15
+minutes by default); it never writes an attribute or commissions a device.
 
 ### Does it work without Thread or without Zigbee?
 
@@ -200,9 +211,13 @@ Yes. Each network is on when its variable is set; with one network the protocol 
 
 ### Which Thread border routers work?
 
-Those running the OpenThread Border Router (ot-br-posix) with its REST API, including the Home
-Assistant add-on. Newer images give RSSI per device; older ones only the topology. Details:
+Through the REST API: those running the OpenThread Border Router (ot-br-posix), including the
+Home Assistant add-on. Newer images give RSSI per device; older ones only the topology. Details:
 [Thread](https://firsttris.github.io/funkloch/thread.html).
+
+Through Matter: any border router (Apple, Google, Aqara, …), since the Matter devices report their
+own neighbor tables to matterjs-server, the server behind Home Assistant's Matter integration.
+Details: [Matter](https://firsttris.github.io/funkloch/matter.html).
 
 ### How do I get notified when a Zigbee device goes offline?
 
@@ -212,7 +227,7 @@ default, so a short dropout sends nothing. See [notifications](https://firsttris
 ### Can I try it without my own network?
 
 Yes: `docker run --rm -p 8090:8090 -e FUNKLOCH_DEMO=1 tristanteu/funkloch` starts with a demo
-network of 13 devices and 30 days of history.
+network of 21 devices and 30 days of history.
 
 ## 📚 Documentation
 
@@ -223,6 +238,7 @@ The full documentation, with search, is at **[firsttris.github.io/funkloch](http
 | [Installation](https://firsttris.github.io/funkloch/installation.html) | Quadlet, Compose, variables, reverse proxy, backup, password reset |
 | [Zigbee2MQTT](https://firsttris.github.io/funkloch/zigbee2mqtt.html) | what Funkloch reads and the one request it sends |
 | [Thread (OTBR)](https://firsttris.github.io/funkloch/thread.html) | REST API, older images, names |
+| [Matter](https://firsttris.github.io/funkloch/matter.html) | matterjs-server: Thread behind any border router, Wi-Fi devices, together with the OTBR |
 | [Signal, trend and reachability](https://firsttris.github.io/funkloch/signal.html) | score formulas, traffic light, trend, offline rule, patterns |
 | [Repeaters](https://firsttris.github.io/funkloch/repeaters.html) | which devices use a repeater, Zigbee2MQTT settings for silent routers |
 | [Events and notifications](https://firsttris.github.io/funkloch/notifications.html) | rules, ntfy, webhook and MQTT payload |
@@ -245,7 +261,7 @@ Tailwind 4, uPlot, Paraglide (German and English). Architecture, tests and relea
 
 ## 🤝 Contributing
 
-Issues and pull requests are welcome. A good bug report names the Zigbee2MQTT version or OTBR image
+Issues and pull requests are welcome. A good bug report names the Zigbee2MQTT version, OTBR image or matterjs-server version
 and, for parsing problems, includes a short recording from `bun run record`. Please run
 `bun run typecheck && bunx biome ci . && bun run test` before opening a pull request.
 
@@ -258,6 +274,6 @@ and, for parsing problems, includes a short recording from `bun run record`. Ple
 
 <sub>License: <a href="LICENSE">AGPL-3.0</a> · © Tristan Teufel and contributors<br>
 Changed versions you pass on or run for others must offer their source code under the AGPL; a commercial license without these obligations is available via <a href="https://teufel-it.de">teufel-it.de</a>.<br>
-Funkloch is not affiliated with Zigbee2MQTT, the Connectivity Standards Alliance, the Thread Group or OpenThread.</sub>
+Funkloch is not affiliated with Zigbee2MQTT, the Connectivity Standards Alliance, the Thread Group, OpenThread, matter.js or the Open Home Foundation.</sub>
 
 </div>

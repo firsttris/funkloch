@@ -21,6 +21,7 @@ Environment=ZIGBEE2MQTT_MQTT_URL=mqtt://localhost:1883
 Environment=ZIGBEE2MQTT_MQTT_USER=funkloch
 Environment=ZIGBEE2MQTT_MQTT_PASSWORD=secret
 Environment=OTBR_URL=http://localhost:8081
+Environment=MATTER_SERVER_URL=ws://localhost:5580/ws
 Environment=TZ=Europe/Berlin
 AutoUpdate=registry
 
@@ -54,6 +55,7 @@ services:
       ZIGBEE2MQTT_MQTT_USER: funkloch
       ZIGBEE2MQTT_MQTT_PASSWORD: secret
       OTBR_URL: http://localhost:8081
+      MATTER_SERVER_URL: ws://localhost:5580/ws
       TZ: Europe/Berlin
     restart: unless-stopped
 
@@ -92,6 +94,8 @@ Each network is on when its variable is set; everything else has a default.
 | `ZIGBEE2MQTT_BASE_TOPIC` | Zigbee2MQTT base topic | `zigbee2mqtt` |
 | `ZIGBEE2MQTT_NETWORKMAP_HOURS` | hours between two network maps until changed in the settings, at least 1 | `6` |
 | `OTBR_URL` | REST API of the OpenThread Border Router, e.g. `http://localhost:8081`; empty: Thread off | |
+| `MATTER_SERVER_URL` | WebSocket of matterjs-server, e.g. `ws://localhost:5580/ws`; empty: Matter off. See [Matter](matter.md) | |
+| `MATTER_POLL_MINUTES` | minutes between two reads of the neighbor tables and Wi-Fi signals, 5 to 1440 | `15` |
 | `PORT` | port of the web UI | `8090` |
 | `DATA_DIR` | folder of the SQLite database | `/data` |
 | `TZ` | time zone for day boundaries, the heatmap, the 3 a.m. jobs and every date and time on the pages, whatever the browser's zone | `UTC` |
