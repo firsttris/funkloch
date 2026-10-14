@@ -33,6 +33,25 @@ test.describe('network map', () => {
     await expect(page.locator('.topo-line.bottleneck')).toHaveCount(1)
   })
 
+  test('a control on the map works after the map was dragged', async ({ page }) => {
+    await page.goto('/network')
+    const world = page.locator('.topo-world')
+    await expect(world).toHaveAttribute('style', /scale/)
+    const scale = async () =>
+      Number((await world.getAttribute('style'))?.match(/scale\(([\d.]+)\)/)?.[1])
+    const frame = await page.locator('.topo-frame').boundingBox()
+    if (!frame) throw new Error('no map')
+    // an empty spot near the top left, inside the window
+    await page.mouse.move(frame.x + 30, frame.y + 120)
+    await page.mouse.down()
+    await page.mouse.move(frame.x + 90, frame.y + 160, { steps: 5 })
+    await page.mouse.up()
+    const before = await scale()
+    // the click on a control (zoom, "+ n more") is no longer taken for the end of the drag
+    await page.getByRole('button', { name: 'Hineinzoomen' }).click()
+    await expect.poll(scale).toBeGreaterThan(before)
+  })
+
   test('switches to thread and requests a fresh map', async ({ page }) => {
     await page.goto('/network')
     await page.getByRole('radio', { name: 'Thread' }).click()
