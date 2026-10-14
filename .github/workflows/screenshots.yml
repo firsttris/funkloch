@@ -1,6 +1,17 @@
 name: Update screenshots
 
+# After every change to the look on main, and by hand. The pictures are committed with the
+# GITHUB_TOKEN, which starts no other workflow, so they don't run the checks or themselves again.
 on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "messages/**"
+      - "tests/e2e/screenshots.spec.ts"
+      - "package.json"
+      - "bun.lock"
   workflow_dispatch:
 
 jobs:

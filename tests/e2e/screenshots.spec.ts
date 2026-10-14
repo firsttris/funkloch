@@ -9,6 +9,18 @@ for (const scheme of ['light', 'dark'] as const) {
     test.use({ colorScheme: scheme })
     const suffix = scheme === 'dark' ? '-dark' : ''
 
+    test('network map, the picture on top of the README', async ({ page }) => {
+      await page.goto('/network')
+      await expect(page.getByRole('link', { name: /^Koordinator/ })).toBeVisible()
+      // the build-up animation has ended, so every line and tile is drawn
+      await page.waitForTimeout(2500)
+      await page.screenshot({
+        path: `${DIR}/hero${suffix}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      })
+    })
+
     test('device list', async ({ page }) => {
       await page.goto('/')
       await expect(page.getByTestId('device-row')).toHaveCount(DEVICES)
