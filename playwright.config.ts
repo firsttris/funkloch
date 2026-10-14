@@ -27,12 +27,12 @@ export default defineConfig({
     // The browsers share one demo server: tests that change its settings run in Chromium only
     {
       name: 'firefox',
-      testIgnore: /screenshots|auth|notifications/,
+      testIgnore: /screenshots|auth|notifications|rename/,
       use: devices['Desktop Firefox'],
     },
     {
       name: 'webkit',
-      testIgnore: /screenshots|auth|notifications/,
+      testIgnore: /screenshots|auth|notifications|rename/,
       use: devices['Desktop Safari'],
     },
     {

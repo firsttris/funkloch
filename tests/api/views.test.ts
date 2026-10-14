@@ -20,9 +20,9 @@ const idOf = (name: string) => {
 }
 
 describe('overview', () => {
-  test('lists the 13 demo devices, worst first, with KPIs', () => {
+  test('lists the 19 demo devices, worst first, with KPIs', () => {
     const view = overviewView(env.context, '24h')
-    expect(view.rows).toHaveLength(13)
+    expect(view.rows).toHaveLength(19)
     expect(view.rows[0]).toMatchObject({ name: 'Türsensor Garage', status: 'offline' })
     expect(view.rows[1]).toMatchObject({
       name: 'Temperatursensor Keller',
@@ -30,11 +30,24 @@ describe('overview', () => {
       trend: 'down',
     })
     expect(view.counts).toMatchObject({
-      total: 13,
+      total: 19,
       offline: 1,
-      byProtocol: { zigbee: 8, thread: 5 },
+      byProtocol: { zigbee: 13, thread: 6 },
     })
     expect(view.protocols.map((p) => p.id).sort()).toEqual(['thread', 'zigbee'])
+  })
+
+  test('names the bottleneck: the cellar socket and its sensors over a weak link', () => {
+    const view = overviewView(env.context, '24h')
+    expect(view.bottlenecks).toEqual([
+      {
+        protocol: 'zigbee',
+        child: { id: idOf('Steckdose Keller Flur'), name: 'Steckdose Keller Flur' },
+        parent: { id: expect.any(Number), name: 'Koordinator' },
+        devices: 4,
+        link: 'LQI 56/36',
+      },
+    ])
   })
 
   test('every row has a raw text and a parent, sparklines have the range length', () => {
@@ -125,6 +138,57 @@ describe('device detail', () => {
     expect(view?.current?.text).toMatch(/LQI \d · −\d+ dBm/)
   })
 
+  test('a Thread router shows its transmit error rate; the ESP32-C6 fails one frame in ten', () => {
+    const esp = deviceView(env.context, idOf('ESP32-C6 Thread Router · 52bb…4b82'), '7d')
+    expect(esp?.txErrors?.high).toBe(true)
+    expect(esp?.txErrors?.threshold).toBe(5)
+    expect(esp?.txErrors?.day?.rate).toBeGreaterThan(0.08)
+    expect(esp?.txErrors?.day?.frames).toBeGreaterThan(10_000)
+    expect(esp?.txErrors?.hourly).toHaveLength(7 * 24)
+    expect(esp?.events.map((e) => e.type)).toContain('tx_errors_high')
+    const strip = deviceView(env.context, idOf('Lichtleiste TV'), '7d')
+    expect(strip?.txErrors?.high).toBe(false)
+    expect(strip?.txErrors?.day?.rate).toBeLessThan(0.005)
+    // Zigbee has no MAC counters
+    expect(deviceView(env.context, idOf('Lampe Küche'), '7d')?.txErrors).toBeNull()
+  })
+
+  test('the ESP32-C6 in the cellar: no device uses it, the sockets cover the cellar', () => {
+    const view = deviceView(env.context, idOf('ESP32-C6 Zigbee Router'), '7d')
+    expect(view?.finding).toMatchObject({
+      children: 0,
+      carried: 0,
+      advice: 'move_towards_root',
+      uplink: { name: 'Koordinator', root: true, weak: true, text: 'LQI 64/15' },
+      coveredBy: [
+        { name: 'Steckdose Keller Flur', neighbor: true },
+        { name: 'Steckdose Waschküche', neighbor: true },
+      ],
+    })
+  })
+
+  test('the cellar socket carries three sensors over a weak link', () => {
+    const view = deviceView(env.context, idOf('Steckdose Keller Flur'), '7d')
+    expect(view?.finding).toMatchObject({
+      children: 3,
+      carried: 3,
+      advice: 'strengthen_uplink',
+      uplink: { text: 'LQI 56/36', weak: true },
+    })
+  })
+
+  test('the Thread ESP32-C6: unused, its way to the border router fine', () => {
+    const view = deviceView(env.context, idOf('ESP32-C6 Thread Router · 52bb…4b82'), '7d')
+    expect(view?.finding).toMatchObject({
+      carried: 0,
+      advice: null,
+      root: { role: 'border_router' },
+      uplink: { root: true, weak: false, text: '−76/−75 dBm' },
+    })
+    // an end device gets no finding
+    expect(deviceView(env.context, idOf('Wassermelder Keller'), '7d')?.finding).toBeNull()
+  })
+
   test('an unknown device is null', () => {
     expect(deviceView(env.context, 99_999, '7d')).toBeNull()
   })
@@ -133,17 +197,27 @@ describe('device detail', () => {
 describe('network', () => {
   test('the zigbee map: every device with its kind, one edge per pair with signal bars', () => {
     const view = networkView(env.context, 'zigbee', null, null)
-    expect(view.nodes).toHaveLength(9)
+    expect(view.nodes).toHaveLength(14)
     const root = view.nodes.find((n) => n.root)
     expect(root?.name).toBe('Koordinator')
     const pairs = view.edges.map((e) => [e.a, e.b].sort().join('-'))
     expect(new Set(pairs).size).toBe(pairs.length)
-    expect(view.edges.filter((e) => e.parent)).toHaveLength(8)
+    expect(view.edges.filter((e) => e.parent)).toHaveLength(13)
     expect(view.nodes.find((n) => n.name === 'Steckdose Waschküche')?.kind).toBe('plug')
     for (const e of view.edges.filter((e) => e.quality !== 'offline' && e.parent))
       expect(e.bars).toBeGreaterThan(0)
     expect(view.snapshots.length).toBeGreaterThan(20)
     expect(view.canRequest).toBe(true)
+  })
+
+  test('the bottleneck is marked on its line, nothing else is', () => {
+    const view = networkView(env.context, 'zigbee', null, null)
+    const marked = view.edges.filter((e) => e.bottleneck !== null)
+    expect(marked).toEqual([
+      expect.objectContaining({ a: idOf('Steckdose Keller Flur'), bottleneck: 4, parent: true }),
+    ])
+    expect(view.bottlenecks).toHaveLength(1)
+    expect(networkView(env.context, 'thread', null, null).bottlenecks).toEqual([])
   })
 
   test('the selected device shows its parent, link and hops', () => {
@@ -209,8 +283,8 @@ describe('network', () => {
 describe('events', () => {
   test('lists the demo events, newest first, with counts per kind', () => {
     const view = eventsView(env.context, 'all', 30)
-    expect(view.counts).toMatchObject({ all: 9, offline: 3, signal: 4, topology: 2, network: 0 })
-    expect(view.events).toHaveLength(9)
+    expect(view.counts).toMatchObject({ all: 10, offline: 3, signal: 5, topology: 2, network: 0 })
+    expect(view.events).toHaveLength(10)
     const times = view.events.map((e) => e.ts)
     expect(times).toEqual([...times].sort((a, b) => b - a))
     expect(view.events.find((e) => e.type === 'parent_changed')?.device).toBe(
@@ -222,7 +296,7 @@ describe('events', () => {
     expect(eventsView(env.context, 'topology', 30).events.every((e) => e.kind === 'topology')).toBe(
       true,
     )
-    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(9)
+    expect(eventsView(env.context, 'all', 7).events.length).toBeLessThanOrEqual(10)
   })
 
   test('a list cut at its limit says so', () => {
@@ -236,7 +310,7 @@ describe('events', () => {
     const csv = eventsCsv(env.context, 'all', 30)
     const lines = csv.trim().split('\n')
     expect(lines[0]).toBe('time,kind,type,protocol,device,address,details')
-    expect(lines).toHaveLength(10)
+    expect(lines).toHaveLength(11)
     expect(csv).toContain('"{""from"":""Steckdose Wohnzimmer"",""to"":""Rollladen Schlafzimmer""}"')
   })
 })
@@ -244,10 +318,11 @@ describe('events', () => {
 describe('heatmap', () => {
   test('one row per device with one cell per hour, worst first', () => {
     const view = heatmapView(env.context, 7)
-    expect(view.rows).toHaveLength(13)
+    expect(view.rows).toHaveLength(19)
     for (const row of view.rows) expect(row.cells).toHaveLength(7 * 24)
     expect(view.rows[0]?.name).toBe('Türsensor Garage')
-    expect(view.rows.at(-1)?.cells).toMatch(/^g+$/)
+    // the last rows have no weak or offline hour
+    expect(view.rows.at(-1)?.cells).toMatch(/^[gm]+$/)
     expect(heatmapView(env.context, 30).rows[0]?.cells).toHaveLength(30 * 24)
   })
 

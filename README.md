@@ -119,6 +119,10 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 - **Raw value chart** (LQI or RSSI): every message for 24 hours, hourly median with min–max band
   for 7 and 30 days, offline stretches and the weak threshold drawn in.
 - **Messages per hour**, **parent changes**, **connections** and the device's **events**.
+- **Names**: Thread routers named after the model their diagnostics report, and a name of your own
+  set right on the device's page.
+- **Transmit errors** of Thread routers from their MAC counters: how often the channel was busy,
+  per hour over 7 days, with a warning from 5 % a day.
 
 ### 🕸️ Network map and heatmap
 
@@ -128,13 +132,18 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
   snapshots to compare.
 - **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and
   whether their signal got better; repeaters without sensors get a history from the network map.
+- **Router check**: each router's page says whether it does its job: how many devices go through
+  it, how strong its way to the coordinator is, whether other routers already cover its area, and
+  where it would do more.
+- **Bottlenecks**: a weak link that many devices hang on is named on the overview and drawn thick
+  on the map, with where a router in between would help.
 - **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
   that drops every evening) and **slow declines** pointed out.
 
 ### 🔔 Events and notifications
 
-- **Events**: offline and back, below threshold, falling trend, recurring pattern, parent or role
-  change, new or removed device, bridge offline, noisy channel; CSV export.
+- **Events**: offline and back, below threshold, falling trend, recurring pattern, many transmit
+  errors, parent or role change, new or removed device, bridge offline, noisy channel; CSV export.
 - **Notifications** by **ntfy**, **webhook** (JSON) or **MQTT**, with a wait time for offline and
   weak signal, one message per device and hour, in German or English.
 
@@ -154,6 +163,10 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
   <tr>
     <td><img src="docs/screenshots/heatmap-dark.png" alt="Funkloch heatmap in dark mode: signal quality of every Zigbee and Thread device by hour over 7 days, with a recurring evening dropout"></td>
     <td><img src="docs/screenshots/events.png" alt="Funkloch events: offline, weak signal, falling trend and parent changes by day, with notification rules for ntfy, webhook and MQTT"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/router.png" alt="Funkloch router check of an ESP32-C6 Zigbee router in the cellar: no device uses it, its neighbors cover the area, its way to the coordinator is weak"></td>
+    <td><img src="docs/screenshots/thread-router-dark.png" alt="Funkloch Thread router in dark mode: transmit errors per hour over 7 days from the MAC counters, about 10 % against a threshold of 5 %"></td>
   </tr>
 </table>
 

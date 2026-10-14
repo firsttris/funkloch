@@ -43,6 +43,20 @@ export const linkEntrySchema = z.looseObject({
 export type LinkEntry = z.infer<typeof linkEntrySchema>
 
 /**
+ * The MAC counters TLV (src/rest/json.cpp MacCounters2Json), cumulative since the device started.
+ * OpenThread fills ifOutErrors with the failed clear channel assessments (openthread
+ * src/core/thread/net_diag_tlvs.cpp MacCountersTlvValue::InitFrom: mTxErrCca) and the packet
+ * counters with the unique transmission requests (mTxUnicast, mTxBroadcast).
+ */
+export const macCountersSchema = z.looseObject({
+  ifOutErrors: z.number(),
+  ifOutUcastPkts: z.number(),
+  ifOutBroadcastPkts: z.number(),
+})
+
+export type MacCounters = z.infer<typeof macCountersSchema>
+
+/**
  * The border router names its items "networkDiagnostics" (src/rest/rest_diagnostics_coll.hpp
  * NWK_DIAG_TYPE_NAME); openapi.yaml says "threadNetworkDiagnostic". Both are read.
  */
@@ -57,6 +71,10 @@ export const networkDiagnosticSchema = z.looseObject({
     rloc16: z.string().optional(),
     routerNeighbors: z.array(linkEntrySchema).optional(),
     children: z.array(linkEntrySchema).optional(),
+    macCounters: macCountersSchema.optional(),
+    /** Set by the device's firmware; OpenThread's default is empty (src/core/config/net_diag.h) */
+    vendorName: z.string().optional(),
+    vendorModel: z.string().optional(),
     batteryLevel: z.number().nullish(),
   }),
 })

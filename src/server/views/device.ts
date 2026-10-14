@@ -14,18 +14,29 @@ import {
 } from '~/core/detail'
 import { deviceStatus } from '~/core/devices'
 import { hourlySeries } from '~/core/rollup'
+import { routerFinding } from '~/core/router-finding'
 import { median } from '~/core/stats'
 import { trend } from '~/core/trend'
+import {
+  counterDeltas,
+  hourlyTxErrorRates,
+  TX_ERROR_WARN,
+  TX_ERROR_WINDOW,
+  txErrorRate,
+} from '~/core/tx-errors'
 import { DAY, HOUR, type Role } from '~/core/types'
 import {
   availabilityOf,
+  countersOf,
   deviceById,
+  devicesOfProtocol,
   displayName,
   eventsOf,
   hourlyOf,
   latestSamples,
   latestSnapshot,
   linksOf,
+  linksOfSnapshot,
   messagesPerHour,
   parentsOverTime,
   rawSamples,
@@ -37,6 +48,60 @@ import { deviceRows, protocolInfo } from './shared'
 
 /** How long back a child's parent history is read for "connected since" */
 const SINCE_WINDOW = 90 * DAY
+
+/** Days the transmit error chart covers */
+const TX_ERROR_DAYS = 7
+
+/** The transmit error rate of the last day and per hour; null for a device without counters */
+const txErrorsView = (db: ViewContext['db'], deviceId: number, high: boolean, now: number) => {
+  const from = now - TX_ERROR_DAYS * DAY + HOUR
+  const readings = countersOf(db, deviceId, from - HOUR)
+  if (readings.length === 0) return null
+  const deltas = counterDeltas(readings)
+  return {
+    high,
+    threshold: TX_ERROR_WARN * 100,
+    day: txErrorRate(deltas, now - TX_ERROR_WINDOW),
+    from,
+    hourly: hourlyTxErrorRates(deltas, from, now),
+  }
+}
+
+/**
+ * Whether a router does its job, from the newest snapshot, with the link values written the
+ * protocol's way; null for other roles or without a snapshot
+ */
+const findingView = (
+  { db, settings }: Pick<ViewContext, 'db' | 'settings'>,
+  device: { id: number; protocol: string; role: string },
+  snapshotId: number | null,
+) => {
+  const meta = PROTOCOLS[device.protocol]
+  if (device.role !== 'router' || snapshotId === null || !meta) return null
+  const finding = routerFinding({
+    id: device.id,
+    nodes: devicesOfProtocol(db, device.protocol).map((d) => ({
+      id: d.id,
+      name: displayName(d),
+      role: d.role as Role,
+    })),
+    links: linksOfSnapshot(db, snapshotId).map((l) => ({
+      from: l.fromId,
+      to: l.toId,
+      lqi: l.lqi,
+      rssi: l.rssi,
+      parent: l.parent,
+    })),
+    linkScore: meta.linkScore,
+    weak: settings.thresholds.weak,
+  })
+  const { uplink } = finding
+  return {
+    ...finding,
+    // How the router hears its uplink first, then how the uplink hears it
+    uplink: uplink ? { ...uplink, text: meta.formatLinkPair(uplink.back, uplink.there) } : null,
+  }
+}
 
 /** Null when there is no such device */
 export const deviceView = ({ db, now, settings }: ViewContext, id: number, range: DetailRange) => {
@@ -94,6 +159,8 @@ export const deviceView = ({ db, now, settings }: ViewContext, id: number, range
       id: device.id,
       protocol: device.protocol,
       name: displayName(device),
+      customName: device.customName,
+      networkName: device.name,
       address: device.address,
       networkAddress: device.networkAddress,
       model: device.model,
@@ -117,12 +184,14 @@ export const deviceView = ({ db, now, settings }: ViewContext, id: number, range
       ),
     },
     chart,
+    txErrors: txErrorsView(db, device.id, device.txErrorsHigh, now),
     offline: offlineIntervals(availability.changes, availability.onlineAtStart, from, now),
     messages: {
       from: messageFrom,
       values: hourlySeries(messagesPerHour(db, device.id, messageFrom, now), messageFrom, now),
     },
     topologyTs: snapshot?.ts ?? null,
+    finding: findingView({ db, settings }, device, snapshot?.id ?? null),
     via: deviceLinks.find((l) => l.kind === 'parent')?.name ?? null,
     links: deviceLinks,
     events: eventsOf(db, device.id).map((e) => ({

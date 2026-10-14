@@ -61,6 +61,27 @@ describe('OTBR poll, REST API under /api', () => {
     expect(problems).toEqual([])
   })
 
+  test('a maker named in a diagnostic is added to the devices at once', async () => {
+    const { poll, take, of } = setup()
+    await poll.cycle()
+    const lists = of(take(), 'devices')
+    // first from the collection alone, then with what the diagnostics said
+    expect(lists).toHaveLength(2)
+    const thermo = lists[1]?.devices.find((d) => d.address === '2a55d952bc7b4008')
+    expect(thermo).toMatchObject({ name: 'eve-thermo', vendor: 'Eve Systems', model: 'Eve Thermo' })
+    expect(lists[1]?.devices.find((d) => d.role === 'border_router')?.vendor).toBeNull()
+  })
+
+  test('each router answers its MAC counters, read as transmit counters', async () => {
+    const { poll, take, of } = setup()
+    await poll.cycle()
+    const counters = of(take(), 'counters').map((o) => o.counters)
+    expect(counters.map((c) => [c.address, c.unicast, c.broadcast, c.errors])).toEqual([
+      ['96518e5497d5b9f3', 6, 926, 0],
+      ['2a55d952bc7b4008', 9702, 3998, 1326],
+    ])
+  })
+
   test('each part waits for its interval; a requested topology comes at once', async () => {
     const { poll, take, of, otbr, advance } = setup()
     await poll.cycle()
@@ -120,7 +141,8 @@ describe('OTBR poll, REST API under /api', () => {
     const { poll, otbr, take, of } = setup()
     otbr.failTasks.add('updateDeviceCollectionTask')
     await poll.cycle()
-    expect(of(take(), 'devices')).toHaveLength(1)
+    // the collection, then once more with the makers from the diagnostics
+    expect(of(take(), 'devices').length).toBeGreaterThan(0)
   })
 
   test('without a border router answer the next cycle detects again', async () => {

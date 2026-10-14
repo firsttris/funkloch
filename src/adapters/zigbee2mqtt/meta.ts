@@ -14,4 +14,8 @@ export const zigbeeMeta: ProtocolMeta = {
   formatRaw: ({ raw }) => `LQI ${Math.round(raw)}`,
   linkScore: ({ lqi }) => (lqi === null ? null : zigbeeScore(lqi)),
   formatLink: ({ lqi }) => (lqi === null ? '–' : String(Math.round(lqi))),
+  formatLinkPair: (there, back) => {
+    const values = [there?.lqi, back?.lqi].flatMap((v) => (v == null ? [] : [Math.round(v)]))
+    return values.length === 0 ? 'LQI –' : `LQI ${values.join('/')}`
+  },
 }

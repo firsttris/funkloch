@@ -28,4 +28,11 @@ export const threadMeta: ProtocolMeta = {
     [lqi === null ? '–' : String(lqi), rssi === null ? null : String(rssi).replace('-', '−')]
       .filter(Boolean)
       .join(' · '),
+  // The RSSI where both directions have one, else the link quality 0–3 of older images
+  formatLinkPair: (there, back) => {
+    const rssi = [there?.rssi, back?.rssi].flatMap((v) => (v == null ? [] : [v]))
+    if (rssi.length > 0) return `${rssi.join('/')} dBm`.replaceAll('-', '−')
+    const lqi = [there?.lqi, back?.lqi].flatMap((v) => (v == null ? [] : [v]))
+    return lqi.length === 0 ? '–' : `LQI ${lqi.join('/')}`
+  },
 }

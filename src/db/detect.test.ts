@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import type { DeviceInfo } from '~/core/types'
 import { HOUR, MINUTE } from '~/core/types'
-import { detectSignal, detectTrends } from './detect'
+import { detectSignal, detectTrends, detectTxErrors } from './detect'
+import { countersOf } from './queries'
+import { applyRetention } from './retention'
 import { rollupPending } from './rollup'
 import { devices, events } from './schema'
-import { applyDevices, storeBatch, storeTopology } from './store'
+import { applyDevices, storeBatch, storeCounters, storeTopology } from './store'
 import { tempDb } from './test-db'
 
 let cleanup = () => {}
@@ -123,5 +125,72 @@ describe('topology and role events', () => {
     expect(db.select().from(events).all()).toMatchObject([
       { type: 'role_changed', details: { from: 'router', to: 'end_device' } },
     ])
+  })
+})
+
+describe('detectTxErrors', () => {
+  /** Readings of router r1 every 5 minutes: `frames` and `errors` per reading from `from` on */
+  const send = (db: ReturnType<typeof setup>, from: number, to: number, errors: number) => {
+    const before = countersOf(db, 2, 0).at(-1) ?? { unicast: 0, broadcast: 0, errors: 0 }
+    let total = before
+    for (let ts = from; ts <= to; ts += 5 * MINUTE) {
+      total = {
+        unicast: total.unicast + 70,
+        broadcast: total.broadcast + 30,
+        errors: total.errors + errors,
+      }
+      storeCounters(db, { protocol: 'zigbee', address: 'r1', ts, ...total })
+    }
+  }
+  const txEvents = (db: ReturnType<typeof setup>) =>
+    db
+      .select({ type: events.type, details: events.details })
+      .from(events)
+      .all()
+      .filter((e) => e.type.startsWith('tx_errors'))
+
+  test('a day with 10 % failed frames is reported once, with rate and frames', () => {
+    const db = setup()
+    send(db, T0, T0 + 24 * HOUR, 10)
+    expect(detectTxErrors(db, T0 + 24 * HOUR)).toBe(1)
+    expect(detectTxErrors(db, T0 + 25 * HOUR)).toBe(0)
+    expect(txEvents(db)).toEqual([
+      {
+        type: 'tx_errors_high',
+        details: { rate: 10, errors: 2880, frames: 28_800, threshold: 5 },
+      },
+    ])
+    expect(
+      db
+        .select()
+        .from(devices)
+        .all()
+        .find((d) => d.address === 'r1')?.txErrorsHigh,
+    ).toBe(true)
+  })
+
+  test('back to normal below 3 %, and a restart in between does not count as a drop', () => {
+    const db = setup()
+    send(db, T0, T0 + 24 * HOUR, 10)
+    detectTxErrors(db, T0 + 24 * HOUR)
+    // The router restarts: its counters begin at zero again
+    storeCounters(db, {
+      protocol: 'zigbee',
+      address: 'r1',
+      ts: T0 + 24 * HOUR + 5 * MINUTE,
+      unicast: 70,
+      broadcast: 30,
+      errors: 1,
+    })
+    send(db, T0 + 24 * HOUR + 10 * MINUTE, T0 + 49 * HOUR, 1)
+    detectTxErrors(db, T0 + 49 * HOUR)
+    expect(txEvents(db).map((e) => e.type)).toEqual(['tx_errors_high', 'tx_errors_normal'])
+  })
+
+  test('readings older than the samples are deleted with them', () => {
+    const db = setup()
+    send(db, T0, T0 + HOUR, 0)
+    applyRetention(db, T0 + 15 * 24 * HOUR)
+    expect(countersOf(db, 2, 0)).toEqual([])
   })
 })

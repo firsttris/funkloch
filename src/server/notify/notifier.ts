@@ -32,6 +32,7 @@ const history = (db: Db, now: number) => {
     lastSent,
     offlineSent: latestDeliveryPerDevice(db, 'offline'),
     weakSent: latestDeliveryPerDevice(db, 'signal_weak'),
+    txErrorsSent: latestDeliveryPerDevice(db, 'tx_errors_high'),
   }
 }
 
@@ -85,6 +86,7 @@ export const runNotifications = async (
   const lastSent = new Map(past.lastSent)
   const offlineSent = new Set(past.offlineSent)
   const weakSent = new Set(past.weakSent)
+  const txErrorsSent = new Set(past.txErrorsSent)
   const counts = { sent: 0, skipped: 0, failed: 0 }
 
   for (const event of pending) {
@@ -97,7 +99,7 @@ export const runNotifications = async (
         deviceOnline: event.online,
       },
       settings.rules,
-      { lastSent, offlineSent, weakSent },
+      { lastSent, offlineSent, weakSent, txErrorsSent },
       now,
     )
     if (decision === 'wait') continue
@@ -106,6 +108,8 @@ export const runNotifications = async (
       counts.skipped++
       if (event.deviceId !== null && event.type === 'offline') offlineSent.delete(event.deviceId)
       if (event.deviceId !== null && event.type === 'signal_weak') weakSent.delete(event.deviceId)
+      if (event.deviceId !== null && event.type === 'tx_errors_high')
+        txErrorsSent.delete(event.deviceId)
       continue
     }
     const note = notification(
@@ -138,6 +142,7 @@ export const runNotifications = async (
     lastSent.set(dedupeKey(event), event.ts)
     if (event.deviceId !== null && event.type === 'offline') offlineSent.add(event.deviceId)
     if (event.deviceId !== null && event.type === 'signal_weak') weakSent.add(event.deviceId)
+    if (event.deviceId !== null && event.type === 'tx_errors_high') txErrorsSent.add(event.deviceId)
   }
   return counts
 }

@@ -4,6 +4,7 @@ import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-tab
 import { useMemo } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
+import { BottleneckHint } from '~/components/bottleneck-hint'
 import { ChannelCard } from '~/components/channel-card'
 import { KpiCard } from '~/components/kpi-card'
 import { roleLabel, statusVar, trendColor, trendLabel } from '~/components/labels'
@@ -231,6 +232,8 @@ function DevicesPage() {
           </div>
           {data.channels ? <ChannelCard channels={data.channels} now={data.now} /> : null}
         </div>
+
+        <BottleneckHint bottlenecks={data.bottlenecks} />
 
         <Card>
           <CardHeader>

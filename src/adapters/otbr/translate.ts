@@ -1,5 +1,5 @@
 // OTBR answers to observations. Pure: the adapter passes in what it fetched and the time.
-import type { DeviceInfo, Link, Measurement, Role } from '~/core/types'
+import type { DeviceInfo, Link, Measurement, Role, TxCounters } from '~/core/types'
 import { withUplinks } from '~/core/uplinks'
 import { threadMeta, threadScore } from './meta'
 import type {
@@ -33,21 +33,55 @@ const roleOf = (item: DeviceItem): Role => {
   return mode?.fullThreadDevice ? 'router' : 'unknown'
 }
 
-/** The SRP host name without ".local", else the extended address */
-const nameOf = (item: DeviceItem, address: string) =>
-  item.attributes.hostname?.replace(/\.local\.?$/, '') || address
+/** What a device's network diagnostic says about its maker; null where the firmware set nothing */
+export type VendorInfo = { vendor: string | null; model: string | null }
 
-export const toDeviceInfo = (item: DeviceItem): DeviceInfo => {
+const NO_VENDOR: VendorInfo = { vendor: null, model: null }
+
+/** "52bb…4b82": enough of the extended address to tell two devices of one model apart */
+export const shortAddress = (address: string) => `${address.slice(0, 4)}…${address.slice(-4)}`
+
+/**
+ * The SRP host name without ".local"; without one the model (or maker) with the short address,
+ * e.g. "ESP32-C6 Thread Router · 52bb…4b82"; else the extended address.
+ */
+export const threadName = (address: string, hostname: string | undefined, vendor: VendorInfo) => {
+  const host = hostname?.replace(/\.local\.?$/, '')
+  if (host) return host
+  const maker = vendor.model ?? vendor.vendor
+  return maker ? `${maker} · ${shortAddress(address)}` : address
+}
+
+const present = (value: string | undefined) => (value?.trim() ? value.trim() : null)
+
+/** Vendor name and model of every router whose diagnostic carries one */
+export const vendorsFromDiagnostics = (diagnostics: readonly NetworkDiagnostic[]) =>
+  new Map<string, VendorInfo>(
+    diagnostics.flatMap((d) => {
+      const info = {
+        vendor: present(d.attributes.vendorName),
+        model: present(d.attributes.vendorModel),
+      }
+      return info.vendor || info.model
+        ? [[d.attributes.extAddress.toLowerCase(), info] as const]
+        : []
+    }),
+  )
+
+/**
+ * A device of the collection. The collection carries no vendor or model (src/rest/json.cpp
+ * DeviceInfo2Json); they come from the device's own network diagnostic, where there is one.
+ */
+export const toDeviceInfo = (item: DeviceItem, vendor: VendorInfo = NO_VENDOR): DeviceInfo => {
   const address = (item.attributes.extAddress ?? item.id).toLowerCase()
   const role = roleOf(item)
   return {
     protocol: PROTOCOL,
     address,
-    name: nameOf(item, address),
+    name: threadName(address, item.attributes.hostname, vendor),
     role,
-    // The device collection carries no vendor or model (src/rest/json.cpp DeviceInfo2Json)
-    model: null,
-    vendor: null,
+    model: vendor.model,
+    vendor: vendor.vendor,
     power: role === 'sleepy_end_device' ? 'battery' : role === 'unknown' ? 'unknown' : 'mains',
     networkAddress: item.attributes.rloc16 ?? null,
   }
@@ -134,6 +168,26 @@ export const fromDiagnostics = (
 
   return { measurements, links: withUplinks(links, roots, threadMeta.linkScore) }
 }
+
+/** The transmit counters of every router that sent its MAC counters */
+export const countersFromDiagnostics = (
+  diagnostics: readonly NetworkDiagnostic[],
+  ts: number,
+): TxCounters[] =>
+  diagnostics.flatMap((d) => {
+    const counters = d.attributes.macCounters
+    if (!counters) return []
+    return [
+      {
+        protocol: PROTOCOL,
+        address: d.attributes.extAddress.toLowerCase(),
+        ts,
+        unicast: counters.ifOutUcastPkts,
+        broadcast: counters.ifOutBroadcastPkts,
+        errors: counters.ifOutErrors,
+      },
+    ]
+  })
 
 /** Energy per channel: the strongest of the samples, in dBm */
 export const fromEnergyScan = (scan: EnergyScan) =>

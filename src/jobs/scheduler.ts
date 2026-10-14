@@ -3,7 +3,7 @@ import { hourStart } from '~/core/rollup'
 import type { Settings } from '~/core/settings'
 import { MINUTE } from '~/core/types'
 import type { Db } from '~/db/client'
-import { detectPatterns, detectSignal, detectTrends } from '~/db/detect'
+import { detectPatterns, detectSignal, detectTrends, detectTxErrors } from '~/db/detect'
 import { checkReachability } from '~/db/reachability'
 import { applyRetention } from '~/db/retention'
 import { rollupPending } from '~/db/rollup'
@@ -22,8 +22,8 @@ export type Jobs = {
 }
 
 /**
- * One tick a minute: reachability and the signal check every time, rollup and trend after every
- * full hour (and once at start to catch up), retention once a night.
+ * One tick a minute: reachability and the signal check every time, rollup, trend and transmit
+ * errors after every full hour (and once at start to catch up), retention once a night.
  */
 export const startScheduler = (
   db: Db,
@@ -51,6 +51,7 @@ export const startScheduler = (
       rolledHour = hourStart(now)
       run('rollup', () => rollupPending(db, now))
       run('trend', () => detectTrends(db, now))
+      run('transmit errors', () => detectTxErrors(db, now))
       if (jobs.hourly) run('hourly jobs', () => jobs.hourly?.(now))
     }
     run('reachability', () => checkReachability(db, now))

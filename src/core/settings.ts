@@ -33,6 +33,7 @@ export const settingsSchema = z
       topology: rule({}),
       network: rule({}),
       pattern: rule({}),
+      transmit: rule({}),
     }),
     /** Language of the notifications */
     language: z.enum(['de', 'en']),
@@ -63,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
     topology: { enabled: false },
     network: { enabled: true },
     pattern: { enabled: true },
+    transmit: { enabled: true },
   },
   language: 'de',
   publicUrl: '',

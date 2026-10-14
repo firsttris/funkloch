@@ -9,7 +9,7 @@ of the range and says so when there are more; the CSV has them all.
 | Kind | Events |
 |---|---|
 | Offline | **offline** (reported or silent), **back online** |
-| Signal | **below threshold** (median below *weak* for 30 minutes, back above it 5 points higher), **falling trend**, **recurring pattern** |
+| Signal | **below threshold** (median below *weak* for 30 minutes, back above it 5 points higher), **falling trend**, **recurring pattern**, **many transmit errors** (a Thread router fails 5 % of its frames over 24 hours, back to normal below 3 %) |
 | Topology | **parent changed**, **role changed** (e.g. a Thread router became a child) |
 | Network | **joined**, **removed**, **bridge offline** and **back** (Zigbee2MQTT or the border router), **channel noisy** (an energy scan finds a network's own channel above −76 dBm) |
 
@@ -23,6 +23,7 @@ Under **Events → Notifications** each kind can be switched on or off:
 | Signal below threshold | on, after 30 minutes | *recovered* only follows a sent *below threshold* |
 | Trend falling | on | |
 | Recurring pattern | on | |
+| Transmit errors | on | *back to normal* only follows a sent *many transmit errors* |
 | Parent or role change | off | frequent in a healthy mesh |
 | Network | on | joined, removed, bridge, noisy channel |
 

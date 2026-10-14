@@ -1,6 +1,7 @@
 // A border router for tests: answers the REST resources Funkloch reads from the fixtures
 // (tests/fixtures/otbr-spec) and is as strict as ot-br-posix (main, 65a0ce9) about headers and
-// task attributes. Tasks complete on the first look.
+// task attributes. Tasks complete on the first look; a network diagnostic holds only the types the
+// task asked for, as the border router's (src/rest/json.cpp DiagSet2JsonString keeps the fieldset).
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -96,17 +97,30 @@ export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
   const diagnostics: Item[] = fixture('diagnostics.json').data
   const legacy = variant === 'legacy' ? fixture('legacy-diagnostics.json') : null
   const actions = new Map<string, Item & { relationships?: unknown }>()
+  /** Network diagnostics the tasks produced, with only the asked types */
+  const results = new Map<string, Item>()
   const requests: string[] = []
   const fail = new Map<string, number>()
   const failTasks = new Set<string>()
 
   const resultOf = (task: Item) => {
     if (task.type === 'getNetworkDiagnosticTask') {
-      return diagnostics.find(
+      const found = diagnostics.find(
         (d) =>
           d.type === 'networkDiagnostics' &&
           d.attributes.extAddress === task.attributes.destination,
       )
+      if (!found) return undefined
+      const asked = new Set(['created', ...(task.attributes.types as string[])])
+      const result = {
+        ...found,
+        id: crypto.randomUUID(),
+        attributes: Object.fromEntries(
+          Object.entries(found.attributes).filter(([key]) => asked.has(key)),
+        ),
+      }
+      results.set(result.id, result)
+      return result
     }
     if (task.type === 'getEnergyScanTask')
       return diagnostics.find((d) => d.type === 'energyScanReport')
@@ -165,7 +179,8 @@ export const createFakeOtbr = (variant: 'api' | 'legacy' = 'api'): FakeOtbr => {
     }
     const diagnostic = pathname.match(/^\/api\/diagnostics\/(.+)$/)
     if (diagnostic) {
-      const item = diagnostics.find((d) => d.id === diagnostic[1])
+      const id = diagnostic[1] ?? ''
+      const item = results.get(id) ?? diagnostics.find((d) => d.id === id)
       return item ? Response.json({ data: item }) : new Response('Not Found', { status: 404 })
     }
     return new Response('Not Found', { status: 404 })

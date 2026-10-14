@@ -21,6 +21,8 @@ export type History = {
   offlineSent: ReadonlySet<number>
   /** Devices whose latest weak-signal event was sent */
   weakSent: ReadonlySet<number>
+  /** Devices whose latest transmit-error event was sent */
+  txErrorsSent: ReadonlySet<number>
 }
 
 type RuleKey = keyof Settings['rules']
@@ -32,6 +34,8 @@ const RULE: Record<string, RuleKey> = {
   signal_recovered: 'signal',
   trend_down: 'trend',
   pattern: 'pattern',
+  tx_errors_high: 'transmit',
+  tx_errors_normal: 'transmit',
   parent_changed: 'topology',
   role_changed: 'topology',
   device_added: 'network',
@@ -73,6 +77,11 @@ export const decide = (
   if (
     event.type === 'signal_recovered' &&
     (event.deviceId === null || !history.weakSent.has(event.deviceId))
+  )
+    return 'skip'
+  if (
+    event.type === 'tx_errors_normal' &&
+    (event.deviceId === null || !history.txErrorsSent.has(event.deviceId))
   )
     return 'skip'
 

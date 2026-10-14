@@ -3,9 +3,18 @@
 import { and, desc, eq, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { diffDevices } from '~/core/devices'
 import { parentChangesBetween } from '~/core/events'
-import type { DeviceInfo, Measurement, PowerSource, Role, Topology } from '~/core/types'
+import type { DeviceInfo, Measurement, PowerSource, Role, Topology, TxCounters } from '~/core/types'
 import type { Db } from './client'
-import { devices, type EventDetails, events, links, samples, settings, snapshots } from './schema'
+import {
+  counters,
+  devices,
+  type EventDetails,
+  events,
+  links,
+  samples,
+  settings,
+  snapshots,
+} from './schema'
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
 type Conn = Db | Tx
@@ -193,6 +202,21 @@ export const storeBatch = (db: Db, measurements: Measurement[], seen: SeenInput[
         .run()
     }
   })
+
+/** Stores one reading of a device's transmit counters */
+export const storeCounters = (db: Db, reading: TxCounters) => {
+  const deviceId = ensureDevice(db, reading.protocol, reading.address, reading.ts)
+  db.insert(counters)
+    .values({
+      deviceId,
+      ts: reading.ts,
+      unicast: reading.unicast,
+      broadcast: reading.broadcast,
+      errors: reading.errors,
+    })
+    .onConflictDoNothing()
+    .run()
+}
 
 /** Remembers what the protocol reports; the effective state follows in the reachability check. */
 export const storeReportedAvailability = (

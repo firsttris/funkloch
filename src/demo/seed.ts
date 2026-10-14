@@ -4,16 +4,24 @@ import { DEFAULT_SETTINGS } from '~/core/settings'
 import { DAY, HOUR, MINUTE } from '~/core/types'
 import { storeChannelScan, storeNetworkChannel } from '~/db/channels'
 import type { Db } from '~/db/client'
-import { detectPatterns, detectSignal, detectTrends } from '~/db/detect'
+import { detectPatterns, detectSignal, detectTrends, detectTxErrors } from '~/db/detect'
 import { checkReachability } from '~/db/reachability'
 import { applyRetention } from '~/db/retention'
 import { rollupPending } from '~/db/rollup'
 import { devices } from '~/db/schema'
-import { addEvent, applyDevices, ensureDevice, storeBatch, storeTopology } from '~/db/store'
+import {
+  addEvent,
+  applyDevices,
+  ensureDevice,
+  storeBatch,
+  storeCounters,
+  storeTopology,
+} from '~/db/store'
 import { DEMO_DEVICES } from './devices'
 import {
   availabilityChanges,
   channelScanAt,
+  counterHistory,
   DEMO_CHANNELS,
   demoDeviceInfos,
   HISTORY_DAYS,
@@ -34,6 +42,9 @@ export const seedDemo = (db: Db, now: number) => {
 
   DEMO_DEVICES.forEach((device, i) => {
     storeBatch(db, history(device, now, i + 1), [])
+    const counterDays = DEFAULT_SETTINGS.retention.samplesDays
+    for (const reading of counterHistory(device, now, counterDays, i + 1))
+      storeCounters(db, reading)
     const deviceId = ensureDevice(db, device.protocol, device.address, start)
     for (const change of availabilityChanges(device, now)) {
       addEvent(db, {
@@ -74,6 +85,7 @@ export const seedDemo = (db: Db, now: number) => {
   rollupPending(db, now, (HISTORY_DAYS + 1) * DAY)
   checkReachability(db, now)
   detectTrends(db, now)
+  detectTxErrors(db, now)
   detectPatterns(db, now, DEFAULT_SETTINGS.thresholds)
   detectSignal(
     db,

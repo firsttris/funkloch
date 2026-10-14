@@ -10,6 +10,8 @@ import { ChevronLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
+import { DeviceLinks } from '~/components/device-links'
+import { DeviceTitle } from '~/components/device-title'
 import { KpiCard } from '~/components/kpi-card'
 import {
   eventColor,
@@ -23,8 +25,10 @@ import {
 import { MessagesChart } from '~/components/messages-chart'
 import { NotFound } from '~/components/not-found'
 import { ProtocolBadge } from '~/components/protocol-badge'
+import { RouterFindingCard } from '~/components/router-finding-card'
 import { SignalChart } from '~/components/signal-chart'
 import { StatusDot } from '~/components/status'
+import { TxErrorsCard } from '~/components/tx-errors-card'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardHint, CardTitle } from '~/components/ui/card'
 import { Segmented } from '~/components/ui/segmented'
@@ -105,7 +109,6 @@ function DevicePage() {
   const rawLabel = protocol?.rawLabel ?? ''
   const from = data.now - { '24h': 1, '7d': 7, '30d': 30 }[data.range] * 86_400_000
   const below = data.current && data.weakRaw !== null && data.current.raw < data.weakRaw
-  const children = data.links.filter((l) => l.kind === 'child').length
   const markers = data.events
     .filter(
       (e) => e.ts >= from && (e.type === 'offline' || e.type === 'online' || e.kind === 'topology'),
@@ -125,7 +128,13 @@ function DevicePage() {
         </Link>
 
         <div className="flex flex-col gap-2">
-          <h1 className="m-0 text-[28px] font-bold tracking-tight">{device.name}</h1>
+          <DeviceTitle
+            key={device.id}
+            id={device.id}
+            name={device.name}
+            customName={device.customName}
+            networkName={device.networkName}
+          />
           <div className="flex flex-wrap items-center gap-2">
             {protocol ? <ProtocolBadge protocol={device.protocol} label={protocol.label} /> : null}
             <Badge>
@@ -161,6 +170,17 @@ function DevicePage() {
             ) : null}
           </dl>
         </Card>
+
+        {data.finding ? (
+          <RouterFindingCard
+            finding={data.finding}
+            topologyTs={data.topologyTs}
+            txErrorRate={
+              data.txErrors?.high && data.txErrors.day ? data.txErrors.day.rate * 100 : null
+            }
+            now={data.now}
+          />
+        ) : null}
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
           <KpiCard
@@ -199,6 +219,7 @@ function DevicePage() {
             value={m.kpi_messages_value({ n: number(kpis.messagesPerHour, 1) })}
             hint={m.kpi_messages_hint()}
           />
+          {data.txErrors ? <TxErrorsKpi txErrors={data.txErrors} /> : null}
         </div>
 
         <Card className="flex flex-col gap-3.5 px-[18px] pt-4 pb-[18px]">
@@ -277,6 +298,8 @@ function DevicePage() {
           </div>
         </Card>
 
+        {data.txErrors ? <TxErrorsCard txErrors={data.txErrors} now={data.now} /> : null}
+
         <div className="flex flex-wrap items-stretch gap-4">
           <Card className="flex min-w-0 flex-[999_1_560px] flex-col gap-3 px-[18px] pt-4 pb-[18px]">
             <div>
@@ -294,56 +317,7 @@ function DevicePage() {
             />
           </Card>
 
-          <Card className="flex min-w-0 flex-[1_1_360px] flex-col gap-3 px-[18px] pt-4 pb-[18px]">
-            <div>
-              <CardTitle>{m.links_title()}</CardTitle>
-              {data.topologyTs !== null ? (
-                <CardHint>{m.links_hint({ ago: ago(data.topologyTs, data.now) })}</CardHint>
-              ) : null}
-              {children > 0 ? (
-                <p className="m-0 mt-1 text-[13px] font-medium">
-                  {m.links_children({ count: children })}
-                </p>
-              ) : null}
-            </div>
-            {data.links.length === 0 ? (
-              <p className="text-foreground-subtle">{m.links_none()}</p>
-            ) : (
-              <ul className="m-0 flex list-none flex-col p-0">
-                {data.links.map((link) => (
-                  <li
-                    key={`${link.kind}-${link.id}`}
-                    className="grid grid-cols-[minmax(0,1fr)_72px] items-center gap-x-3 gap-y-1 border-b border-border-subtle py-[9px]"
-                  >
-                    <div className="flex min-w-0 flex-col">
-                      <span className="inline-flex min-w-0 items-center gap-2">
-                        <StatusDot status={link.status} />
-                        <Link
-                          to="/devices/$id"
-                          params={{ id: link.id }}
-                          className="truncate font-semibold no-underline"
-                        >
-                          {link.name}
-                        </Link>
-                        <span className="sr-only">{statusLabel(link.status)}</span>
-                      </span>
-                      <span className="text-xs text-foreground-subtle">
-                        {{ parent: m.link_parent, child: m.link_child, neighbor: m.link_neighbor }[
-                          link.kind
-                        ]({
-                          role: roleLabel(link.role),
-                        })}
-                        {link.since !== null
-                          ? ` · ${m.link_since({ date: dateTime(link.since) })}`
-                          : ''}
-                      </span>
-                    </div>
-                    <LinkQuality lqi={link.lqi} rssi={link.rssi} protocol={device.protocol} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          <DeviceLinks data={data} />
         </div>
 
         <Card className="px-[18px] pt-4 pb-2">
@@ -385,32 +359,23 @@ const Legend = ({ swatch, children }: { swatch: ReactNode; children: ReactNode }
   </span>
 )
 
-const LinkQuality = ({
-  lqi,
-  rssi,
-  protocol,
-}: {
-  lqi: number | null
-  rssi: number | null
-  protocol: string
-}) => {
-  const max = protocol === 'zigbee' ? 255 : 3
-  const pct = lqi === null ? 0 : Math.round((lqi / max) * 100)
+const TxErrorsKpi = ({ txErrors }: { txErrors: NonNullable<DeviceDetail['txErrors']> }) => {
+  const { day, threshold } = txErrors
   return (
-    <div className="flex flex-col items-end gap-1">
-      <span className="font-mono text-xs text-foreground-muted">
-        {lqi === null ? '–' : `LQI ${lqi}`}
-        {rssi !== null ? ` · ${rssi} dBm` : ''}
-      </span>
-      <div className="h-[5px] w-[72px] overflow-hidden rounded-[3px] bg-track">
-        <div
-          className="h-[5px]"
-          style={{
-            width: `${pct}%`,
-            background: pct < 25 ? 'var(--status-weak)' : 'var(--status-good)',
-          }}
-        />
-      </div>
-    </div>
+    <KpiCard
+      size="md"
+      label={m.kpi_tx_errors()}
+      value={day ? `${number(day.rate * 100, 1)} %` : '–'}
+      tone={day && day.rate * 100 >= threshold ? 'weak' : undefined}
+      hint={
+        day
+          ? m.kpi_tx_errors_hint({
+              errors: number(day.errors),
+              frames: number(day.frames),
+              threshold: number(threshold),
+            })
+          : m.kpi_tx_errors_none()
+      }
+    />
   )
 }

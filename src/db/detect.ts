@@ -6,8 +6,16 @@ import { findPattern, PATTERN_DAYS } from '~/core/patterns'
 import type { Thresholds } from '~/core/score'
 import { ROOT_ROLES } from '~/core/topology'
 import { trend } from '~/core/trend'
+import {
+  counterDeltas,
+  TX_ERROR_WARN,
+  TX_ERROR_WINDOW,
+  txErrorRate,
+  txErrorTransition,
+} from '~/core/tx-errors'
 import { DAY, MINUTE, type Trend } from '~/core/types'
 import type { Db } from './client'
+import { countersOf, devicesWithCounters } from './queries'
 import { devices, events, hourly, samples } from './schema'
 import { addEvent } from './store'
 
@@ -167,4 +175,41 @@ export const detectPatterns = (
     })
   }
   return found
+}
+
+/**
+ * A transmit error rate over the warning rate for the last 24 hours, or back below the clear
+ * rate, from the counter readings; run hourly. A device without readings keeps its state.
+ */
+export const detectTxErrors = (db: Db, now: number) => {
+  const from = now - TX_ERROR_WINDOW
+  const withCounters = new Set(devicesWithCounters(db, from))
+  let changed = 0
+  db.transaction((tx) => {
+    for (const device of listed(db)) {
+      if (!withCounters.has(device.id)) continue
+      const rate = txErrorRate(counterDeltas(countersOf(db, device.id, from)), from)
+      const transition = txErrorTransition(device.txErrorsHigh, rate)
+      if (!transition || !rate) continue
+      changed++
+      tx.update(devices)
+        .set({ txErrorsHigh: transition === 'tx_errors_high' })
+        .where(eq(devices.id, device.id))
+        .run()
+      addEvent(tx, {
+        ts: now,
+        kind: 'signal',
+        type: transition,
+        protocol: device.protocol,
+        deviceId: device.id,
+        details: {
+          rate: Math.round(rate.rate * 1000) / 10,
+          errors: rate.errors,
+          frames: rate.frames,
+          threshold: TX_ERROR_WARN * 100,
+        },
+      })
+    }
+  })
+  return changed
 }

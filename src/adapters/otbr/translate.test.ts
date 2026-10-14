@@ -10,11 +10,14 @@ import {
   networkDiagnosticSchema,
 } from './schemas'
 import {
+  countersFromDiagnostics,
   fromDiagnostics,
   fromEnergyScan,
   fromLegacyDiagnostics,
   linkQualityFromMargin,
+  threadName,
   toDeviceInfo,
+  vendorsFromDiagnostics,
 } from './translate'
 
 const fixture = (name: string) =>
@@ -39,7 +42,7 @@ describe('linkQualityFromMargin', () => {
 
 describe('toDeviceInfo', () => {
   test('roles, names and power from the device collection', () => {
-    expect(devices.map(toDeviceInfo)).toMatchObject([
+    expect(devices.map((item) => toDeviceInfo(item))).toMatchObject([
       { address: '96518e5497d5b9f3', name: 'otbr', role: 'border_router', power: 'mains' },
       { address: '2a55d952bc7b4008', name: 'eve-thermo', role: 'router', networkAddress: '0x5000' },
       {
@@ -52,6 +55,39 @@ describe('toDeviceInfo', () => {
       },
       { address: '0011223344556677', role: 'end_device' },
     ])
+  })
+})
+
+describe('names and makers', () => {
+  // The ESP32-C6 router in the cellar registers no SRP host name
+  const esp = deviceItemSchema.parse({
+    id: '52bbac72ec804b82',
+    type: 'threadDevice',
+    attributes: { extAddress: '52bbac72ec804b82', role: 'router' },
+  })
+
+  test('without a host name the model and the short address name the device', () => {
+    const vendor = { vendor: 'Espressif', model: 'ESP32-C6 Thread Router' }
+    expect(toDeviceInfo(esp, vendor)).toMatchObject({
+      name: 'ESP32-C6 Thread Router · 52bb…4b82',
+      vendor: 'Espressif',
+      model: 'ESP32-C6 Thread Router',
+    })
+    expect(threadName('52bbac72ec804b82', undefined, { vendor: 'Espressif', model: null })).toBe(
+      'Espressif · 52bb…4b82',
+    )
+  })
+
+  test('the host name wins, and without anything the address stays', () => {
+    const vendor = { vendor: 'Eve Systems', model: 'Eve Thermo' }
+    expect(threadName('2a55d952bc7b4008', 'eve-thermo.local.', vendor)).toBe('eve-thermo')
+    expect(toDeviceInfo(esp).name).toBe('52bbac72ec804b82')
+  })
+
+  test('makers from the diagnostics; the empty default of OpenThread counts as none', () => {
+    expect(vendorsFromDiagnostics(diagnostics)).toEqual(
+      new Map([['2a55d952bc7b4008', { vendor: 'Eve Systems', model: 'Eve Thermo' }]]),
+    )
   })
 })
 
@@ -153,8 +189,75 @@ describe('fromDiagnostics', () => {
     expect(none.links).toMatchObject([{ rssi: null }])
   })
 
+  test('the own border router is the root, a router of another maker as leader is not', () => {
+    // A streamer that leads the partition and hears the router better than the border router does
+    const leader = deviceItemSchema.parse({
+      id: 'abcdefabcdefabcd',
+      type: 'threadDevice',
+      attributes: { extAddress: 'abcdefabcdefabcd', role: 'leader' },
+    })
+    expect(toDeviceInfo(leader).role).toBe('router')
+    const diagnostic = (router: string, neighbors: [string, number][]) =>
+      networkDiagnosticSchema.parse({
+        id: router,
+        type: 'networkDiagnostics',
+        attributes: {
+          extAddress: router,
+          routerNeighbors: neighbors.map(([extAddress, averageRssi]) => ({
+            extAddress,
+            averageRssi,
+            linkMargin: 30,
+          })),
+        },
+      })
+    const { links } = fromDiagnostics(
+      [
+        diagnostic('96518e5497d5b9f3', [
+          ['2a55d952bc7b4008', -80],
+          ['abcdefabcdefabcd', -60],
+        ]),
+        diagnostic('abcdefabcdefabcd', [['2a55d952bc7b4008', -55]]),
+      ],
+      0,
+      new Set(['96518e5497d5b9f3']),
+    )
+    const parents = links.filter((l) => l.parent).map((l) => [l.from, l.to])
+    expect(parents).toContainEqual(['2a55d952bc7b4008', '96518e5497d5b9f3'])
+    expect(parents).toContainEqual(['abcdefabcdefabcd', '96518e5497d5b9f3'])
+  })
+
   test('nothing in, nothing out', () => {
     expect(fromDiagnostics([], 0)).toEqual({ measurements: [], links: [] })
+  })
+})
+
+describe('countersFromDiagnostics', () => {
+  test('ifOutErrors against the unicast and broadcast frames sent', () => {
+    expect(countersFromDiagnostics(diagnostics, 1000)).toEqual([
+      {
+        protocol: 'thread',
+        address: '96518e5497d5b9f3',
+        ts: 1000,
+        unicast: 6,
+        broadcast: 926,
+        errors: 0,
+      },
+      {
+        protocol: 'thread',
+        address: '2a55d952bc7b4008',
+        ts: 1000,
+        unicast: 9702,
+        broadcast: 3998,
+        errors: 1326,
+      },
+    ])
+  })
+
+  test('a diagnostic without MAC counters gives none', () => {
+    const [first] = diagnostics
+    if (!first) throw new Error('fixture')
+    const { macCounters: _, ...attributes } = first.attributes
+    expect(countersFromDiagnostics([{ ...first, attributes }], 0)).toEqual([])
   })
 })
 
