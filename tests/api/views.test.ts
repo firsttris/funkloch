@@ -37,6 +37,19 @@ describe('overview', () => {
     expect(view.protocols.map((p) => p.id).sort()).toEqual(['thread', 'zigbee'])
   })
 
+  test('names the bottleneck: the cellar socket and its sensors over a weak link', () => {
+    const view = overviewView(env.context, '24h')
+    expect(view.bottlenecks).toEqual([
+      {
+        protocol: 'zigbee',
+        child: { id: idOf('Steckdose Keller Flur'), name: 'Steckdose Keller Flur' },
+        parent: { id: expect.any(Number), name: 'Koordinator' },
+        devices: 4,
+        link: 'LQI 56/36',
+      },
+    ])
+  })
+
   test('every row has a raw text and a parent, sparklines have the range length', () => {
     for (const row of overviewView(env.context, '24h').rows) {
       expect(row.rawText).toMatch(/LQI/)
@@ -195,6 +208,16 @@ describe('network', () => {
       expect(e.bars).toBeGreaterThan(0)
     expect(view.snapshots.length).toBeGreaterThan(20)
     expect(view.canRequest).toBe(true)
+  })
+
+  test('the bottleneck is marked on its line, nothing else is', () => {
+    const view = networkView(env.context, 'zigbee', null, null)
+    const marked = view.edges.filter((e) => e.bottleneck !== null)
+    expect(marked).toEqual([
+      expect.objectContaining({ a: idOf('Steckdose Keller Flur'), bottleneck: 4, parent: true }),
+    ])
+    expect(view.bottlenecks).toHaveLength(1)
+    expect(networkView(env.context, 'thread', null, null).bottlenecks).toEqual([])
   })
 
   test('the selected device shows its parent, link and hops', () => {

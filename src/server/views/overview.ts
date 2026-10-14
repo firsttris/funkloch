@@ -3,6 +3,7 @@ import { PROTOCOLS } from '~/adapters/registry'
 import { channelBars } from '~/core/channels'
 import { latestChannelScan, networkChannels } from '~/db/channels'
 import { latestSamples, listedDevices } from '~/db/queries'
+import { latestBottlenecks } from './bottlenecks'
 import type { ViewContext } from './context'
 import { adapterStates, deviceRows, protocolInfo } from './shared'
 
@@ -26,6 +27,7 @@ export const overviewView = (
     adapters: states,
     protocols: protocolInfo(protocolIds),
     counts: overview.counts,
+    bottlenecks: latestBottlenecks(db, protocolIds, settings.thresholds.weak),
     rows: overview.rows.map((row) => {
       const sample = latest.get(row.id)
       const meta = PROTOCOLS[row.protocol]

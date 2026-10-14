@@ -54,6 +54,8 @@ export type MapLink = {
   quality: Band | 'offline' | null
   label: string
   bars: number
+  /** Devices that go over this weak parent link, when it is a bottleneck */
+  bottleneck: number | null
 }
 
 /** Delay of the build-up animation: each level a little later, a list one row after the other */

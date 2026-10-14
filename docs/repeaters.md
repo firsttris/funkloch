@@ -51,6 +51,28 @@ and other transmitters, or put the Thread network on a channel away from the Wi-
 A new router needs time: end devices change their parent only when the old link gets bad or
 they rejoin. Look again after a day, or restart a device (re-insert the battery) to make it choose.
 
+## Where the network is narrow
+
+A router helps most where many devices share one weak link. For every parent link on the map
+Funkloch counts the devices that hang on it: the device below and everything whose way leads
+through it. A link that carries at least 3 devices and is weak (the weaker direction below the
+*weak* threshold; for Thread from RSSI and link quality) is a **bottleneck**:
+
+> 23 devices hang on Steckdose Keller Kleiner Raum ↔ Coordinator (LQI 55/35). A router between
+> these two would strengthen the way.
+
+The overview names it, the network map draws it thick and red and writes *Bottleneck · 23 devices*
+under the device below it. **Show on the map** selects that device.
+
+Where to put the router: between the two ends, where it hears both better than they hear each
+other. In a house that is often the floor in between, near the stairs: a socket in the ground
+floor halfway between a cellar socket and a coordinator upstairs. It takes over only when it is
+better: give the devices a day, then look at the bottleneck again.
+
+The map comes from the neighbor tables only (`routes: false`): Funkloch's uplinks are its reading
+of the map (below), not the routes the network takes. Asking for the routing tables would cost a
+timeout of about 25 seconds for every router that does not answer them (Tuya TS011F among them).
+
 ## Zigbee: a router that sends nothing itself
 
 A pure repeater has no sensors, so it never sends a state message, and Zigbee2MQTT publishes

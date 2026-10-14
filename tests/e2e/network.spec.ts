@@ -17,6 +17,22 @@ test.describe('network map', () => {
     ).toBeVisible()
   })
 
+  test('the overview names the bottleneck, the map marks it', async ({ page }) => {
+    await page.goto('/')
+    const hint = page.getByTestId('bottleneck')
+    await expect(hint.getByRole('heading', { name: 'Engpass im Netz' })).toBeVisible()
+    await expect(hint).toContainText(
+      '4 Geräte hängen über Steckdose Keller Flur ↔ Koordinator (LQI 56/36). Ein Router zwischen diesen beiden würde den Weg stärken.',
+    )
+    await hint.getByRole('link', { name: 'Auf der Karte zeigen' }).click()
+    await expect(page).toHaveURL(/\/network\?.*device=\d+/)
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Steckdose Keller Flur' }),
+    ).toBeVisible()
+    await expect(page.getByText('Engpass · 4 Geräte')).toBeVisible()
+    await expect(page.locator('.topo-line.bottleneck')).toHaveCount(1)
+  })
+
   test('switches to thread and requests a fresh map', async ({ page }) => {
     await page.goto('/network')
     await page.getByRole('radio', { name: 'Thread' }).click()

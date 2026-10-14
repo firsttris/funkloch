@@ -3,6 +3,7 @@ import { createFileRoute, Link, stripSearchParams, useNavigate } from '@tanstack
 import type { ReactNode } from 'react'
 import { z } from 'zod'
 import { AppHeader } from '~/components/app-header'
+import { BottleneckHint } from '~/components/bottleneck-hint'
 import { HistoryArea } from '~/components/history-area'
 import { roleLabel, statusLabel, statusVar } from '~/components/labels'
 import { NetworkTree, SNAPSHOT_DAYS_CLIENT } from '~/components/network-tree'
@@ -84,6 +85,8 @@ function NetworkPage() {
             />
           ) : null}
         </div>
+
+        <BottleneckHint bottlenecks={data.bottlenecks} onMap />
 
         <div className="flex flex-wrap items-start gap-4">
           <Card className="min-w-0 flex-[999_1_640px] p-3">
@@ -347,6 +350,12 @@ const Legend = () => (
         <line x1="0" y1="11" x2="26" y2="11" stroke="var(--status-weak)" strokeWidth="2" />
       </Swatch>
       {m.legend_line_weak()}
+    </span>
+    <span className="flex items-center gap-2.5">
+      <Swatch>
+        <line x1="0" y1="11" x2="26" y2="11" stroke="var(--status-weak)" strokeWidth="4" />
+      </Swatch>
+      {m.legend_line_bottleneck()}
     </span>
     <span className="flex items-center gap-2.5">
       <Swatch>

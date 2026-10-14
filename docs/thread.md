@@ -38,6 +38,17 @@ A full Thread device that is still a child shows as *router-eligible (REED)*; wh
 router, Funkloch reports the role change. Routers get an uplink towards the border router on the
 map, see [Repeaters](repeaters.md).
 
+## The root of the map
+
+The root is the border router Funkloch reads: the only item of type `threadBorderRouter` in
+`/api/devices` (ot-br-posix `src/rest/rest_devices_coll.cpp`, *this* device), or the `/node` of older
+images. Other border routers in the same network (an Apple TV, a HomePod, a Google TV Streamer)
+and the leader of the partition, whoever it is, are routers on the map. That keeps the way to the
+root, the router check and the bottlenecks about the border router your Home Assistant talks to:
+a device whose best way leads to a streamer's border router may still reach yours through it, and
+the map shows that step. Funkloch cannot read the other border routers' tables; their links come
+from the routers that hear them.
+
 ## Names
 
 The border router knows extended addresses and, with SRP, host names. A router's network

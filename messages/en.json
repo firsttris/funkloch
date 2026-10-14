@@ -335,5 +335,11 @@
   "finding_carried": "Go through it",
   "finding_uplink": "Uplink",
   "finding_covered_neighbor": "Its neighbor {names} already covers the area.",
-  "finding_covered_other": "{names} hears its neighbors at least as well and already covers the area."
+  "finding_covered_other": "{names} hears its neighbors at least as well and already covers the area.",
+  "bottleneck_title": "Bottleneck in the network",
+  "bottleneck_text": "{count} devices hang on {child} ↔ {parent} ({link}).",
+  "bottleneck_advice": "A router between these two would strengthen the way.",
+  "bottleneck_show": "Show on the map",
+  "network_bottleneck": "Bottleneck · {count} devices",
+  "legend_line_bottleneck": "Thick and red: a bottleneck, a weak link many devices go through"
 }

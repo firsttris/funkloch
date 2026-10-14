@@ -135,6 +135,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 - **Router check**: each router's page says whether it does its job: how many devices go through
   it, how strong its way to the coordinator is, whether other routers already cover its area, and
   where it would do more.
+- **Bottlenecks**: a weak link that many devices hang on is named on the overview and drawn thick
+  on the map, with where a router in between would help.
 - **Heatmap** of every device by hour over 7 or 30 days, with **recurring weak hours** (the socket
   that drops every evening) and **slow declines** pointed out.
 

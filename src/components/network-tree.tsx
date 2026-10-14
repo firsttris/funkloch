@@ -83,6 +83,11 @@ export const NetworkTree = ({
         {d.role === 'router' && counts(d.id) > 0 ? (
           <span>· {m.network_linked({ count: number(counts(d.id)) })}</span>
         ) : null}
+        {up?.bottleneck ? (
+          <span className="font-semibold text-weak">
+            · {m.network_bottleneck({ count: number(up.bottleneck) })}
+          </span>
+        ) : null}
       </>
     )
   }
@@ -117,7 +122,13 @@ export const NetworkTree = ({
           {tree.lines.map((line) => {
             const lit = way?.has(line.id) ?? false
             const faded = !kept(line.id)
-            const tone = cn(line.quality === 'weak' && 'weak', lit && 'lit', faded && 'topo-faded')
+            const narrow = (uplink.get(line.id)?.bottleneck ?? null) !== null
+            const tone = cn(
+              (line.quality === 'weak' || narrow) && 'weak',
+              narrow && 'bottleneck',
+              lit && 'lit',
+              faded && 'topo-faded',
+            )
             const offline = line.quality === 'offline'
             return (
               <g

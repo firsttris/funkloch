@@ -12,6 +12,7 @@ import {
   linksOfSnapshot,
   snapshotsOf,
 } from '~/db/queries'
+import { bottlenecksOf } from './bottlenecks'
 import type { ViewContext } from './context'
 import { adapterStates, deviceRows, protocolInfo } from './shared'
 
@@ -59,6 +60,8 @@ export const networkView = (
       }))
     : []
   const edges = mapEdges(links, meta?.linkScore ?? (() => null), offline)
+  const narrow = snapshot ? bottlenecksOf(db, protocol, snapshot.id, settings.thresholds.weak) : []
+  const carriedOver = new Map(narrow.map((b) => [b.child.id, b.devices]))
   const labelOf = (edge: (typeof edges)[number]) => meta?.formatLink(edge) ?? ''
   const barsOf = (edge: (typeof edges)[number]) =>
     edge.quality === 'offline' ? 0 : signalBars(meta?.linkScore(edge) ?? null)
@@ -104,7 +107,10 @@ export const networkView = (
       quality: e.quality,
       label: labelOf(e),
       bars: barsOf(e),
+      /** Devices that go over this weak parent link, when it is a bottleneck */
+      bottleneck: e.parent ? (carriedOver.get(e.a) ?? null) : null,
     })),
+    bottlenecks: narrow,
     selected: selected
       ? {
           ...selected,

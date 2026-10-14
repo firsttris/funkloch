@@ -189,6 +189,43 @@ describe('fromDiagnostics', () => {
     expect(none.links).toMatchObject([{ rssi: null }])
   })
 
+  test('the own border router is the root, a router of another maker as leader is not', () => {
+    // A streamer that leads the partition and hears the router better than the border router does
+    const leader = deviceItemSchema.parse({
+      id: 'abcdefabcdefabcd',
+      type: 'threadDevice',
+      attributes: { extAddress: 'abcdefabcdefabcd', role: 'leader' },
+    })
+    expect(toDeviceInfo(leader).role).toBe('router')
+    const diagnostic = (router: string, neighbors: [string, number][]) =>
+      networkDiagnosticSchema.parse({
+        id: router,
+        type: 'networkDiagnostics',
+        attributes: {
+          extAddress: router,
+          routerNeighbors: neighbors.map(([extAddress, averageRssi]) => ({
+            extAddress,
+            averageRssi,
+            linkMargin: 30,
+          })),
+        },
+      })
+    const { links } = fromDiagnostics(
+      [
+        diagnostic('96518e5497d5b9f3', [
+          ['2a55d952bc7b4008', -80],
+          ['abcdefabcdefabcd', -60],
+        ]),
+        diagnostic('abcdefabcdefabcd', [['2a55d952bc7b4008', -55]]),
+      ],
+      0,
+      new Set(['96518e5497d5b9f3']),
+    )
+    const parents = links.filter((l) => l.parent).map((l) => [l.from, l.to])
+    expect(parents).toContainEqual(['2a55d952bc7b4008', '96518e5497d5b9f3'])
+    expect(parents).toContainEqual(['abcdefabcdefabcd', '96518e5497d5b9f3'])
+  })
+
   test('nothing in, nothing out', () => {
     expect(fromDiagnostics([], 0)).toEqual({ measurements: [], links: [] })
   })

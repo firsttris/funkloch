@@ -177,6 +177,11 @@
   stroke: var(--status-weak);
 }
 
+/* A weak link many devices go through: thicker, lit or not */
+.topo-line.bottleneck {
+  stroke-width: 4;
+}
+
 .topo-flow {
   fill: none;
   stroke: var(--foreground-subtle);

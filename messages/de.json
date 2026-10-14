@@ -335,5 +335,11 @@
   "finding_carried": "Gehen über ihn",
   "finding_uplink": "Uplink",
   "finding_covered_neighbor": "Sein Nachbar {names} deckt den Bereich schon ab.",
-  "finding_covered_other": "{names} hört seine Nachbarn mindestens genauso gut und deckt den Bereich schon ab."
+  "finding_covered_other": "{names} hört seine Nachbarn mindestens genauso gut und deckt den Bereich schon ab.",
+  "bottleneck_title": "Engpass im Netz",
+  "bottleneck_text": "{count} Geräte hängen über {child} ↔ {parent} ({link}).",
+  "bottleneck_advice": "Ein Router zwischen diesen beiden würde den Weg stärken.",
+  "bottleneck_show": "Auf der Karte zeigen",
+  "network_bottleneck": "Engpass · {count} Geräte",
+  "legend_line_bottleneck": "Dick und rot: Engpass, ein schwacher Link, über den viele Geräte gehen"
 }
