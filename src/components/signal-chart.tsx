@@ -177,14 +177,13 @@ export const SignalChart = (props: Props) => {
     )
     resize.observe(element)
     // Colours are read once per plot; a switch between light and dark draws it again
-    const scheme = matchMedia('(prefers-color-scheme: dark)')
-    const redraw = () => {
+    const theme = new MutationObserver(() => {
       plot.destroy()
       plot = create()
-    }
-    scheme.addEventListener('change', redraw)
+    })
+    theme.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => {
-      scheme.removeEventListener('change', redraw)
+      theme.disconnect()
       resize.disconnect()
       plot.destroy()
     }

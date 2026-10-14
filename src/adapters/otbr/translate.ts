@@ -52,16 +52,45 @@ export const threadName = (address: string, hostname: string | undefined, vendor
   return maker ? `${maker} · ${shortAddress(address)}` : address
 }
 
-const present = (value: string | undefined) => (value?.trim() ? value.trim() : null)
+/**
+ * A maker's name or model as the firmware set it, or null. Punctuation and spaces at the end go;
+ * what is left under 3 characters says nothing. OpenThread built as a reference device sets the
+ * vendor name "RD:" by default (openthread src/core/config/net_diag.h), and an ESP32-C6 with
+ * ESPHome's OpenThread sends exactly that.
+ */
+export const cleanVendor = (value: string | undefined) => {
+  const cleaned = value?.trim().replace(/[\s\p{P}]+$/u, '') ?? ''
+  return cleaned.length < 3 ? null : cleaned
+}
 
-/** Vendor name and model of every router whose diagnostic carries one */
+/** "esp32c6" → "ESP32-C6", "efr32mg24" → "EFR32MG24" */
+const chipName = (chip: string) => {
+  const esp = chip.match(/^esp32([a-z]\d+)?$/i)
+  if (esp) return esp[1] ? `ESP32-${esp[1].toUpperCase()}` : 'ESP32'
+  return chip.toUpperCase()
+}
+
+/**
+ * A model from the stack version when the firmware names no maker: OpenThread's ESP32 port writes
+ * "openthread-esp32/<version>; <chip>; <build date>", which gives "ESP32-C6 (OpenThread)".
+ */
+export const modelFromStack = (stack: string | undefined) => {
+  const [name, chip] = (stack ?? '').split(';').map((part) => part.trim())
+  if (!name?.toLowerCase().startsWith('openthread') || !chip || !/^[a-z]+\d[a-z0-9]*$/i.test(chip))
+    return null
+  return `${chipName(chip)} (OpenThread)`
+}
+
+/** Vendor name and model of every router whose diagnostic carries one, cleaned */
 export const vendorsFromDiagnostics = (diagnostics: readonly NetworkDiagnostic[]) =>
   new Map<string, VendorInfo>(
     diagnostics.flatMap((d) => {
-      const info = {
-        vendor: present(d.attributes.vendorName),
-        model: present(d.attributes.vendorModel),
-      }
+      const vendor = cleanVendor(d.attributes.vendorName)
+      const model = cleanVendor(d.attributes.vendorModel)
+      const info =
+        vendor || model
+          ? { vendor, model }
+          : { vendor: null, model: modelFromStack(d.attributes.threadStackVersion) }
       return info.vendor || info.model
         ? [[d.attributes.extAddress.toLowerCase(), info] as const]
         : []

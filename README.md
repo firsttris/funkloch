@@ -129,6 +129,7 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 - **Network map** of the Zigbee mesh and the Thread network as a tree: the coordinator on top,
   each router with the devices that talk through it, signal bars on every link, problems in red.
+  The routers wrap into rows to fit the screen, so the map shows at full size on a phone too.
   Drag and zoom, search, "problems only", a device's way to the coordinator lit up on hover, older
   snapshots to compare.
 - **Repeaters**: see which devices connect through a new Zigbee or Thread router, since when, and
@@ -152,7 +153,8 @@ Reverse proxy, backups, password reset and every variable: [installation guide](
 
 - **Login** with one admin password (argon2), sessions in the database.
 - **One SQLite file**: raw readings for 14 days, hourly values for a year, both adjustable.
-- **German and English** interface, light and dark.
+- **German and English** interface, light and dark: as the system is set or chosen in the header,
+  which also shows the version that runs.
 
 ## 📸 Screenshots
 

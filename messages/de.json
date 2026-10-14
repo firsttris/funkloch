@@ -341,5 +341,10 @@
   "bottleneck_advice": "Ein Router zwischen diesen beiden würde den Weg stärken.",
   "bottleneck_show": "Auf der Karte zeigen",
   "network_bottleneck": "Engpass · {count} Geräte",
-  "legend_line_bottleneck": "Dick und rot: Engpass, ein schwacher Link, über den viele Geräte gehen"
+  "legend_line_bottleneck": "Dick und rot: Engpass, ein schwacher Link, über den viele Geräte gehen",
+  "app_version": "v{version}",
+  "theme_label": "Darstellung: {theme}",
+  "theme_system": "wie das System",
+  "theme_light": "hell",
+  "theme_dark": "dunkel"
 }
