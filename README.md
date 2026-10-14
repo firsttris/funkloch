@@ -11,6 +11,7 @@ One Docker container next to Zigbee2MQTT and your OTBR, read-only, no cloud, ope
 [![CI](https://github.com/firsttris/funkloch/actions/workflows/ci.yml/badge.svg)](https://github.com/firsttris/funkloch/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/firsttris/funkloch?logo=github&label=release)](https://github.com/firsttris/funkloch/releases/latest)
 [![Docker pulls](https://img.shields.io/docker/pulls/tristanteu/funkloch?logo=docker&logoColor=white)](https://hub.docker.com/r/tristanteu/funkloch)
+[![Image Size](https://img.shields.io/docker/image-size/tristanteu/funkloch/latest?logo=docker&logoColor=white&label=image)](https://hub.docker.com/r/tristanteu/funkloch)
 [![Docs](https://img.shields.io/badge/docs-firsttris.github.io%2Ffunkloch-4f46e5?logo=materialformkdocs&logoColor=white)](https://firsttris.github.io/funkloch/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 <br>
