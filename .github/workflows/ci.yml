@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
@@ -63,7 +63,7 @@ jobs:
     outputs:
       image: ${{ steps.playwright.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: playwright
         uses: firsttris/workflows/actions/playwright-image@v1
         with:
@@ -84,7 +84,7 @@ jobs:
       image: ${{ needs.playwright-image.outputs.image }}
       options: --ipc=host
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The npm package brings the binary without curl or unzip, which the image lacks
       - run: npm install --global "bun@$(jq -r .packageManager package.json | cut -d@ -f2)"
       - run: bun install --frozen-lockfile
@@ -94,7 +94,7 @@ jobs:
         env:
           HOME: /root
         run: bunx playwright test --shard=${{ matrix.shard }}/2 ${{ github.event_name == 'pull_request' && '--project=chromium --project=auth' || '--project=chromium --project=firefox --project=webkit --project=auth' }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-${{ matrix.shard }}
@@ -110,7 +110,7 @@ jobs:
     outputs:
       docker: ${{ steps.diff.outputs.docker }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           filter: blob:none
@@ -160,7 +160,7 @@ jobs:
       contents: read
       packages: write   # keeps the build cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: firsttris/workflows/actions/docker-build@v1
         with:
           dockerfile: docker/Dockerfile
