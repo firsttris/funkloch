@@ -1,18 +1,14 @@
 // Renovate (GitHub App, https://github.com/apps/renovate): a pull request for each new release of
-// what Funkloch builds on, plus the "Dependency Dashboard" issue listing what is open.
-// Only those: Bun (image, the packageManager CI installs, the README badge and its types) and the
-// Mosquitto broker of the integration tests. Zigbee2MQTT, the OTBR and matterjs-server are not
-// pinned anywhere (the contract tests replay recordings, see CLAUDE.md), the other packages and
-// the actions are not tracked here, Funkloch's own image moves with its releases.
+// what Funkloch builds on, plus the "Dependency Dashboard" issue listing what is open. Their own
+// pull requests: Bun (image, the packageManager CI installs, the README badge and its types) and
+// the Mosquitto broker of the integration tests.
+// Everything else (the other packages, the actions, the images) comes with the shared settings of
+// firsttris/workflows (renovate/default.json5): minor and patch updates once a month in one pull
+// request that merges itself when CI is green, majors on request in the dashboard.
 // Check with `npx --package renovate renovate-config-validator .github/renovate.json5`.
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended"],
-  enabledManagers: ["dockerfile", "bun", "custom.regex"],
-  timezone: "Europe/Berlin",
-  labels: ["dependencies"],
-  // Nothing merges itself: each of these needs the checks in its pull request read by a person
-  automerge: false,
+  extends: ["github>firsttris/workflows//renovate/default.json5"],
   customManagers: [
     {
       // "packageManager": "bun@x.y.z": the Bun of every CI job (bun-version-file, and the
@@ -45,11 +41,6 @@
   ],
   packageRules: [
     {
-      // From the packages only @types/bun (with Bun, below)
-      matchManagers: ["bun"],
-      enabled: false,
-    },
-    {
       // Funkloch's own image moves with its releases (release.yml)
       matchPackageNames: ["docker.io/tristanteu/**", "tristanteu/**", "ghcr.io/firsttris/**"],
       enabled: false,
@@ -64,6 +55,9 @@
       prBodyNotes: [
         "`docker/Dockerfile` (`oven/bun` and `-slim`), `packageManager` in package.json (CI's `bun-version-file` and the e2e job's `npm install bun@…`), the README badge and `@types/bun` move together. `engines.bun` and \"Bun 1.4 or newer\" in the docs are the minimum and stay unless the code needs the new release. Funkloch serves with `Bun.serve` (`serve.ts`) and stores with `bun:sqlite`: read the release notes for both, run the checks of CLAUDE.md and watch the docker job (the image starts and `/healthz` turns green) and the integration job on main.",
       ],
+      schedule: ["at any time"],
+      automerge: false,
+      dependencyDashboardApproval: false,
     },
     {
       matchPackageNames: ["docker.io/library/eclipse-mosquitto"],
@@ -71,6 +65,10 @@
       prBodyNotes: [
         "Only the integration tests use it (`mosquitto -c /mosquitto-no-auth.conf`): check that the new image still ships that config file. The integration job runs on main and before releases, not on pull requests: run it with `MQTT_TEST_URL=mqtt://localhost:1883 bun run test:integration` against the new image before merging.",
       ],
+      groupName: "eclipse-mosquitto",
+      schedule: ["at any time"],
+      automerge: false,
+      dependencyDashboardApproval: false,
     },
   ],
 }
