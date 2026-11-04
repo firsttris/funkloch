@@ -12,8 +12,8 @@ With your own network: `ZIGBEE2MQTT_MQTT_URL=… OTBR_URL=… bun run dev`.
 
 ## Stack
 
-Bun, TanStack Start (React) with Router, Query and Table, Zod, SQLite (`bun:sqlite`) with Drizzle,
-mqtt.js, Tailwind 4 with Radix and lucide, uPlot, Paraglide (German
+Bun, TanStack Start (React, rendered by TanStack Redact) with Router, Query and Table, Zod, SQLite
+(`bun:sqlite`) with Drizzle, mqtt.js, Tailwind 4 with Radix and lucide, uPlot, Paraglide (German
 and English), Biome, Vitest, Playwright. `bun run build` bundles everything into `dist/`; `serve.ts`
 serves it with `Bun.serve`, so the image needs no `node_modules`. On SIGTERM or SIGINT it logs
 `shutting down`, closes the HTTP server, stops the adapters and jobs, writes what is still buffered

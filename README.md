@@ -254,8 +254,8 @@ bun install
 bun run demo          # http://localhost:8090 with the demo network
 ```
 
-Bun, TanStack Start (React), TanStack Router, Query and Table, Zod, SQLite with Drizzle, mqtt.js,
-Tailwind 4, uPlot, Paraglide (German and English). Architecture, tests and releases:
+Bun, TanStack Start (React, rendered by TanStack Redact), TanStack Router, Query and Table, Zod,
+SQLite with Drizzle, mqtt.js, Tailwind 4, uPlot, Paraglide (German and English). Architecture, tests and releases:
 [Development](https://firsttris.github.io/funkloch/development.html); fixtures from your own network:
 [Recording fixtures](https://firsttris.github.io/funkloch/recording.html).
 

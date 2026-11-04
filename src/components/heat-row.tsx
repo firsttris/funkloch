@@ -22,7 +22,8 @@ export const HeatRow = ({ cells, label }: { cells: string; label: string }) => {
       viewBox={`0 0 ${cells.length} 1`}
       preserveAspectRatio="none"
       className="block h-6 w-full"
-      shapeRendering="crispEdges"
+      // As CSS: Redact 0.3.1 does not hyphenate this SVG attribute
+      style={{ shapeRendering: 'crispEdges' }}
       role="img"
       aria-label={label}
     >
@@ -33,7 +34,8 @@ export const HeatRow = ({ cells, label }: { cells: string; label: string }) => {
         d={dayLines}
         stroke="var(--surface)"
         strokeWidth={2}
-        vectorEffect="non-scaling-stroke"
+        // As CSS: Redact 0.3.1 does not hyphenate this SVG attribute
+        style={{ vectorEffect: 'non-scaling-stroke' }}
       />
     </svg>
   )
