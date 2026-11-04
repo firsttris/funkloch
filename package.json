@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@inlang/paraglide-js": "^2.27.0",
+    "@inlang/paraglide-js": "^3.1.0",
     "@inlang/plugin-message-format": "^4.5.2",
     "@playwright/test": "^1.64.0",
     "@tailwindcss/vite": "^4.3.3",
