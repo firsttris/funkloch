@@ -5,21 +5,14 @@
 // Everything else (the other packages, the actions, the images) comes with the shared settings of
 // firsttris/workflows (renovate/default.json5): minor and patch updates once a month in one pull
 // request that merges itself when CI is green, majors on request in the dashboard.
-// Check with `npx --package renovate renovate-config-validator .github/renovate.json5`.
+// Check with `bunx --package renovate renovate-config-validator .github/renovate.json5`.
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["github>firsttris/workflows//renovate/default.json5"],
+  // "packageManager": "bun@x.y.z" (the Bun of every CI job: setup-bun's bun-version-file, and the
+  // npm-installed Bun of the e2e and screenshots jobs) needs no manager of its own: Renovate's
+  // package.json manager reads it as the dependency `bun`.
   customManagers: [
-    {
-      // "packageManager": "bun@x.y.z": the Bun of every CI job (bun-version-file, and the
-      // npm-installed Bun of the e2e job)
-      customType: "regex",
-      managerFilePatterns: ["/^package\\.json$/"],
-      matchStrings: ['"packageManager": "bun@(?<currentValue>\\d+\\.\\d+\\.\\d+)"'],
-      depNameTemplate: "oven-sh/bun",
-      datasourceTemplate: "github-releases",
-      extractVersionTemplate: "^bun-v(?<version>.+)$",
-    },
     {
       // The Bun badge of the README (a minor, like the image tag)
       customType: "regex",
@@ -48,12 +41,13 @@
     {
       // Bun: the build and runtime images, packageManager, the badge and the types in one PR, so
       // CI tests the Bun the image ships
-      matchPackageNames: ["docker.io/oven/bun", "oven/bun", "oven-sh/bun", "@types/bun"],
+      // (`bun` is packageManager, `oven-sh/bun` the README badge)
+      matchPackageNames: ["bun", "docker.io/oven/bun", "oven/bun", "oven-sh/bun", "@types/bun"],
       enabled: true,
       groupName: "Bun",
       sourceUrl: "https://github.com/oven-sh/bun",
       prBodyNotes: [
-        "`docker/Dockerfile` (`oven/bun` and `-slim`), `packageManager` in package.json (CI's `bun-version-file` and the e2e job's `npm install bun@…`), the README badge and `@types/bun` move together. `engines.bun` and \"Bun 1.4 or newer\" in the docs are the minimum and stay unless the code needs the new release. Funkloch serves with `Bun.serve` (`serve.ts`) and stores with `bun:sqlite`: read the release notes for both, run the checks of CLAUDE.md and watch the docker job (the image starts and `/healthz` turns green) and the integration job on main.",
+        "`docker/Dockerfile` (`oven/bun` and `-slim`), `packageManager` in package.json (CI's `bun-version-file` and the `npm install bun@…` of the e2e and screenshots jobs), the README badge and `@types/bun` move together. `engines.bun` and \"Bun 1.4 or newer\" in the docs are the minimum and stay unless the code needs the new release. Funkloch serves with `Bun.serve` (`serve.ts`) and stores with `bun:sqlite`: read the release notes for both, run the checks of CLAUDE.md and watch the docker job (the image starts and `/healthz` turns green) and the integration job on main.",
       ],
       schedule: ["at any time"],
       automerge: false,
