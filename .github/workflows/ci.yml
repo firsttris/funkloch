@@ -85,15 +85,16 @@ jobs:
       options: --ipc=host
     steps:
       - uses: actions/checkout@v7
-      # The npm package brings the binary without curl or unzip, which the image lacks
-      - run: npm install --global "bun@$(jq -r .packageManager package.json | cut -d@ -f2)"
+      # The npm package brings the binary without curl or unzip, which the image lacks; node reads
+      # the version, since the image has no jq either
+      - run: npm install --global "bun@$(node -p "require('./package.json').packageManager.split('@')[1]")"
       - run: bun install --frozen-lockfile
       - run: bun run build
       - name: Playwright
         # Firefox refuses to start as root with a $HOME owned by another user
         env:
           HOME: /root
-        run: bunx playwright test --shard=${{ matrix.shard }}/2 ${{ github.event_name == 'pull_request' && '--project=chromium --project=auth' || '--project=chromium --project=firefox --project=webkit --project=auth' }}
+        run: bun --bun playwright test --shard=${{ matrix.shard }}/2 ${{ github.event_name == 'pull_request' && '--project=chromium --project=auth' || '--project=chromium --project=firefox --project=webkit --project=auth' }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
