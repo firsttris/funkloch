@@ -14,3 +14,4 @@ coverage/
 /recordings/
 .env
 /site/
+**/project.inlang/cache/

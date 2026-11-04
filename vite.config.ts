@@ -18,6 +18,7 @@ export default defineConfig(({ command }) => ({
     paraglideVitePlugin({
       project: './project.inlang',
       outdir: './src/paraglide',
+      outputStructure: 'message-modules',
       strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
       emitTsDeclarations: true,
     }),
