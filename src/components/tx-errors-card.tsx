@@ -51,7 +51,8 @@ export const TxErrorsCard = ({ txErrors, now }: { txErrors: TxErrors; now: numbe
             y2={y(threshold)}
             stroke="var(--foreground-subtle)"
             strokeDasharray="4 4"
-            vectorEffect="non-scaling-stroke"
+            // As CSS: Redact 0.3.1 does not hyphenate this SVG attribute
+            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
           <line
             x1="0"
@@ -59,7 +60,8 @@ export const TxErrorsCard = ({ txErrors, now }: { txErrors: TxErrors; now: numbe
             y1={HEIGHT - 0.5}
             y2={HEIGHT - 0.5}
             stroke="var(--chart-axis)"
-            vectorEffect="non-scaling-stroke"
+            // As CSS: Redact 0.3.1 does not hyphenate this SVG attribute
+            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
         </svg>
         <div

@@ -48,7 +48,8 @@ export const MessagesChart = ({
           y1={height - 0.5}
           y2={height - 0.5}
           stroke="var(--chart-axis)"
-          vectorEffect="non-scaling-stroke"
+          // As CSS: Redact 0.3.1 does not hyphenate this SVG attribute
+          style={{ vectorEffect: 'non-scaling-stroke' }}
         />
       </svg>
       <div

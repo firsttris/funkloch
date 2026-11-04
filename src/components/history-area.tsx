@@ -63,7 +63,8 @@ export const HistoryArea = ({
                 stroke={color}
                 strokeWidth="1.8"
                 strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
+                // As CSS: Redact 0.3.1 does not hyphenate this SVG attribute
+                style={{ vectorEffect: 'non-scaling-stroke' }}
               />
             </g>
           )
